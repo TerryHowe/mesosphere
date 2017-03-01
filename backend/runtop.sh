@@ -1,1 +1,1 @@
-top -l 1 | grep 'Load Avg'
+top -b -n 1 | grep 'load average'
