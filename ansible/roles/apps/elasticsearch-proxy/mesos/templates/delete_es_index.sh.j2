@@ -11,12 +11,12 @@ while [ $day_start -lt $days_ago ]; do
   day_start=$(($day_start+1))
 done
 
-for index in `curl -s -XGET http://elasticsearch-proxy-{{ region }}.{{ admin_project }}.cloud.twc.net:9200/_cat/indices?pretty=1 | grep logstash | awk '{print $3}'`
+for index in `curl -s -XGET http://elasticsearch-proxy-{{ region }}.{{ admin_project }}.cloud.bobby.net:9200/_cat/indices?pretty=1 | grep logstash | awk '{print $3}'`
 do
   if [[ " ${indices_to_keep[@]} " =~ " ${index} " ]]; then
     echo "Keep $index"
   else
     echo "Delete $index"
-    curl -XDELETE http://elasticsearch-proxy-{{ region }}.{{ admin_project }}.cloud.twc.net:9200/${index}
+    curl -XDELETE http://elasticsearch-proxy-{{ region }}.{{ admin_project }}.cloud.bobby.net:9200/${index}
   fi
 done

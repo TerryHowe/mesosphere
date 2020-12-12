@@ -1,8 +1,8 @@
 ---
 
 - set_fact:
-    ssl_cert_path: "/etc/grafana/certs/grafana-{{ region }}.{{ project }}.cloud.twc.net.crt"
-    ssl_key_path: "/etc/grafana/certs/grafana-{{ region }}.{{ project }}.cloud.twc.net.key"
+    ssl_cert_path: "/etc/grafana/certs/grafana-{{ region }}.{{ project }}.cloud.bobby.net.crt"
+    ssl_key_path: "/etc/grafana/certs/grafana-{{ region }}.{{ project }}.cloud.bobby.net.key"
 
 - name: Install grafana packages
   package: name="{{ item }}" state=present

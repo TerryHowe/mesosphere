@@ -8,7 +8,7 @@
     "container": {
         "docker": {
             "forcePullImage": true,
-            "image": "registry-ncw.dev-admin.cloud.twc.net/paas/vault-dcos",
+            "image": "registry-ncw.dev-admin.cloud.bobby.net/paas/vault-dcos",
             "network": "BRIDGE",
             "portMappings": [
                 {

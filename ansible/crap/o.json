@@ -9,7 +9,7 @@
     "container": {
         "docker": {
             "forcePullImage": false,
-            "image": "registry-nce.dev-admin.cloud.twc.net/terry/marathon:latest",
+            "image": "registry-nce.dev-admin.cloud.bobby.net/terry/marathon:latest",
             "network": "HOST",
             "parameters": [],
             "privileged": false

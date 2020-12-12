@@ -3,9 +3,9 @@ jenkins_dir: '/root/jenkins'
 jenkins_managed_inventories:
   - "{{ admin_project }}-{{ region }}"
   - "{{ mesos_project }}-{{ region }}"
-jenkins_url: https://jenkins-{{ region }}.{{ admin_project }}.cloud.twc.net
+jenkins_url: https://jenkins-{{ region }}.{{ admin_project }}.cloud.bobby.net
 jenkins_executors: 4
-jenkins_jiraext_jirabaseurl: https://jira.cloud.twc.net
+jenkins_jiraext_jirabaseurl: https://jira.cloud.bobby.net
 jenkins_jiraext_username: "{{ lookup('vault', 'jenkins', 'service_username')}}"
 jenkins_jiraext_password: "{{ lookup('vault', 'jenkins', 'service_password')}}"
 jenkins_jiraext_pattern: ASPAAS-,PAASDEPLOY-

@@ -1,6 +1,6 @@
 # Customer Onboarding Playbooks
 
-Refer to https://confluence.cloud.twc.net/display/CSAS/New+Customer+Setup for the steps required to onboard a customer.
+Refer to https://confluence.cloud.bobby.net/display/CSAS/New+Customer+Setup for the steps required to onboard a customer.
 
 ## General Usage
 

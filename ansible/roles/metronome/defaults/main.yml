@@ -1,2 +1,2 @@
 ---
-metronome_endpoint: "https://mesos-{{region}}.{{project}}.cloud.twc.net/service/metronome"
+metronome_endpoint: "https://mesos-{{region}}.{{project}}.cloud.bobby.net/service/metronome"

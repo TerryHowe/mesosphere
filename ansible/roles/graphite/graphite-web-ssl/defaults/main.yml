@@ -1,5 +1,5 @@
-graphite_public_url: "graphite-{{ region }}.{{ project }}.cloud.twc.net"
+graphite_public_url: "graphite-{{ region }}.{{ project }}.cloud.bobby.net"
 graphite_proxy_url: "http://{{ ansible_default_ipv4['address'] }}:80"
-grafana_public_url: "grafana-{{ region }}.{{ project }}.cloud.twc.net"
+grafana_public_url: "grafana-{{ region }}.{{ project }}.cloud.bobby.net"
 grafana_proxy_url: "http://127.0.0.1:3000"
 

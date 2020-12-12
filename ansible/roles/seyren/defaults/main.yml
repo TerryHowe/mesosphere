@@ -6,7 +6,7 @@ seyren_url: "http://localhost:8081"
 graphite_url: http://{{ openstack['private_v4'] }}:8080 # locals only
 graphite_username: admin
 graphite_password: "{{ os_password }}"
-public_url: "seyren-{{ region }}.{{ project }}.cloud.twc.net"
+public_url: "seyren-{{ region }}.{{ project }}.cloud.bobby.net"
 
 seyren_project: "{{ alert_project | default(project) }}"
 seyren_region: "{{ alert_region | default(region) }}"

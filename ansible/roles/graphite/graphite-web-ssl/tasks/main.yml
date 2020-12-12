@@ -3,8 +3,8 @@
 - set_fact:
     public_url: "{{ graphite_public_url }}"
     proxy_url: "{{ graphite_proxy_url }}"
-    ssl_cert_path: "/etc/nginx/conf.d/graphite-{{ region }}.{{ project }}.cloud.twc.net.crt"
-    ssl_key_path: "/etc/nginx/conf.d/graphite-{{ region }}.{{ project }}.cloud.twc.net.key"
+    ssl_cert_path: "/etc/nginx/conf.d/graphite-{{ region }}.{{ project }}.cloud.bobby.net.crt"
+    ssl_key_path: "/etc/nginx/conf.d/graphite-{{ region }}.{{ project }}.cloud.bobby.net.key"
 
 - name: Graphite ssl cert
   copy: content="{{lookup('vault', 'graphite-{{region}}.{{project}}.public', 'contents')}}" dest="{{ ssl_cert_path }}" owner=nginx group=nginx
@@ -20,8 +20,8 @@
 - set_fact:
     public_url: "{{ grafana_public_url }}"
     proxy_url: "{{ grafana_proxy_url }}"
-    ssl_cert_path: "/etc/nginx/conf.d/grafana-{{ region }}.{{ project }}.cloud.twc.net.crt"
-    ssl_key_path: "/etc/nginx/conf.d/grafana-{{ region }}.{{ project }}.cloud.twc.net.key"
+    ssl_cert_path: "/etc/nginx/conf.d/grafana-{{ region }}.{{ project }}.cloud.bobby.net.crt"
+    ssl_key_path: "/etc/nginx/conf.d/grafana-{{ region }}.{{ project }}.cloud.bobby.net.key"
 
 - name: Grafana ssl cert
   copy: content="{{lookup('vault', 'grafana-{{region}}.{{project}}.public', 'contents')}}" dest="{{ ssl_cert_path }}" owner=nginx group=nginx

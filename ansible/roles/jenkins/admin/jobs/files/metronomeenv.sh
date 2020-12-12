@@ -8,7 +8,7 @@ if [ -f ansible-jenkins.cfg ]
 then
   export ANSIBLE_CONFIG="$(pwd)/ansible-jenkins.cfg"
 fi
-dcos config set core.dcos_url "https://admin:${OS_PASSWORD}@mesos-${region}.${OS_TENANT_NAME}.cloud.twc.net" > /dev/null 2>&1
+dcos config set core.dcos_url "https://admin:${OS_PASSWORD}@mesos-${region}.${OS_TENANT_NAME}.cloud.bobby.net" > /dev/null 2>&1
 dcos auth login > /dev/null 2>&1
 if [ $? -ne 0 ]
 then

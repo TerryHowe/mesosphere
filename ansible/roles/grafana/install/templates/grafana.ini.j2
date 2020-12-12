@@ -36,7 +36,7 @@ protocol = https
 http_port = {{ grafana_port }}
 
 # The public facing domain name used to access grafana from a browser
-domain = https://grafana-{{ region }}.{{ project }}.cloud.twc.net
+domain = https://grafana-{{ region }}.{{ project }}.cloud.bobby.net
 
 # Redirect to correct domain if host header does not match domain
 # Prevents DNS rebinding attacks
@@ -44,7 +44,7 @@ domain = https://grafana-{{ region }}.{{ project }}.cloud.twc.net
 
 # The full public facing url you use in browser, used for redirects and emails
 # If you use reverse proxy and sub path specify full url (with sub path)
-root_url = https://grafana-{{ region }}.{{ project }}.cloud.twc.net
+root_url = https://grafana-{{ region }}.{{ project }}.cloud.bobby.net
 
 # Log web requests
 ;router_logging = false

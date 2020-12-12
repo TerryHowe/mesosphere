@@ -8,7 +8,7 @@
         certificate: "{{ lookup('vault', 'kibana-{{ region }}.{{ project }}.public', 'contents') }}"
         controller_user: admin
         controller_pass: "{{ avi_controller_admin_password }}"
-        controller_host: "avi-{{ region }}.{{ project }}.cloud.twc.net:9443"
+        controller_host: "avi-{{ region }}.{{ project }}.cloud.bobby.net:9443"
 
 - hosts: localhost
   roles:

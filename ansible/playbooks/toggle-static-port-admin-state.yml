@@ -26,7 +26,7 @@
 
     - name: create graphite event
       uri:
-        url: https://graphite-{{ region }}.{{ admin_project }}.cloud.twc.net/events/
+        url: https://graphite-{{ region }}.{{ admin_project }}.cloud.bobby.net/events/
         method: POST
         validate_certs: no
         body_format: json

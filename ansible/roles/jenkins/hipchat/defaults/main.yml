@@ -1,5 +1,5 @@
 ---
-hipchat_server: hipchat.os.cloud.twc.net
+hipchat_server: hipchat.os.cloud.bobby.net
 hipchat_room: '42'
 hipchat_file: jenkins.plugins.hipchat.HipChatNotifier.xml
 hipchat_token: "{{lookup('vault', 'jenkins', 'hipchat')}}"

@@ -15,7 +15,7 @@ function validate {
   openssl x509 -in $certfile -text | egrep -q "Issuer:.*CN=(Time Warner Cable|Symantec)" || echo "WARNING: Bogus issuer found for $certfile"
 
   subject=$(openssl x509 -in $certfile  -text -noout | grep Subject: | sed -e 's/^[[:space:]]*//')
-  cn_host=$(echo $subject | sed -e 's/^.*CN=\(.*\).cloud.twc.net/\1/')
+  cn_host=$(echo $subject | sed -e 's/^.*CN=\(.*\).cloud.bobby.net/\1/')
   file_host=$(echo $certfile | sed -e 's/^.*\/\([^\/]*\)\.public/\1/')
 
   if [ "$file_host" != "$cn_host" ]; then

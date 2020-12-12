@@ -6,7 +6,7 @@
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "registry-nce.dev-admin.cloud.twc.net/terry/hello_world",
+      "image": "registry-nce.dev-admin.cloud.bobby.net/terry/hello_world",
       "network": "BRIDGE",
       "portMappings": [
         { "containerPort": 5000, "hostPort": 0 }

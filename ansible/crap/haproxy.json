@@ -6,7 +6,7 @@
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "registry-ncw.staging-admin.cloud.twc.net/paas/paas-haproxy",
+      "image": "registry-ncw.staging-admin.cloud.bobby.net/paas/paas-haproxy",
       "network": "BRIDGE",
       "portMappings": [
         { "containerPort": 9000, "hostPort": 0 }

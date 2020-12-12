@@ -14,7 +14,7 @@ dcos_acs_token="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0Nzk2NTcxNDYsInV
 #do
 #  -X 'DELETE' \
 #done
-dcos_url="https://mesos-nce.dev-mesos.cloud.twc.net"
+dcos_url="https://mesos-nce.dev-mesos.cloud.bobby.net"
 # terry token
 #dcos_acs_token="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0Nzk3NjU5MDIsInVpZCI6InRlcnJ5LWFkbWluIn0.tS6DtyjrYUAos_tAndgcWRRZM6Q38Xtj_syOUgu5Vm4_sAkk9ua9JQWty8Of3lkZ2uVwOLdGpo5-0MaQkAZOyz9YJSTrFjbs7F3Zwo3fz_FsJR5Nwk00Z7d6t6I_1QFKLqQU5EqgI-6NCR1a_rPAW0Y_pD-IcXlSNX-c4DHfiYFts4IpYKkCK0_Dr4m8-wm6vLvGGViXCYfERs-cVE7jNZTO_ndKUqBz3jOlAeUQK9g9x0qmFtVs6w4iWlMjADFYWKY2K9JO4p9ivj8XoWooGb6bGim4vkOVR2wivr5QFwqws49bipVKtO01QN-MXcyqmgaKO6obzh8NRE1tTbJo1A"
 

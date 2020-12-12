@@ -14,7 +14,7 @@
 # The address of vault will be generated off OS_TENANT_NAME.  It will
 # convert the mesos project to the admin project if the tenant is for
 # mesos.  So, for example if OS_TENANT_NAME=staging-mesos will will
-# generate the url for https://vault-nce.staging-admin.cloud.twc.net:8200/
+# generate the url for https://vault-nce.staging-admin.cloud.bobby.net:8200/
 # You'll need a valid DNS or hosts entry for that domain name.
 #
 # Alternatively, you can set VAULT_ADDR to the url.
@@ -43,7 +43,7 @@ class LookupModule(LookupBase):
         tenant = os.getenv('OS_TENANT_NAME')
         tenant = tenant.replace("mesos", "admin")
         region = os.getenv('OS_REGION_NAME').lower()
-        return ("https://vault-%s.%s.cloud.twc.net:8200" % (region, tenant))
+        return ("https://vault-%s.%s.cloud.bobby.net:8200" % (region, tenant))
 
 
     def get_verify(self):

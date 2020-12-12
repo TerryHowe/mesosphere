@@ -6,8 +6,8 @@
 
 - set_fact:
     public_url: "{{ moira_public_url }}"
-    ssl_cert_path: "/etc/nginx/conf.d/monitor-{{ region }}.{{ project }}.cloud.twc.net.crt"
-    ssl_key_path: "/etc/nginx/conf.d/monitor-{{ region }}.{{ project }}.cloud.twc.net.key"
+    ssl_cert_path: "/etc/nginx/conf.d/monitor-{{ region }}.{{ project }}.cloud.bobby.net.crt"
+    ssl_key_path: "/etc/nginx/conf.d/monitor-{{ region }}.{{ project }}.cloud.bobby.net.key"
 
 - name: Moira/monitor ssl cert
   copy: content="{{lookup('vault', 'monitor-{{region}}.{{project}}.public', 'contents')}}" dest="{{ ssl_cert_path }}" owner=nginx group=nginx

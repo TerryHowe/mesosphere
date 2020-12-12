@@ -6,7 +6,7 @@
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "registry-ncw.dev-admin.cloud.twc.net/paas/cassandra",
+      "image": "registry-ncw.dev-admin.cloud.bobby.net/paas/cassandra",
       "network": "BRIDGE",
       "portMappings": [
         { "containerPort": 5000, "hostPort": 0 }

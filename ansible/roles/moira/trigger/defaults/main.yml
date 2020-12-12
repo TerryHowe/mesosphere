@@ -1,4 +1,4 @@
-moira_url: "https://monitor-{{ region }}.{{ admin_project }}.cloud.twc.net"
+moira_url: "https://monitor-{{ region }}.{{ admin_project }}.cloud.bobby.net"
 
 moira_project: "{{ alert_project | default(project) }}"
 moira_region: "{{ alert_region | default(region) }}"

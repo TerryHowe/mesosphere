@@ -219,11 +219,11 @@ def get_cache_name():
 def certy():
     import certifi
     filename = certifi.where()
-    twcfilename = filename + '.twc'
+    bobbyfilename = filename + '.bobby'
     rootfilename = 'roles/openssh/files/ca-trust/Time Warner Cable Internal Root CA.pem'
     standalonefilename = 'roles/openssh/files/ca-trust/Time Warner Cable Internal Standalone CA.pem'
-    if not os.path.exists(twcfilename):
-        open(twcfilename, 'a').close()
+    if not os.path.exists(bobbyfilename):
+        open(bobbyfilename, 'a').close()
         with open(filename, "a+") as f:
             rootca = open(rootfilename).read()
             f.write(rootca)

@@ -1,6 +1,6 @@
 ---
 #-- Defaults File For Github Hook Variables
 
-webhook_url: https://jenkins-{{region}}.{{ admin_project }}.cloud.twc.net/github-webhook/
+webhook_url: https://jenkins-{{region}}.{{ admin_project }}.cloud.bobby.net/github-webhook/
 repo_name: https://github.webapps.rr.com/api/v3/repos/ApplicationServices/ansible
 username: paas-git-admin

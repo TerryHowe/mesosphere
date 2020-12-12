@@ -10,7 +10,7 @@
         mem: 1536
         instances: 1
       marathon:
-        reporter-graphite: "tcp://carbon-relay-{{ region }}.{{ admin_project }}.cloud.twc.net:2003?prefix=marathon.{{ mesos_project }}.{{ region }}.marathon-{{ customer.shortname }}&interval=15"
+        reporter-graphite: "tcp://carbon-relay-{{ region }}.{{ admin_project }}.cloud.bobby.net:2003?prefix=marathon.{{ mesos_project }}.{{ region }}.marathon-{{ customer.shortname }}&interval=15"
 
 - name: create admin user
   dcos_user:

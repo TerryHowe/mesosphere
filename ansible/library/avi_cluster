@@ -40,9 +40,9 @@ except ImportError:
 #         "name" : "192.168.2.11"
 #      }
 #   ],
-#   "tenant_ref" : "https://avi-controller-1-ncw.dev-mesos.cloud.twc.net:9443/api/tenant/admin#admin",
+#   "tenant_ref" : "https://avi-controller-1-ncw.dev-mesos.cloud.bobby.net:9443/api/tenant/admin#admin",
 #   "name" : "cluster-0-1",
-#   "url" : "https://avi-controller-1-ncw.dev-mesos.cloud.twc.net:9443/api/cluster"
+#   "url" : "https://avi-controller-1-ncw.dev-mesos.cloud.bobby.net:9443/api/cluster"
 #}
 
 

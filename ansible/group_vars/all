@@ -1,4 +1,4 @@
-os_auth_url: "{{ lookup('env','OS_AUTH_URL') | default('https://dnvrco-api.os.cloud.twc.net:5000/v2.0') }}"
+os_auth_url: "{{ lookup('env','OS_AUTH_URL') | default('https://dnvrco-api.os.cloud.bobby.net:5000/v2.0') }}"
 os_username: "{{ lookup('env','OS_USERNAME') | default('paas-devops') }}"
 os_password: "{{ lookup('env','OS_PASSWORD') | default('') }}"
 os_tenant_name: "{{ lookup('env','OS_TENANT_NAME') | default('paas-dev') }}"
@@ -11,9 +11,9 @@ admin_project: "{{ project | regex_replace('mesos', 'admin') }}"
 project_environment: "{{ project | regex_replace('-admin', '') | regex_replace('-mesos', '')}}"
 vault_environment: "{{project_environment}}-{{region}}"
 mesos_cluster_name: "{{ project }}-{{ region }}"
-project_domain: "{{project}}.cloud.twc.net"
-mesos_domain: "{{mesos_project}}.cloud.twc.net"
-admin_domain: "{{admin_project}}.cloud.twc.net"
+project_domain: "{{project}}.cloud.bobby.net"
+mesos_domain: "{{mesos_project}}.cloud.bobby.net"
+admin_domain: "{{admin_project}}.cloud.bobby.net"
 docker_registry: "registry-{{region}}.{{admin_domain}}"
 clair_scanner_host: "http://scanner-{{region}}.{{admin_domain}}:6060"
 
@@ -42,7 +42,7 @@ ldap_paas_group_dn: "CN=dl-CloudServices-PaaS-Ops,OU=DL,OU=Groups,OU=West,OU=TWC
 ldap_user_attr: "cn"
 ldap_search_base_dn: "DC=corp,DC=bobby,DC=com"
 
-# from https://confluence.cloud.twc.net/display/PUBOD/Creating+a+TWC+only+Security+Group
+# from https://confluence.cloud.bobby.net/display/PUBOD/Creating+a+TWC+only+Security+Group
 corporate_vpn_cidrs:
   # bobby AWS tunnel
   - 52.2.221.104
