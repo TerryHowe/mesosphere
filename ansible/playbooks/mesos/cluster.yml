@@ -1,0 +1,6 @@
+---
+#-- Playbook for building mesos cluster from scratch
+- include: ../nfs-server.yml
+- include: bootstrap.yml
+- include: master.yml
+- include: agent.yml

@@ -1,0 +1,3 @@
+---
+- name: restart avi controller
+  service: name=avicontroller state=restarted

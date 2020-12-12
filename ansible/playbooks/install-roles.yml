@@ -1,0 +1,12 @@
+# ansible-galaxy install -r install-roles.yml
+
+# To save a "local" copy of remote 3rd pary repos
+#
+#   1. git clone --mirror <github-url>
+#   2. create an new repo on GHE
+#   3. git push --mirror https://github.webapps.rr.com/ApplicationServices/<repo>
+#   4. drop the github url here preceeded by 'git+'
+
+# Graphite roles used
+- src: git+https://github.webapps.rr.com/ApplicationServices/ansible-grafana.git
+  name: aseng-ansible-grafana

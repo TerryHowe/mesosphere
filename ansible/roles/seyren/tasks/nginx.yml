@@ -1,0 +1,15 @@
+---
+- set_fact:
+    ssl_cert_path: "/etc/nginx/conf.d/seyren-{{ region }}.{{ project }}.cloud.twc.net.crt"
+    ssl_key_path: "/etc/nginx/conf.d/seyren-{{ region }}.{{ project }}.cloud.twc.net.key"  
+
+- name: Seyren ssl cert
+  copy: content="{{lookup('vault', 'seyren-{{region}}.{{project}}.public', 'contents')}}" dest="{{ ssl_cert_path }}" owner=nginx group=nginx
+
+- name: Seyren ssl key
+  copy: content="{{lookup('vault', 'seyren-{{region}}.{{project}}.private', 'contents')}}" dest="{{ ssl_key_path }}" owner=nginx group=nginx mode=0600
+
+- name: Seyren nginx config
+  template: src=nginx.conf.j2 dest={{ nginx_site_dir }}/seyren.conf owner=nginx group=nginx
+  notify:
+    - reload nginx

@@ -1,0 +1,39 @@
+---
+dependencies:
+  - role: moira/trigger
+    moira_triggers: "{{ esproxy_triggers }}"
+    tags:
+      - monitoring
+  - { role: metronome, command: "/usr/local/bin/delete_es_index.sh", job_schedule_enabled: "true", job_interval: '0 23 * * *', job_description: "Deletes ES indexes older than 3 days", job_name: "delete-es-index-older-than-3-days" }
+  - role: docker-app
+    app_spec:
+      app_name: elasticsearch-proxy-{{ region }}
+      access: internet
+      service_port: 9200
+      container_port: 80
+      allowed_cidrs: "{{ admin_clients }}"
+      marathon:
+        cpus: 1
+        mem: 512
+        instances: 1
+        container:
+          docker:
+            image: nginx
+        env:
+          RESOLVER_IPS: "{% for host in groups['mesos-master'] %} {{ hostvars[host]['openstack']['private_v4'] }}{% endfor %}"
+          UPSTREAM_SERVICE_NAME: elasticsearch
+          UPSTREAM_SERVICE_FQDN: elasticsearch-executor.elasticsearch.mesos
+          UPSTREAM_SERVICE_PORT: "1025"
+        cmd: >
+          /bin/bash -c "envsubst < /mnt/mesos/sandbox/default.conf.template >
+          /etc/nginx/conf.d/default.conf &&
+          nginx -g 'daemon off;'"
+        uris:
+          - https://github.webapps.rr.com/raw/ApplicationServices/ansible/master/roles/apps/elasticsearch-proxy/nginx/default.conf.template
+        healthChecks:
+          - protocol: HTTP
+            portIndex: 0
+            path: /
+            gracePeriodSeconds: 5
+            intervalSeconds: 20
+            maxConsecutiveFailures: 3

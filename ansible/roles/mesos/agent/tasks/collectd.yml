@@ -1,0 +1,21 @@
+---
+- name: add collectd plugin for mesos agent
+  template: src=mesos-agent.py dest={{ collectd_python_module_dir }}
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: configure collectd plugin
+  template: src=collectd.conf.j2 dest=/etc/collectd.d/mesos-agent.conf
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: configure collectd /data dir check
+  copy: src=data_dir_check.conf dest=/etc/collectd.d/data_dir_check.conf
+  notify:
+    - restart collectd
+  tags:
+    - monitoring

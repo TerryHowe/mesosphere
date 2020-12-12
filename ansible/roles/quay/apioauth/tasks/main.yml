@@ -1,0 +1,16 @@
+---
+- block:
+  - name: generate oauth.sql file
+    template: src=oauth.sql.j2 dest={{tmp_sql_file}}
+    changed_when: False
+
+  - name: upload mysql database
+    mysql_db: name=quay
+              state=import
+              target={{tmp_sql_file}}
+              login_host=127.0.0.1
+              config_file=~/.writer.my.cnf
+
+  - file: path={{tmp_sql_file}} state=absent
+    changed_when: False
+  run_once: True

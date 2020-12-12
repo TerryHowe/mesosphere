@@ -1,0 +1,43 @@
+avi_controller_alerts:
+  avi_controller_portal_process_listening:
+    name: "Avi Controller Portal Port Listening"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.avi-controller.*.tcpconns.9443-local.tcp_connections.LISTEN, 5), 0), 4)"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1
+  avi_controller_service_process_listening:
+    name: "Avi Controller Service Port Listening"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.avi-controller.*.tcpconns.8443-local.tcp_connections.LISTEN, 5), 0), 4)"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1
+  avi_cluster_has_leader:
+    name: "Avi Controller Cluster Lost Leader"
+    target: "alias(sumSeries(transformNull(collectd.{{ project }}.{{ region }}.avi-controller.*.avi_controller.node_role.CLUSTER_LEADER, 0)), 'Avi Controller Cluster Leader Status')"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    reducer_type: "max"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1
+  avi_cloud_connector_errors:
+    name: "Avi Controller Cloud Connector Errors"
+    target: "alias(maxSeries(derivative(transformNull(collectd.{{ project }}.{{ region }}.avi-controller.*.aggregation.tail-max.derive.errors, 0))), 'Avi Controller Cloud Connector Errors')"
+    alert_params:
+      - 0
+    alert_type: "gt"
+    reducer_type: "max"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 1

@@ -1,0 +1,18 @@
+---
+- name: "Build repository"
+  uri:
+    url: "https://{{docker_registry}}/api/v1/repository/{{quay_namespace}}/{{quay_name}}/build/"
+    method: POST
+    validate_certs: no
+    status_code: 201
+    body_format: json
+    body: '{
+            "docker_tags": [ "latest" ],
+            "pull_robot": "paas+robotti",
+            "subdirectory": "{{git_subdir}}",
+            "archive_url": "{{git_repository}}"
+           }'
+    headers:
+      Authorization: "Bearer {{quay_oauth_token}}"
+      Accept: application/json
+      Content-Type: application/json

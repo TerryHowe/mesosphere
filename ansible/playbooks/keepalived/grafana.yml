@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  vars:
+    - openstack_virtualip_port_name: 'ha-grafana'
+    - openstack_virtualip_hostgroup: 'admin-proxy'
+    - openstack_virtualip_host_name: "ha-grafana-{{ region }}" 
+  roles:
+    - openstack/virtualip
+
+- hosts: admin-proxy
+  become: yes
+  roles:
+    - keepalived
+

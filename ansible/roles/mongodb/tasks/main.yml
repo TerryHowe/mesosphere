@@ -1,0 +1,38 @@
+---
+#-- MongoDB role
+
+- name: Remove default mongodb packages
+  package: name={{ item }} state=absent
+  with_items:
+    - mongodb
+    - mongodb-server
+    - mongodb-test
+
+- name: Install RPM key for Mongo 3.0
+  rpm_key: state=present key=https://www.mongodb.org/static/pgp/server-3.0.asc
+  when: ansible_os_family == "RedHat"
+
+- name: Configure yum repo for Mongo 3.0
+  copy: src=mongodb-3.0.repo dest=/etc/yum.repos.d/ owner=root group=root mode=0644
+  when: ansible_os_family == "RedHat"   
+
+- name: Install mongodb-org packages
+  package: name=mongodb-org state=present
+
+- name: Copy over the mongod.conf file
+  template: src=mongod.conf.j2 dest=/etc/mongod.conf
+
+- name: Disable /sys/kernel/mm/transparent_hugepage/enabled
+  shell: echo "never" > /sys/kernel/mm/transparent_hugepage/enabled
+
+- name: Disable /sys/kernel/mm/transparent_hugepage/defrag
+  shell: echo "never" > /sys/kernel/mm/transparent_hugepage/defrag
+
+- name: Set other system limits for the mongod user
+  copy: src=mongod.limits dest=/etc/security/99-mongod-limits.conf
+
+- name: Enable mongodb
+  service: name=mongod enabled=yes
+
+- name: Start mongodb
+  service: name=mongod state=started

@@ -1,0 +1,48 @@
+---
+- name: install user marathon
+  dcos_package:
+    package: marathon
+    app_id: "/{{ customer.shortname }}/marathon-{{ customer.shortname }}"
+    options:
+      service:
+        name: "marathon-{{ customer.shortname }}"
+        cpus: 2.0
+        mem: 1536
+        instances: 1
+      marathon:
+        reporter-graphite: "tcp://carbon-relay-{{ region }}.{{ admin_project }}.cloud.twc.net:2003?prefix=marathon.{{ mesos_project }}.{{ region }}.marathon-{{ customer.shortname }}&interval=15"
+
+- name: create admin user
+  dcos_user:
+    uid: "{{ customer.shortname }}-admin"
+    password: "{{ customer.password }}"
+    description: "{{ customer.shortname }} Admin User"
+  no_log: True
+
+- name: create administrator group
+  dcos_group:
+    gid: "{{ customer.shortname }}-admins"
+    description: "{{ customer.shortname }} Administrators"
+
+- name: add user to group
+  dcos_group_member:
+    gid: "{{ customer.shortname }}-admins"
+    uid: "{{ customer.shortname }}-admin"
+
+- include: acl.yml
+  with_items:
+    - "dcos:adminrouter:service:marathon-{{ customer.shortname }}"
+    - "dcos:service:marathon:marathon-{{ customer.shortname }}"
+    - "dcos:adminrouter:service:jenkins-{{ customer.shortname }}"
+    - "dcos:service:marathon:jenkins-{{ customer.shortname }}"
+    - "dcos:adminrouter:ops:metadata"
+    - "dcos:adminrouter:ops:slave"
+    - "dcos:adminrouter:ops:mesos"
+    - "dcos:secrets:default:%252F{{ customer.shortname }}"
+    - "dcos:adminrouter:service:marathon"
+    - "dcos:service:marathon:marathon:services:%252F{{ customer.shortname }}"
+
+- name: add password to secrets
+  dcos_secret:
+    path: "{{ customer.shortname }}/password"
+    value: "{{ customer.password }}"

@@ -1,0 +1,13 @@
+---
+# use case: generate a "pool" of vips
+- block:
+    - include: vip.yml
+      vars:
+        openstack_virtualip_port_name: "{{ openstack_virtualip_port_prefix }}-{{ '%x'|format(item|int) }}"
+        openstack_virtualip_external_host_name: "{{ openstack_virtualip_port_prefix }}-{{ item }}-{{ region }}"
+      with_sequence: start=1 end="{{ openstack_virtualip_pool_size | int }}"
+  when: openstack_virtualip_port_prefix is defined
+
+# use case: single vip
+- include: vip.yml
+  when: openstack_virtualip_port_prefix is not defined

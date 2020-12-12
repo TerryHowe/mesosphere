@@ -1,0 +1,17 @@
+# BEGIN service fragment for vault
+frontend frontend_vault
+    mode http
+    bind {{ haproxy_service_virtualip }}:8200 ssl crt {{vault_cert_file}}
+    reqadd X-Forwarded-Proto:\ https
+    default_backend backend_vault
+
+backend backend_vault
+    mode http
+    option forwardfor
+    option http-server-close
+    option httpchk GET /v1/sys/health
+    http-check expect status 200
+{% for backend in groups['worker'] %}
+    server {{ hostvars[backend]['openstack']['human_id'] }} {{ hostvars[backend]['openstack']['private_v4'] }}:8200 check ssl verify none
+{% endfor %}
+# END service fragment for vault

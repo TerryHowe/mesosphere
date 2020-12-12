@@ -1,0 +1,44 @@
+---
+#- set_fact:
+    #bootstrap_host_port: "{{ bootstrap_host.split(':')[1] }}"
+
+# Configure a bootstrap node for a mesosphere cluster
+#
+- name: Create the dcos genconf dir
+  file: path="{{ dcos_genconf_dir }}" state=directory mode=0755
+
+- name: Copy the ip detection script into place
+  template: src=ip-detect.j2 dest="{{ dcos_genconf_dir }}/ip-detect" owner=root group=root mode=0644
+
+- name: Create the cluster config
+  template: src=config.yaml.j2 dest="{{ dcos_genconf_dir }}/config.yaml" owner=root group=root mode=0644
+
+#-- TODO: Bring this back when mesos provides versioned download links
+#--       OR we run our own server
+#- name: Download latest stable dcos_generate_config.ee.sh
+  #get_url: url={{ mesos_bootstrap_dcos_url }} dest="{{ dcos_root_dir }}/dcos_generate_config.ee.sh" mode=0755
+
+- name: see if the dcos generated installer already exists
+  stat: path="{{ dcos_genconf_dir }}/serve/dcos_install.sh"
+  register: dcos_install
+  changed_when: not dcos_install.stat.exists
+
+- name: DCOS generate config
+  command: bash dcos_generate_config.ee.sh
+  when: not dcos_install.stat.exists
+  args:
+    chdir: "{{ dcos_root_dir }}"
+
+- name: Disable docker restarts to prevent problems during upgrades
+  shell: sed -i -e "s/systemctl restart systemd-journald//g" -e "s/systemctl restart docker//g" "{{ dcos_genconf_dir }}/serve/dcos_install.sh"
+
+- include: container-service.yml
+  vars:
+    name: "dcos-{{ mesos_version }}-bootstrap-nginx"
+    image: nginx
+    ports:
+      - "{{ bootstrap_host_port }}:80"
+    volumes:
+      - "{{ dcos_genconf_dir }}/serve:/usr/share/nginx/html:ro"
+
+- include: collectd.yml

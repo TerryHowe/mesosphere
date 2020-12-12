@@ -1,0 +1,22 @@
+#!/bin/bash
+
+day_start="0"
+days_ago="3"
+
+indices_to_keep=()
+
+while [ $day_start -lt $days_ago ]; do
+  logdate=`date -d "- ${day_start} days" +'%Y.%m.%d'`
+  indices_to_keep=("${indices_to_keep[@]}" "logstash-${logdate}")
+  day_start=$(($day_start+1))
+done
+
+for index in `curl -s -XGET http://elasticsearch-proxy-{{ region }}.{{ admin_project }}.cloud.twc.net:9200/_cat/indices?pretty=1 | grep logstash | awk '{print $3}'`
+do
+  if [[ " ${indices_to_keep[@]} " =~ " ${index} " ]]; then
+    echo "Keep $index"
+  else
+    echo "Delete $index"
+    curl -XDELETE http://elasticsearch-proxy-{{ region }}.{{ admin_project }}.cloud.twc.net:9200/${index}
+  fi
+done

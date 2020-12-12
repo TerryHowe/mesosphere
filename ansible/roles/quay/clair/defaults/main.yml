@@ -1,0 +1,17 @@
+postgres_user: "{{lookup('vault', 'clair', 'postgres_user')}}"
+postgres_password: "{{lookup('vault', 'clair', 'postgres_password')}}"
+postgres_dbname: "{{lookup('vault', 'clair', 'postgres_dbname')}}"
+postgres_version: "latest"
+
+postgres_connstr: "host={{clair_postgres_host}} port=5432 dbname={{postgres_dbname}} user={{postgres_user}} password={{postgres_password}} statement_timeout=60000 sslmode=disable"
+clair_postgres_host: "worker-1-{{region}}.{{admin_domain}}"
+clair_scanner_health_endpoint: "http://scanner-{{region}}.{{admin_domain}}:6061/health"
+clair_directory: "/mnt/persistent/clair"
+clair_version: "v1.2.3"
+
+# unique per environment
+scanner_service_key_id: "{{lookup('vault', '{{vault_environment}}', 'scanner_service_key_id')}}"
+scanner_private_key_filename: "scanner-{{region}}.{{admin_project}}.pem"
+scanner_private_key: "{{lookup('vault', '{{scanner_private_key_filename}}', 'contents')}}"
+
+quay_registry_host: "https://{{docker_registry}}"

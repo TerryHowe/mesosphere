@@ -1,0 +1,8 @@
+---
+
+# Tests executed from Travis
+
+- hosts: all
+  roles:
+    - role: ansible-graphite
+      graphite_secret_key: testtest123

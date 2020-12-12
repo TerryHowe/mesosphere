@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+import base64
+from ansible.module_utils.basic import *
+
+try:
+  from avi.sdk.avi_api import ApiSession
+  HAS_AVISDK = True
+except ImportError:
+  HAS_AVISDK = False
+
+
+if __name__ == '__main__':
+
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'state': {'default': 'present', 'choices': ['present', 'absent']},
+            'role_name': {'required': True, 'type': 'str'},
+            'privileges': {'type': 'dict'},
+            'controller_user': {'required': True, 'type': 'str'},
+            'controller_pass': {'required': True, 'type': 'str'},
+            'controller_host': {'required': True, 'type': 'str'},
+        },
+        supports_check_mode=True
+    )
+
+    if not HAS_AVISDK:
+        module.fail_json(msg="avisdk package is required")
+
+    args = module.params
+    ensure_present = args['state'] != 'absent'
+    api = ApiSession.get_session(args['controller_host'], args['controller_user'],
+                                 args['controller_pass'], tenant='admin')
+
+    role = api.get_object_by_name('role', args['role_name'])
+    privileges = [{'resource': key, 'type': value} for key, value in args['privileges'].iteritems()]
+    changed = False
+
+    if ensure_present:
+        target_role = {'name': args['role_name'], 'privileges': privileges}
+        if not role:
+            changed = True
+            if not module.check_mode:
+                role = api.post('role', target_role).json()
+        elif role['privileges'] != privileges:
+            changed = True
+            if not module.check_mode:
+                role = api.put('role/{0}'.format(role['uuid']),
+                               data=target_role).json()
+    elif role and not ensure_present:
+        changed = True
+        if not module.check_mode:
+            api.delete('role/{uuid}'.format(**role))
+
+    module.exit_json(changed=changed, role=role)

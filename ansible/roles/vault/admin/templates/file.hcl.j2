@@ -1,0 +1,12 @@
+backend "consul" {
+  address = "consul-{{region}}-internal.{{admin_domain}}:8500"
+}
+
+listener "tcp" {
+ address = "0.0.0.0:8200"
+ tls_cert_file = "/vault/certs/{{project}}.public.pem"
+ tls_key_file = "/vault/certs/{{project}}.private.pem"
+ tls_min_version = "tls10"
+}
+
+disable_mlock = true

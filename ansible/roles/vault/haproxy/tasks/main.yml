@@ -1,0 +1,10 @@
+---
+- copy: content="{{vault_public}}\n{{vault_private}}" dest="{{vault_cert_file}}" mode=0750 owner=root group=root
+
+- name: create haproxy service config
+  template:
+    src: haproxy-service.cfg.j2
+    dest: /etc/haproxy/conf.d/vault.cfg
+    mode: '0644'
+  notify:
+    - reconfig haproxy

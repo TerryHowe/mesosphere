@@ -1,0 +1,154 @@
+seyren_version: 1.3.0
+seyren_log_level: info
+seyren_log_path: /var/log/
+seyren_port: 8081
+seyren_url: "http://localhost:8081"
+graphite_url: http://{{ openstack['private_v4'] }}:8080 # locals only
+graphite_username: admin
+graphite_password: "{{ os_password }}"
+public_url: "seyren-{{ region }}.{{ project }}.cloud.twc.net"
+
+seyren_project: "{{ alert_project | default(project) }}"
+seyren_region: "{{ alert_region | default(region) }}"
+
+collectd_base_ns: "collectd.{{ seyren_project }}.{{ seyren_region }}"
+collectd_admin_ns: "collectd.{{ admin_project }}.{{ seyren_region }}"
+
+pagerduty_api_token: "{{lookup('vault', 'pagerduty', 'api_token')}}"
+
+seyren_checks:
+  mesos_master_process_running:
+    name: "{{ seyren_project }}_{{ seyren_region }}_mesos_master_process_running"
+    query: minSeries({{ collectd_base_ns }}.mesos-master.*.processes.mesos-master.ps_count.processes)
+    from: -2min
+    warn: 0.1
+    error: 0
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: false
+  mesos_slave_process_running:
+    name: "{{ seyren_project }}_{{ seyren_region }}_mesos_slave_process_running"
+    query: minSeries({{ collectd_base_ns }}.mesos-slave.*.processes.mesos-slave.ps_count.processes)
+    from: -2min
+    warn: 0.1
+    error: 0
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: false
+  mesos_slave_load:
+    name: "{{ seyren_project }}_{{ seyren_region }}_mesos_slave_load"
+    query: maxSeries({{ collectd_base_ns }}.mesos-slave.*.load.load.relative.shortterm)
+    from: -1h
+    warn: 0.8
+    error: 0.9
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: false
+  mesos_master_load:
+    name: "{{ seyren_project }}_{{ seyren_region }}_mesos_master_load"
+    query: maxSeries({{ collectd_base_ns }}.mesos-master.*.load.load.relative.shortterm)
+    from: -1h
+    warn: 0.8
+    error: 0.9
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: false
+  avi_controller_load:
+    name: "{{ seyren_project }}_{{ seyren_region }}_avi_controller_load"
+    query: maxSeries({{ collectd_base_ns }}.avi-controller.*.load.load.relative.shortterm)
+    from: -1h
+    warn: 0.8
+    error: 0.9
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: false
+  nfs_server_load:
+    name: "{{ seyren_project }}_{{ seyren_region }}_nfs_server_load"
+    query: maxSeries({{ collectd_base_ns }}.nfs-server.*.load.load.relative.shortterm)
+    from: -1h
+    warn: 0.8
+    error: 0.9
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: false
+  mesos_master_uptime:
+    name: "{{ seyren_project }}_{{ seyren_region }}_mesos_master_uptime"
+    description: The master has restarted
+    query: minSeries({{ collectd_base_ns }}.mesos-master.*.mesos-master.gauge.master_uptime_secs)
+    from: -32min
+    warn: 1800
+    error: 300
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: true
+  mesos_master_tasks_lost:
+    name: "{{ seyren_project }}_{{ seyren_region }}_mesos_master_tasks_lost"
+    description: The master has restarted
+    query: perSecond({{ collectd_base_ns }}.mesos-master.*.mesos-master.counter.master_tasks_lost)
+    from: -30min
+    warn: .04
+    error: .08
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: true
+  mesos_master_slaves_connected:
+    name: "{{ seyren_project }}_{{ seyren_region }}_mesos_master_slaves_connected"
+    description: Not all slaves connected
+    query: minSeries({{ collectd_base_ns }}.mesos-master.*.mesos-master.gauge.master_slaves_connected)
+    from: -5min
+    warn: "{{ groups['mesos-agent'] | length - 1 }}"
+    error: "{{ groups['mesos-agent'] | length - 2 }}"
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: true
+  mesos_masters_elected:
+    name: "{{ seyren_project }}_{{ seyren_region }}_mesos_master_elected"
+    description: No master elected
+    query: maxSeries(transformNull(keepLastValue({{ collectd_base_ns }}.mesos-master.*.mesos-master.gauge.master_elected, 3), 0))
+    from: -5min
+    warn: 0.1
+    error: 0
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: false
+  instance_pingable:
+    name: "{{ admin_project }}_{{ seyren_region }}_instances_pingable"
+    description: Check to ensure instances are responding to ping
+    query: maxSeries({{ collectd_admin_ns }}.graphite.*.ping.ping_droprate.*)
+    from: -5min
+    warn: 0.5
+    error: 1
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: true
+  graphite_disk_space:
+    name: "{{ admin_project }}_{{ seyren_region }}_graphite_disk_space"
+    description: Monitor disk space used to store graphite metrics
+    query: maxSeries({{ collectd_admin_ns }}.graphite.*.df.opt-graphite-storage.percent_bytes.free)
+    from: -1h
+    warn: 10.0
+    error: 5.0
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: false
+  no_masters_running:
+    name: "{{ seyren_project }}_{{ seyren_region }}_no_masters_running"
+    description: Monitor number of running mesos-master processes
+    query: sumSeries(keepLastValue({{ collectd_base_ns }}.mesos-master.*.processes.mesos-master.ps_count.processes, 3))
+    from: -2min
+    warn: 1.0
+    error: 0.0
+    notify: pagerduty
+    ignore_warn: false
+    ignore_error: false
+  mesos_marathon_process_running:
+    name: "{{ seyren_project }}_{{ seyren_region }}_mesos_marathon_process_running"
+    description: Alert if marathon stops running on any master instance
+    query: minSeries(keepLastValue({{ collectd_base_ns }}.mesos-master.*.processes.mesos-marathon.ps_count.processes, 3))
+    from: -2min
+    warn: 0.1
+    error: 0
+    notify: pagerduty
+    ignore_warn: true
+    ignore_error: false
+

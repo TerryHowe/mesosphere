@@ -1,0 +1,7 @@
+---
+customer:
+  name: "bobby Software Engineering"
+  shortname: "bobby"
+  email: "shafi.hashemi@bobby.com"
+  password: "{{ lookup('vault', 'customer/bobby', 'password') }}"
+  org_email: "DLswdevopssec@bobby.com"

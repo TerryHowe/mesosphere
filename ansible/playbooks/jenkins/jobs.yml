@@ -1,0 +1,6 @@
+---
+- hosts: jenkins
+  become: yes
+  roles:
+    - role: jenkins/admin/jobs
+    - role: jenkins/admin/seed

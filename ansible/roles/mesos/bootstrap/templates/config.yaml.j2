@@ -1,0 +1,19 @@
+{% set bootstrap_host = hostvars[groups['mesos-bootstrap'][0]]['ansible_default_ipv4']['address'] -%}
+
+bootstrap_url: http://{{ bootstrap_host }}:{{ bootstrap_host_port }}
+cluster_name: {{ mesos_cluster_name }}
+exhibitor_storage_backend: static
+log_directory: /genconf/logs
+master_discovery: static
+master_list:
+  {% for host in groups['mesos-master'] -%}
+  - {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+  {% endfor %}
+
+resolvers: {{ bootstrap_dns_resolvers | to_yaml }}
+superuser_username: {{ dcos_username }}
+superuser_password_hash: {{ dcos_hashed_password }}
+telemetry_enabled: 'false'
+{% if customer_key is defined -%}
+customer_key: {{ customer_key }}
+{% endif %}

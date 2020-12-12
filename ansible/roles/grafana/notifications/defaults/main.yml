@@ -1,0 +1,14 @@
+---
+grafana_notifications:
+  - name: pagerduty high priority
+    type: pagerduty
+    isDefault: false
+    settings:
+      integrationKey: "{{ vault_pagerduty_highpri_apikey }}"
+      autoResolve: true
+  - name: pagerduty low priority
+    type: pagerduty
+    isDefault: false
+    settings:
+      integrationKey: "{{ vault_pagerduty_lowpri_apikey }}"
+      autoResolve: true

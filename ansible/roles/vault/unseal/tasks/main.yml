@@ -1,0 +1,11 @@
+---
+- hashivault_status:
+    url: '{{vault_url}}'
+    verify: '{{vault_verify}}'
+  register: 'vault_status'
+
+- hashivault_unseal:
+    keys: '{{vault_key_values}}'
+    url: '{{vault_url}}'
+    verify: '{{vault_verify}}'
+  when: "{{vault_status.status.sealed}} == True"

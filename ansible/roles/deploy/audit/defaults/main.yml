@@ -1,0 +1,9 @@
+---
+deploy_tag_ref: "tag-undefined"
+deploy_job_ref: "job-undefined"
+deploy_entry:
+  job: "{{ deploy_job_ref }}"
+  tag: "{{ deploy_tag_ref }}"
+  timestamp: "{{ ansible_date_time.epoch }}"
+  roles: "{{ role_names }}"
+deploy_max_entries: 20

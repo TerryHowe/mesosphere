@@ -1,0 +1,6 @@
+---
+openstack_virtualip_security_groups: [ "corp_vpn" ]
+openstack_virtualip_hostgroup: mesos-agent
+openstack_virtualip_network: "{{ default_server_network }}"
+openstack_virtualip_use_floating_ip: True
+openstack_virtualip_pool_size: 1

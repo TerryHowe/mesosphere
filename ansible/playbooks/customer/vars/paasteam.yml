@@ -1,0 +1,8 @@
+---
+customer:
+  name: "PaaS Team"
+  shortname: "paasteam"
+  email: "timothy@bobby.com"
+  password: "{{ lookup('vault', 'customer/paasteam', 'password') }}"
+  org_email: "timothy@bobby.com"
+  admin_database: True

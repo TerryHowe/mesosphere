@@ -1,0 +1,20 @@
+LoadPlugin ping
+
+<Plugin "ping">
+{% for host in groups['all'] if 'openstack' in hostvars[host] and host != ansible_hostname %}
+  Host "{{ hostvars[host]['openstack']['private_v4'] }}"
+{% endfor %}
+</Plugin>
+
+LoadPlugin target_replace
+PreCacheChain "ip2hostname"
+
+<Chain "ip2hostname">
+{% for host in groups['all'] if 'openstack' in hostvars[host] and host != ansible_hostname %}
+  <Rule "rename_{{ host }}">
+    <Target "replace">
+      TypeInstance "\\<{{ hostvars[host]['openstack']['private_v4'] | regex_replace('\.', '\\.') }}\\>" "{{ host }}"
+    </Target>
+  </Rule>
+{% endfor %}
+</Chain>

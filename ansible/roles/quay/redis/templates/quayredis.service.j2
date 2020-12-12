@@ -1,0 +1,14 @@
+[Unit]
+Description=Quay Container Registry Redis
+Documentation=https://quay.io
+After=quaymsql.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/bin/docker kill quayredis
+ExecStartPre=-/bin/docker rm quayredis
+ExecStartPre=/bin/docker pull redis:3.0.7
+ExecStart=/bin/docker run -d --name quayredis -p 6379:6379 redis
+
+[Install]
+WantedBy=multi-user.target

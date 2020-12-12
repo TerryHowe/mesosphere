@@ -1,0 +1,3 @@
+---
+use_private_ips: False
+ip_attr: "{{ use_private_ips | ternary('private_v4', 'public_v4') }}"

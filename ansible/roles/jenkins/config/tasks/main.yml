@@ -1,0 +1,13 @@
+---
+- name: template src=credentials.xml.j2 dest={{persistent_store}}/credentials.xml
+  template: src=credentials.xml.j2 dest={{persistent_store}}/credentials.xml
+  run_once: True
+  become: yes
+
+- name: post to https://mesos.{{mesos_domain}}/service/jenkins-{{customer_name}}/job/install_plugins/build
+  uri: url="https://mesos.{{mesos_domain}}/service/jenkins-{{customer_name}}/job/install_plugins/build" method=POST
+  run_once: True
+
+- name: post to https://mesos.{{mesos_domain}}/service/jenkins-terry/safeRestart
+  uri: url="https://mesos.{{mesos_domain}}/service/jenkins-{{customer_name}}/safeRestart" method=POST
+  run_once: True

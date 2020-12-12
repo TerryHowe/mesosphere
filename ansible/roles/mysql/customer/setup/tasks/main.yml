@@ -1,0 +1,18 @@
+---
+- name: create customer mysql-admin database
+  mysql_db:
+    name: "{{customer.shortname}}"
+    state: present
+    login_host: 127.0.0.1
+    config_file: '~/.writer.my.cnf'
+  run_once: True
+
+- mysql_user:
+    name: "{{customer.shortname}}"
+    password: "{{customer.password}}"
+    priv: "{{customer.shortname}}.*:ALTER,CREATE,DELETE,DROP,INDEX,INSERT,SELECT,UPDATE,REFERENCES"
+    host: '%'
+    state: present
+    login_host: 127.0.0.1
+    config_file: '~/.writer.my.cnf'
+  run_once: True

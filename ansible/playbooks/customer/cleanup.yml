@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Make sure we are running on the mesos project
+      assert:  { that: "'admin' not in '{{project}}'" }
+
+- name: cleanup quay credentials
+  hosts: mesos-master, mesos-agent
+  vars_files:
+    - vars/{{ customer_name }}.yml
+  roles:
+    - quay/customer/cleanupcreds
+
+- name: "Cleanup customer from Quay and DCOS"
+  hosts: localhost
+  vars_files:
+    - vars/{{ customer_name }}.yml
+  roles:
+    - quay/customer/cleanup
+    - mesos/customer/cleanup
+
+- name: "Cleanup customer data from Vault"
+  hosts: mesos-agent
+  vars_files:
+    - vars/{{ customer_name }}.yml
+  roles:
+    - vault/customer/cleanup

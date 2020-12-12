@@ -1,0 +1,30 @@
+{
+  "id": "/cassandra-terry-haproxy",
+  "cpus": 0.5,
+  "mem": 128.0,
+  "instances": 1,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "registry-ncw.staging-admin.cloud.twc.net/paas/paas-haproxy",
+      "network": "BRIDGE",
+      "portMappings": [
+        { "containerPort": 9000, "hostPort": 0 }
+      ]
+    }
+  },
+  "env": {
+    "HAPROXY_APP_NAME": "cassandra",
+    "HAPROXY_BALANCE": "roundrobin",
+    "HAPROXY_BACKEND_HOST": "node.cassandra-terry.l4lb.thisdcos.directory",
+    "HAPROXY_BACKEND_PORT": "9042"
+  },
+  "labels": {
+      "FE-Proxy": "yes",
+      "FE-Proxy-VIP": "192.168.1.253",
+      "avi_proxy": "{\"virtualservice\": {\"services\": [{\"port\": 9042}], \"analytics_policy\": {\"metrics_realtime_update\": {\"duration\": 0, \"enabled\":true}, \"client_insights\": \"NO_INSIGHTS\", \"full_client_logs\": {\"enabled\":true}}}, \"tenant\": \"admin\" }"
+  },
+  "uris":  [
+    "file:///etc/docker.tar.gz"
+  ]
+}

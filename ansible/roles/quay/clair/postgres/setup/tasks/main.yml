@@ -1,0 +1,18 @@
+---
+- include_vars: ../../../clair/defaults/main.yml
+
+- name: pull postgres
+  shell: docker pull postgres:{{postgres_version}}
+
+- name: check if postgres container is running
+  shell: docker ps --filter name=clair-postgres -q
+  changed_when: False
+  register: runningpostgres
+
+- name: create directory for clair storage
+  file: path="{{clair_directory}}/storage" state=directory owner=root group=root mode=0755
+  become: yes
+
+- name: start clair postgres database
+  shell: docker run -d --name clair-postgres --restart on-failure -p 5432:5432 -e POSTGRES_USER={{postgres_user}} -e POSTGRES_PASSWORD={{postgres_password}} -e POSTGRES_DB={{postgres_dbname}} -v "{{clair_directory}}/storage:/var/lib/postgresql/data" postgres:{{postgres_version}}
+  when: not runningpostgres.stdout

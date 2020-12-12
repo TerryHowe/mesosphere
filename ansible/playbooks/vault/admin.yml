@@ -1,0 +1,37 @@
+---
+- hosts: worker
+  become: yes
+  roles:
+    - deploy/audit
+    - openssh
+    - filesystem
+    - consul/server
+    - consul/join
+    - role: dns/record
+      domain_name: consul-{{ region }}-internal
+      use_private_ips: true
+    - role: vault/admin
+
+- hosts: worker-1-*
+  become: yes
+  vars:
+    vault_image_name: vault
+  roles:
+    - role: dns/record
+      domain_name: vault-{{ region }}
+
+- hosts: localhost
+  roles:
+    - role: vault/init
+    - role: vault/unseal
+      vault_url: 'https://worker-1-{{region}}.{{admin_domain}}:8200'
+      vault_verify: False
+    - role: vault/unseal
+      vault_url: 'https://worker-2-{{region}}.{{admin_domain}}:8200'
+      vault_verify: False
+    - role: vault/configure
+
+- hosts: worker-1-*
+  become: yes
+  roles:
+    - role: vault/collectd

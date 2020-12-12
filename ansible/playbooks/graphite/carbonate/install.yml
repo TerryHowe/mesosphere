@@ -1,0 +1,15 @@
+---
+- hosts: carbon-cache
+  become: yes
+  vars_prompt:
+    - name: new_carbon_cache_nodes
+      prompt: New carbon-cache nodes, comma separated, empty for none (replication factor change)
+      private: no
+    - name: old_replication_factor
+      prompt: Prior replication factor (before adding nodes)
+      private: no
+      default: 1
+  roles:
+    - role: graphite/carbon/config
+    - role: graphite/carbonate/install
+      carbonate_new_carbon_cache_nodes: "{{ new_carbon_cache_nodes.split(',') | map('trim') | list }}"

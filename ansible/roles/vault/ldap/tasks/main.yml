@@ -1,0 +1,23 @@
+---
+- name: check for running vault
+  shell: docker ps --filter ancestor={{vault_image_name}} -q
+  changed_when: False
+  register: vault_container
+- set_fact: vault_container="{{vault_container.stdout}}"
+
+- block:
+  - name: create enable ldap script
+    template: src=ldap_enable.sh.j2 dest=/tmp/ldap_enable.sh
+
+  - name: enable ldap for vault
+    command: docker cp /tmp/ldap_enable.sh {{vault_container}}:ldap_enable.sh
+
+  - name: docker ldap config
+    shell: docker run {{vault_image_name}} --entrypoint=sh ./ldap_enable.sh
+    register: ldapconfig
+    failed_when: "'Error' in ldapconfig.stdout"
+    run_once: True
+
+#  - file: path=/tmp/ldap_enable.sh state=absent
+  when: vault_container != ""
+

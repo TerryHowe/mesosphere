@@ -1,0 +1,12 @@
+---
+- include: cluster-state.yml
+
+- hosts: avi-controller-leader
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  vars_prompt:
+    - name: avi_controller_archive_url
+      prompt: Enter download url for Avi mesos docker archive
+  roles:
+    - role: avi/controller-upgrade

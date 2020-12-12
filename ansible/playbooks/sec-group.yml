@@ -1,0 +1,7 @@
+---
+#-- Playbook to test automated NFS sec-group creation
+
+
+- hosts: localhost
+  roles:
+  - role: sec-groups

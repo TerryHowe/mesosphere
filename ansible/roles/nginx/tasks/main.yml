@@ -1,0 +1,16 @@
+---
+#-- Role for managing nginx
+
+- name: Install nginx package
+  package: name=nginx state=present
+
+- name: Replace default nginx.conf
+  copy: src=nginx.conf dest=/etc/nginx/nginx.conf owner=nginx group=nginx
+  notify:
+    - reload nginx
+
+- name: Enable nginx service
+  service: name=nginx enabled=yes
+
+- name: Start nginx service
+  service: name=nginx state=started

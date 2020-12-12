@@ -1,0 +1,5 @@
+---
+users:
+  cloud-user:
+    comment: "Cloud User"
+    pubkey: "cloud-user-{{ project_environment }}"

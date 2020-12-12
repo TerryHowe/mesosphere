@@ -1,0 +1,43 @@
+- name: Pull existing contact information
+  uri: url="{{ moira_url }}/api/subscription" return_content=yes validate_certs=no
+  register: moira_subs
+
+- set_fact:
+    contacts: "{{ moira_subs.json.list | sum(attribute='contacts', start=[]) | list }}"
+
+- name: Create moira contact types for notification purposes
+  uri:
+    url: "{{ moira_url }}/api/contact"
+    body: >
+      {
+        "id": "{{ item.key }}",
+        "type": "{{ item.value.type }}",
+        "value": "{{ item.value.contact_value }}"
+      }
+    body_format: json
+    method: PUT
+    HEADER_Content_Type: "application/json"
+    status_code: 200
+  when: item.key not in contacts
+  with_dict: "{{ moira_contacts | default({}) }}" 
+
+#-- This currently creates whether subscription exists or not
+#-- Add logic to pull list of subs prior, only create missing ones
+- name: Associate moira contacts with tags
+  uri: 
+    url: "{{ moira_url }}/api/subscription"
+    body: >
+      {
+        "id": "{{ item.key }}",
+        "contacts": ["{{ item.key }}"],
+        "tags": {{ item.value.tags }},
+        "enabled": True,
+        "throttling": False
+      }
+    body_format: json
+    method: PUT
+    HEADER_Content_Type: "application/json"
+    status_code: 200
+  when: item.key not in contacts
+  with_dict: "{{ moira_contacts | default({}) }}" 
+  

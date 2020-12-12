@@ -1,0 +1,20 @@
+---
+- name: See if drone-{{customer_name}} intalled
+  shell: dcos marathon app list | grep drone-{{customer_name}}
+  register: dcosinstalled
+  changed_when: dcosinstalled.rc == 1
+  failed_when: False
+
+- block:
+  - command: mktemp -t "{{customer_name}}.XXXXXXXXXX"
+    register: mktemp
+
+  - name: template src=options.json.j2 dest={{mktemp.stdout}}
+    template: src=options.json.j2 dest={{mktemp.stdout}}
+
+  - name: Install drone-{{customer_name}}
+    shell: dcos marathon app add {{mktemp.stdout}}
+
+  - file: name={{ mktemp.stdout }} state=absent
+
+  when: dcosinstalled.changed

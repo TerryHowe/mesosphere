@@ -1,0 +1,30 @@
+---
+- name: check if avi portal is up
+  command: curl -k -w "%{http_code}" -o /dev/null {{ avi_controller_base_url }}
+  changed_when: False
+  failed_when: False
+  register: portal_status
+
+- block:
+
+    - name: wait for avi portal to start
+      command: curl -k -w "%{http_code}" -o /dev/null {{ avi_controller_base_url }}
+      ignore_errors: true
+      register: portal_wait_status
+      until: portal_wait_status.stdout == "200"
+      retries: 60
+      delay: 10
+
+    # some scenarios cause avi to start up, report 200 then determine it needs
+    # to perform a controller initialize returning 503s until its completed
+    - pause: minutes=2
+
+    - name: wait for avi portal to initialize
+      command: curl -k -w "%{http_code}" -o /dev/null {{ avi_controller_base_url }}
+      ignore_errors: true
+      register: portal_init_status
+      until: portal_init_status.stdout == "200"
+      retries: 60
+      delay: 10
+
+  when: portal_status.stdout == "000"

@@ -1,0 +1,3 @@
+---
+- name: "{{ config.name }}"
+  template: src=logrotate.config.j2 dest=/etc/logrotate.d/{{ config.logrotate_filename }}

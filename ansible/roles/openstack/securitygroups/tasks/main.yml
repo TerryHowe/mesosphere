@@ -1,0 +1,19 @@
+- name: Create security group {{ application_name }}_security_group
+  os_security_group:
+    state: present
+    name: "{{ application_name }}_security_group"
+    description: Security group for '{{ application_name }}' service port
+  register: secgroup
+
+- name: Create security group rules
+  os_security_group_rule:
+    protocol: tcp
+    port_range_min: "{{ application_service_port }}"
+    port_range_max: "{{ application_service_port }}"
+    security_group: "{{ application_name }}_security_group"
+    remote_ip_prefix: "{{ item }}"
+  with_items: "{{ application_allowed_cidrs }}"
+
+- name: Add the security group to the agents
+  command: nova add-secgroup {{ item }} "{{ application_name }}_security_group"
+  with_items: "{{ groups['mesos-agent'] }}"

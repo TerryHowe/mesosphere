@@ -1,0 +1,12 @@
+---
+- name: reconfig keepalived
+  assemble: src=/etc/keepalived/conf.d dest=/etc/keepalived/keepalived.conf backup=yes
+            ignore_hidden=yes
+  notify:
+  - reload keepalived
+
+- name: restarted keepalived
+  service: name=keepalived state=restarted
+
+- name: reload keepalived
+  service: name=keepalived state=reloaded

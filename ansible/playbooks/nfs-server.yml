@@ -1,0 +1,11 @@
+---
+#-- Playbook for nfs server
+
+- hosts: nfs-server
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+  - deploy/audit
+  - filesystem
+  - nfs-server

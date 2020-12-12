@@ -1,0 +1,13 @@
+---
+- hashivault_userpass_delete:
+    url: "{{vault_url}}"
+    token: "{{root_token}}"
+    name: "{{customer.shortname}}"
+- hashivault_userpass_delete:
+    url: "{{vault_url}}"
+    token: "{{root_token}}"
+    name: "{{customer.shortname}}-admin"
+- hashivault_policy_delete:
+    url: "{{vault_url}}"
+    token: "{{root_token}}"
+    name: '{{customer.shortname}}'

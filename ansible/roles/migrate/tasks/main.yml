@@ -1,0 +1,5 @@
+---
+- name: Delete unused vault vm
+  os_server:
+    state: absent
+    name: "vault-1-{{region}}"

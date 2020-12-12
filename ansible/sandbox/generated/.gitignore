@@ -1,0 +1,8 @@
+# Ignore everything in this directory
+#
+# This directory needs to exist so virtualbox can mount it
+*
+dcos/*
+# Except these
+!dcos
+!.gitignore

@@ -1,0 +1,6 @@
+---
+#-- Master playbook to run all grafana monitoring playbooks
+
+- include: avi/monitoring.yml
+- include: mesos/marathon/monitoring.yml
+- include: mesos/monitoring.yml

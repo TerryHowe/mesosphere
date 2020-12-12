@@ -1,0 +1,19 @@
+[Unit]
+Description=AviController
+After=docker.service
+Requires=docker.service
+
+[Service]
+Restart=always
+RestartSec=0
+TimeoutStartSec=0
+TimeoutStopSec=120
+StartLimitInterval=0
+ExecStartPre=-/usr/bin/docker kill avicontroller
+ExecStartPre=-/usr/bin/docker rm avicontroller
+ExecStartPre=/usr/bin/bash -c "/usr/bin/docker run --name=avicontroller --privileged=true -p 5054:5054 -p 8053:53/udp -p 161:161 -p 9080:9080 -p 9443:9443 -p 5098:5098 -p 8443:8443 -d -t -e NUM_CPU={{ avi_controller_num_cpu }} -e NUM_MEMG={{ avi_controller_num_memg }} -e DISK_GB={{ avi_controller_disk_gb }} -e HTTP_PORT=9080 -e HTTPS_PORT=9443 -e MANAGEMENT_IP={{ ansible_default_ipv4['address'] }} -v /var/logs/avi-upstart:/var/logs/upstart -v /:/hostroot -v {{ avi_controller_dir }}:/vol -v {{ avi_controller_upgrade_dir }}:/avi-upgrades -v /var/lib/collectd.sock:/var/lib/collectd.sock -v /var/run/fleet.sock:/var/run/fleet.sock -v /var/run/docker.sock:/var/run/docker.sock avinetworks/controller:{{ avi_controller_docker_tag }}"
+ExecStart=/usr/bin/docker logs -f avicontroller
+ExecStop=/usr/bin/docker stop avicontroller
+
+[Install]
+WantedBy=multi-user.target

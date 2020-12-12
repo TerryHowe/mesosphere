@@ -1,0 +1,106 @@
+#!/usr/bin/env python
+
+from ansible.module_utils.basic import *
+
+try:
+  from avi.sdk.avi_api import ApiSession
+  HAS_AVISDK = True
+except ImportError:
+  HAS_AVISDK = False
+
+# {
+#   "virtual_ip" : {
+#      "addr" : "192.168.3.4",
+#      "type" : "V4"
+#   },
+#   "uuid" : "cluster-3dd7eef4-6e0c-46a7-85f6-6e50ede874a4",
+#   "nodes" : [
+#      {
+#         "vm_hostname" : "node1.controller.local",
+#         "ip" : {
+#            "addr" : "192.168.1.9",
+#            "type" : "V4"
+#         },
+#         "vm_uuid" : "3DD7EEF4-6E0C-46A7-85F6-6E50EDE874A4",
+#         "name" : "192.168.1.9",
+#         "vm_mor" : ""
+#      },
+#      {
+#         "ip" : {
+#            "type" : "V4",
+#            "addr" : "192.168.2.10"
+#         },
+#         "name" : "192.168.2.10"
+#      },
+#      {
+#         "ip" : {
+#            "type" : "V4",
+#            "addr" : "192.168.2.11"
+#         },
+#         "name" : "192.168.2.11"
+#      }
+#   ],
+#   "tenant_ref" : "https://avi-controller-1-ncw.dev-mesos.cloud.twc.net:9443/api/tenant/admin#admin",
+#   "name" : "cluster-0-1",
+#   "url" : "https://avi-controller-1-ncw.dev-mesos.cloud.twc.net:9443/api/cluster"
+#}
+
+
+if __name__ == '__main__':
+
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'ipv4_addrs': {'required': True, 'type': 'list'},
+            'virtual_ip': {'type': 'str'},
+            'controller_user': {'required': True, 'type': 'str'},
+            'controller_pass': {'required': True, 'type': 'str'},
+            'controller_host': {'required': True, 'type': 'str'},
+        },
+        supports_check_mode=True
+    )
+
+    if not HAS_AVISDK:
+        module.fail_json(msg="avisdk package is required")
+
+    args = module.params
+    api = ApiSession.get_session(args['controller_host'], args['controller_user'],
+                                 args['controller_pass'], tenant='admin')
+
+    current_config = api.get('cluster').json()
+    target_config = dict(current_config)
+    target_config['nodes'] = []
+    if args.get('virtual_ip'):
+        target_config['virtual_ip'] = {'addr': args['virtual_ip'], 'type': 'V4'}
+
+    # preserve the node entry if it exists, it might contain more attributes
+    # than 'ip', also comparison between current and target must be accurate
+    for node in current_config['nodes']:
+        node_ip = node['ip']['addr']
+        if node_ip in args['ipv4_addrs']:
+            target_config['nodes'].append(node)
+            args['ipv4_addrs'].remove(node_ip)
+
+    for ipv4_addr in args['ipv4_addrs']:
+        node = {
+            'ip': {
+                'type': 'V4',
+                'addr': ipv4_addr
+            },
+            'name': ipv4_addr,
+        }
+        target_config['nodes'].append(node)
+
+    changed = current_config != target_config
+    response = {'changed': False, 'new': target_config, 'old': current_config}
+
+    if not module.check_mode and changed:
+        resp = api.put('cluster', data=target_config)
+        response['status_code'] = resp.status_code
+        if resp.status_code == 200:
+            response['changed'] = True
+        else:
+            response['error_msg'] = resp.text
+            module.fail_json(msg=json.dumps(response))
+
+    module.exit_json(**response)

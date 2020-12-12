@@ -1,0 +1,19 @@
+---
+- name: fetch avi controller archive
+  get_url: url={{ avi_controller_archive_url }} dest=/root/{{ avi_archive_name }}.tgz
+           checksum=md5:{{ avi_controller_archive_md5 }}
+  register: avi_archive_fetch
+
+- name: provide archive to avi container
+  # inline command is resolving the 'curr' symlink, it doesnt point to a
+  # real location on the docker host
+  shell: cp /root/{{ avi_archive_name }}.tgz `ls -l curr | grep -o 'root[0-9]'`/var/lib/avi/upgrade_pkgs/controller.pkg
+  args:
+    chdir: /var/lib/controller
+
+- name: initiate upgrade
+  avi_cluster_upgrade:
+    controller_host: "{{ avi_controller_base_url }}"
+    controller_user: admin
+    controller_pass: "{{ avi_controller_admin_password }}"
+  register: cluster_upgrade_result

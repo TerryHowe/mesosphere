@@ -1,0 +1,133 @@
+#!/usr/bin/env python
+
+import base64
+import functools
+
+from ansible.module_utils.basic import *
+
+try:
+    from avi.sdk.avi_api import ApiSession
+    HAS_AVISDK = True
+except ImportError:
+    HAS_AVISDK = False
+
+
+if __name__ == '__main__':
+
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'state': {'default': 'present', 'choices': ['present', 'absent']},
+            'name': {'required': True, 'type': 'str'},
+            'action_group_ref': {'type': 'str'},
+            'alert_filter': {'type': 'list'},
+            'alert_rule': {'type': 'dict'},
+            'category': {'default': 'REALTIME'},
+            'enabled': {'default': True, 'type': 'bool'},
+            'expiry_time': {'default': 86400, 'type': 'int'},
+            'rolling_window': {'default': 300, 'type': 'int'},
+            'source': {'type': 'str'},
+            'summary': {'type': 'str'},
+            'tenant_ref': {'type': 'str'},
+            'threshold': {'default': 1, 'type': 'int'},
+            'throttle': {'default': 600, 'type': 'int'},
+            'controller_user': {'required': True, 'type': 'str'},
+            'controller_pass': {'required': True, 'type': 'str'},
+            'controller_host': {'required': True, 'type': 'str'},
+            'controller_tenant': {'default': 'admin'},
+        },
+        supports_check_mode=True
+    )
+
+    required_attrs = (
+        'name',
+        'enabled',
+        'summary',
+        'category',
+        'threshold',
+        'alert_rule',
+        'action_group_ref',
+        'alert_filter',
+        'expiry_time',
+        'rolling_window',
+        'source',
+    )
+
+    if not HAS_AVISDK:
+        module.fail_json(msg="avisdk package is required")
+
+    args = module.params
+    ensure_present = module.params['state'] != 'absent'
+    api = ApiSession.get_session(args['controller_host'],
+                                 args['controller_user'],
+                                 args['controller_pass'],
+                                 tenant=args['controller_tenant'])
+    alertconfig = api.get_object_by_name('alertconfig', args['name'])
+    changed = False
+    response = {}
+
+    if ensure_present:
+        action_group_ref = args.get('action_group_ref')
+        if action_group_ref and not action_group_ref.startswith('/api'):
+            ref = api.get_object_by_name('actiongroupconfig', action_group_ref)
+            action_group_ref = '/api/actiongroupconfig/{uuid}'.format(**ref)
+
+        if not alertconfig:
+            changed = True
+            data = {
+                'name': args['name'],
+                'throttle': args['throttle'],
+                'enabled': args['enabled'],
+                'category': args['category'],
+                'threshold': args['threshold'],
+                'alert_rule': args['alert_rule'],
+                'action_group_ref': action_group_ref,
+                'alert_filter': args['alert_filter'],
+                'expiry_time': args['expiry_time'],
+                'rolling_window': args['rolling_window'],
+                'tenant_ref': args['tenant_ref'],
+                'source': args['source'],
+                'summary': args['summary'],
+            }
+            fn = functools.partial(api.post, 'alertconfig', data=data)
+        else:
+            # cannot figure out how to type as a list but default to None
+            if not args['alert_filter']:
+                args['alert_filter'] = None
+
+            for attr in ('name', 'throttle', 'enabled', 'threshold',
+                         'alert_rule', 'alert_filter', 'expiry_time',
+                         'rolling_window', 'source', 'summary'):
+                if args.get(attr) != alertconfig.get(attr):
+                    response.setdefault('changed_attrs', []).append((attr, alertconfig.get(attr), args.get(attr)))
+                    alertconfig[attr] = args.get(attr)
+                    changed = True
+
+            if args['tenant_ref'] not in alertconfig['tenant_ref']:
+                changed = True
+                response.setdefault('changed_attrs', []).append(('tenant_ref', alertconfig['tenant_ref'], args['tenant_ref']))
+                alertconfig['tenant_ref'] = args['tenant_ref']
+
+            if action_group_ref not in alertconfig.get('action_group_ref'):
+                changed = True
+                response.setdefault('changed_attrs', []).append(('action_group_ref', alertconfig['action_group_ref'], action_group_ref))
+                alertconfig['action_group_ref'] = action_group_ref
+
+            url = 'alertconfig/{uuid}'.format(**alertconfig)
+            fn = functools.partial(api.put, url, data=alertconfig)
+
+        if not module.check_mode and changed:
+            resp = fn()
+            response['api-status-code'] = resp.status_code
+            response['uuid'] = resp.json()['uuid']
+        elif alertconfig:
+            response['uuid'] = alertconfig['uuid']
+
+    elif not ensure_present and alertconfig:
+        changed = True
+        if not module.check_mode:
+            resp = api.delete('alertconfig/{uuid}'.format(
+                              **alertconfig))
+            response['api-status-code'] = resp.status_code
+
+    module.exit_json(changed=changed, **response)

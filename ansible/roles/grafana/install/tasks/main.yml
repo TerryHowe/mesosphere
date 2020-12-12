@@ -1,0 +1,77 @@
+---
+
+- set_fact:
+    ssl_cert_path: "/etc/grafana/certs/grafana-{{ region }}.{{ project }}.cloud.twc.net.crt"
+    ssl_key_path: "/etc/grafana/certs/grafana-{{ region }}.{{ project }}.cloud.twc.net.key"
+
+- name: Install grafana packages
+  package: name="{{ item }}" state=present
+  with_items: "{{ grafana_packages }}"
+
+- name: Create Grafana cert directory
+  file: path="/etc/grafana/certs" state=directory owner=grafana group=grafana mode=0755
+
+- name: Grafana ssl cert
+  copy: content="{{lookup('vault', 'grafana-{{region}}.{{project}}.public', 'contents')}}" dest="{{ ssl_cert_path }}" owner=grafana group=grafana
+
+- name: Grafana ssl key
+  copy: content="{{lookup('vault', 'grafana-{{region}}.{{project}}.private', 'contents')}}" dest="{{ ssl_key_path }}" owner=grafana group=grafana mode=0600
+
+- name: Configure grafana
+  template: src=grafana.ini.j2 dest=/etc/grafana/grafana.ini
+  notify: restart grafana-server
+
+#-- Ports under 1024 require running as root. Running grafana-server as grafana user
+#-- for security purposes. This enables it to listen on 443.
+#-- First, see if it already has the capability. 
+- name: Check if grafana-server already has needed capabilities
+  command: /sbin/getcap /usr/sbin/grafana-server
+  register: grafana_cap
+
+#-- If not, grant it.
+- name: Enable grafana-server to listen on ports under 1024
+  command: /sbin/setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
+  when: '"cap_net_bind_service+ep" not in grafana_cap.stdout'
+  notify: restart grafana-server
+
+- name: Start and enable grafana-server
+  service: name=grafana-server state=started enabled=yes
+
+- name: Wait for grafana-server to be ready
+  wait_for: port="{{ grafana_port }}"
+
+- name: Check for existing graphite datasource
+  uri:
+    url: "{{ grafana_api_endpoint }}/api/datasources"
+    method: GET
+    user: admin
+    password: "{{ os_password }}"
+    validate_certs: no
+    force_basic_auth: yes
+  register: datasources
+
+- name: set grafana datasource fact
+  set_fact:
+    grafana_datasources: "{{ datasources.json | default([]) | map(attribute='name') | list }}"
+    grafana_default: "Graphite"
+
+- name: Create Graphite datasource, if necessary
+  uri:
+    url: "{{ grafana_api_endpoint }}/api/datasources"
+    body: >
+      {
+        "name": "{{ grafana_default }}",
+        "type": "graphite",
+        "url": "http://{{ hostvars[groups['graphite'][0]]['openstack']['private_v4'] }}",
+        "access": "proxy",
+        "basicAuth": false,
+        "isDefault": true
+      }
+    body_format: json
+    method: POST
+    user: admin
+    password: "{{ os_password }}"
+    validate_certs: no
+    force_basic_auth: yes
+    status_code: 200
+  when: grafana_default not in grafana_datasources

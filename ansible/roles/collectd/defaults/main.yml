@@ -1,0 +1,19 @@
+collectd_hostname: "{{ ansible_hostname }}"
+collectd_interval: 15
+collectd_graphite_prefix: "collectd.{{ project }}.{{ region }}.{{ openstack['metadata']['group'] }}."
+collectd_graphite_host: 127.0.0.1
+collectd_graphite_port: 2003
+collectd_network_auth_file: /etc/collectd.auth
+collectd_network_server_hostgroup: graphite
+collectd_network_role: "{{ 'server' if collectd_network_server_hostgroup in group_names else 'client' }}"
+collectd_network_host: "{{ hostvars[groups[collectd_network_server_hostgroup][0]]['openstack']['private_v4'] }}"
+collectd_network_username: collectd
+collectd_network_password: "{{ lookup('vault', '{{vault_environment}}', 'collectd_network_password') }}"
+collectd_python_module_dir: /var/lib/collectd/python
+
+collectd_packages:
+  - collectd-curl_json
+  - collectd-curl
+  - collectd-netlink
+  - collectd-ping
+  - sysstat

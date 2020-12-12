@@ -1,0 +1,5 @@
+---
+- hosts: carbon-cache
+  become: yes
+  roles:
+    - role: graphite/carbonate/rebalance

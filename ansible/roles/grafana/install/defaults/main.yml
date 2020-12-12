@@ -1,0 +1,7 @@
+---
+grafana_packages:
+  - "https://grafanarel.s3.amazonaws.com/builds/grafana-4.0.1-1480694114.x86_64.rpm"
+  - "python-httplib2"
+
+grafana_secret_key:  "{{ lookup('vault', '{{vault_environment}}', 'grafana_secret_key') }}"
+grafana_port: 443

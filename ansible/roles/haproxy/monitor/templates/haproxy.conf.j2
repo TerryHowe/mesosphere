@@ -1,0 +1,15 @@
+<LoadPlugin python>
+    Globals true
+</LoadPlugin>
+
+<Plugin python>
+    ModulePath "{{ collectd_python_module_dir }}/"
+
+    Import "haproxy"
+
+    <Module haproxy>
+      Socket "{{ haproxy_socket }}"
+      ProxyMonitor "frontend"
+      ProxyMonitor "backend"
+    </Module>
+</Plugin>

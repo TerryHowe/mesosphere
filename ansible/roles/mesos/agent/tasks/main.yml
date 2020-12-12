@@ -1,0 +1,62 @@
+---
+# This configures an agent node
+#
+- set_fact:
+    bootstrap_host: "{{ hostvars[groups['mesos-bootstrap'][0]]['ansible_default_ipv4']['address'] }}:{{ bootstrap_host_port }}"
+
+- name: Install git
+  package: name=git state=present
+
+- name: Create the {{ docker_group }} group
+  group: name={{ docker_group }} state=present
+
+- name: Add the {{ remote_user }} to {{ docker_group }} group
+  user: name={{ remote_user }} groups={{ docker_group }} append=yes
+  notify:
+    - restart docker
+
+- name: Create tmp DCOS directory
+  file: path="/tmp/dcos/{{ mesos_version }}" state=directory mode=0755
+
+- name: Fetch dcos_install.sh
+  get_url: url=http://{{ bootstrap_host }}/dcos_install.sh dest="/tmp/dcos/{{ mesos_version }}/dcos_install.sh"
+
+- block:
+    - name: Uninstall pkgpanda during an upgrade
+      shell: sudo -i /opt/mesosphere/bin/pkgpanda uninstall
+
+    - name: Remove /opt/mesosphere during an upgrade
+      shell: rm -rf /opt/mesosphere
+
+    - name: Remove /etc/mesosphere during an upgrade
+      shell: rm -rf /etc/mesosphere
+
+    #-- Replace with a real check
+    - name: Sleep two minutes to allow services to die
+      pause: minutes=2
+
+  when: cluster_upgrade is defined and cluster_upgrade == true
+
+- name: Run the slave install
+  command: bash dcos_install.sh slave
+  args:
+    chdir: "/tmp/dcos/{{ mesos_version }}"
+    creates: /opt/mesosphere
+
+- name: Disable auth against HTTP Read-Only endpoints
+  lineinfile: dest=/opt/mesosphere/etc/mesos-slave-common-extras
+              line="MESOS_AUTHENTICATE_HTTP_READONLY=false"
+              regexp="^MESOS_AUTHENTICATE_HTTP_READONLY="
+  notify:
+    - systemd daemon-reload
+    - dcos-mesos-agent restart
+
+# Needed for elasticsearch
+- name: Add hostname to /etc/hosts
+  lineinfile: dest=/etc/hosts regexp="{{ ansible_fqdn }}" line="{{ ansible_default_ipv4['address'] }} {{ ansible_fqdn }}"
+
+- include: logstash.yml
+  tags: [logging]
+
+- include: collectd.yml
+

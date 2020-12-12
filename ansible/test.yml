@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  vars:
+    virtualip_addr: '192.168.1.251'
+  roles:
+#  - role: openstack/virtualip
+#    openstack_virtualip_port_name: drone-{{customer_name}}
+#    openstack_virtualip_external_host_name: drone-{{customer_name}}-{{ region }}
+  - role: drone

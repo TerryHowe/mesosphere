@@ -1,0 +1,6 @@
+---
+# Handlers for nfs-server
+#
+
+- name: restart nfs
+  service: name=nfs-server state=reloaded

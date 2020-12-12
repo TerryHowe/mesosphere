@@ -1,0 +1,21 @@
+---
+#
+# How we report audits on instances
+#
+- set_fact:
+    deploy_entries: "{{ ansible_local.deploys | default([]) }}"
+  when: "ansible_local is defined"
+
+- set_fact:
+    deploy_entries: []
+  when: "ansible_local is not defined"
+
+- set_fact:
+    deploy_entries_updated: "{{ [deploy_entry] + deploy_entries }}"
+
+- name: ensure fact.d exists
+  file: path=/etc/ansible/facts.d/ state=directory
+
+- name: update audit deploy entries
+  copy: dest="/etc/ansible/facts.d/deploys.fact"
+        content="{{ deploy_entries_updated[:deploy_max_entries] | to_json }}"

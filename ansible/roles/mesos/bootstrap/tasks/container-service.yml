@@ -1,0 +1,20 @@
+---
+- name: install docker-py
+  package: name=python-docker-py
+
+- name: "{{ name }}"
+  docker:
+    name: "{{ name }}"
+    state: present
+    image: "{{ image }}"
+    ports: "{{ ports | default([]) }}"
+    volumes: "{{ volumes | default([]) }}"
+
+- name: create systemd unit file
+  template: src=container.service.j2 dest=/etc/systemd/system/{{ name }}.service
+
+- name: enable {{ name }} service
+  service: name={{ name }} enabled=yes
+
+- name: start {{ name }} service
+  service: name={{ name }} state=started

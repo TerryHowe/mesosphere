@@ -1,0 +1,14 @@
+[Unit]
+Description=Graphite Carbon Cache [instance:{{ item.name }}]
+After=network.target
+
+[Service]
+Type=forking
+StandardOutput=syslog
+StandardError=syslog
+ExecStart=/usr/bin/carbon-cache --instance={{ item.name }} --config=/etc/carbon/carbon.conf --pidfile=/var/run/carbon-cache-{{ item.name }}.pid --logdir=/var/log/carbon/ start
+ExecReload=/bin/kill -USR1 $MAINPID
+PIDFile=/var/run/carbon-cache-{{ item.name }}.pid
+
+[Install]
+WantedBy=multi-user.target

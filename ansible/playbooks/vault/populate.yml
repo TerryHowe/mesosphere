@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  no_log: True
+  roles:
+    - role: deploy/audit
+    - role: vault/populate

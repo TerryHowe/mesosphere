@@ -1,0 +1,9 @@
+[Unit]
+Description=Grafana Ansible Webhook
+
+[Socket]
+ListenStream=127.0.0.1:8888
+Accept=yes
+
+[Install]
+WantedBy=sockets.target

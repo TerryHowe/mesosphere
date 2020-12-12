@@ -1,0 +1,20 @@
+---
+graphite_install_version: 0.9.15
+
+graphite_user:       graphite
+grafana_secret_key:  "{{ lookup('vault', '{{vault_environment}}', 'grafana_secret_key') }}"
+graphite_time_zone:  "UTC"
+
+graphite_admin_date_joined: "2014-07-21T10:11:17.464"
+graphite_admin_email:       "root@example.com"
+graphite_admin_first_name:  ""
+graphite_admin_last_name:   ""
+graphite_admin_last_login:  "2014-07-21T10:11:17.464"
+graphite_admin_username:    "admin"
+graphite_admin_password:    "admin"
+
+# Optional extra options for uwsgi_graphite.ini
+uwsgi_graphite_extraopts: []
+uwsgi_graphite_socket: '127.0.0.1:3031'
+
+ldap_admin_bind_password: "{{lookup('vault', 'ldapadmin', 'password')}}"

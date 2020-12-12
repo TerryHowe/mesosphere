@@ -1,0 +1,28 @@
+---
+- mysql_user: name="{{ mysql_healthcheck_user }}"
+              password="{{ mysql_healthcheck_password }}"
+              priv="*.*:REPLICATION SLAVE,REPLICATION CLIENT"
+              state=present
+              config_file=~/.local.my.cnf
+
+- name: root mysql config
+  template: src=healthcheckmy.cnf.j2 dest=/root/.healthcheck.my.cnf owner=root group=root mode=0400
+
+- name: add mysql replication check script
+  copy: src=mysql_repl_chk dest=/usr/local/bin/mysql_repl_chk mode=0500
+        owner=root group=root
+
+- name: ensure xinted installed
+  package: name=xinetd state=present
+
+- name: add mysql replication check service
+  template: src=mysql-repl-chk-service.j2 dest=/etc/xinetd.d/mysql-repl-chk
+            owner=root group=root mode=0400
+  notify:
+    - restart xinetd
+
+- name: enable xinetd
+  service: name=xinetd enabled=true
+
+- name: start xinetd
+  service: name=xinetd state=started

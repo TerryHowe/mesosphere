@@ -1,0 +1,15 @@
+[Unit]
+Description=Quay Container Registry
+Documentation=https://quay.io
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/bin/docker kill quay
+ExecStartPre=-/bin/docker rm quay
+ExecStartPre=/bin/docker pull quay.io/coreos/registry:{{quay_version}}
+ExecStart=/bin/docker run --name quay --restart=always -p 443:443 -p 80:80 --privileged=true -v /mnt/persistent/quay/config:/conf/stack -v /mnt/persistent/quay/storage:/datastorage -d --link quayredis:redis quay.io/coreos/registry:{{quay_version}}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,45 @@
+marathon_grafana_notifications:
+  - name: ansible marathon restart {{ project }}-{{ region }}
+    type: webhook
+    isDefault: false
+    settings:
+      url: http://127.0.0.1:8888/{{ project }}-{{ region }}/playbooks/mesos/marathon/restart.yml
+      httpMethod: POST
+
+marathon_grafana_alerts:
+  customer_marathon_uptime:
+    name: "Customer Marathon Uptime"
+    target: "groupByNode(transformNull(marathon.{{ project }}.{{ region }}.*.service.mesosphere.marathon.uptime, 0), 3, 'maxSeries')"
+    alert_params:
+      - 30000
+    alert_type: "lt"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 30000
+  marathon_leader_available:
+    name: "Marathon Leader Available"
+    alert_env: "{{ mesos_cluster_name }}"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    reducer_type: "avg"
+    frequency_seconds: 60
+    target: "transformNull(offset(scale(keepLastValue(groupByNode(marathon.{{ project }}.{{ region }}.mesos-master.*.service.mesosphere.marathon.leaderDuration, 8, 'sum'), 2), 0), 1), 0)"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1
+  marathon_leader_duration:
+    name: "Marathon Leader Duration"
+    alert_params:
+      - 300000
+    alert_type: "lt"
+    reducer_type: "last"
+    target: "aliasByNode(maxSeries(transformNull(keepLastValue(marathon.{{ project }}.{{ region }}.mesos-master.*.service.mesosphere.marathon.leaderDuration, 5), 0)), 4, 1)"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 300000
+    notifications:
+      - ansible marathon restart {{ project }}-{{ region }}

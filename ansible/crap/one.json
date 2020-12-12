@@ -1,0 +1,17 @@
+{  
+  "id":"terry-wtf",
+  "cpus": 0.25,
+  "mem": 128.0,
+  "instances": 1,
+  "cmd":"env && sleep 100",
+  "env":{
+    "TERRY_PASSWORD":{
+       "secret":"secret0"
+    }
+  },
+  "secrets":{
+    "secret0":{
+       "source":"terry"
+    }
+  }
+}

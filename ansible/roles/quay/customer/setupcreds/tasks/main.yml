@@ -1,0 +1,42 @@
+---
+- name: fetch robots
+  uri:
+    url: "{{ quay_registry_host }}/api/v1/organization/{{ quay.org }}/robots/robotti"
+    method: GET
+    validate_certs: no
+    status_code: 200
+    headers:
+      Authorization: "Bearer {{quay_oauth_token}}"
+      Accept: application/json
+      Content-Type: application/json
+  register: uriresponse
+
+- set_fact:
+    robot_cred_file: "{{ uriresponse.json.token|hash('sha1') }}"
+    robot_credentials: "{{ uriresponse.json.name }}:{{ uriresponse.json.token }}"
+
+- name: create temp docker creds directory
+  file: path={{ cred_temp_dir }}/.docker state=directory mode=0755
+
+- name: populate docker creds
+  template: src=docker-creds.j2 dest={{ cred_temp_dir }}/.docker/config.json
+
+- name: ensure creds directory exists
+  file: path={{ cred_dir }}/{{ robot_cred_dir }} state=directory mode=0755
+  become: yes
+  become_user: root
+
+- name: package docker creds
+  shell: tar zcf {{ cred_dir }}/{{ robot_cred_dir }}/{{ robot_cred_file }}.tar.gz .docker
+  args:
+    chdir: "{{ cred_temp_dir }}"
+  become: yes
+  become_user: root
+
+- name: ensure docker creds are readable
+  file: path="{{ cred_dir }}/{{ robot_cred_dir }}/{{ robot_cred_file }}.tar.gz" owner=root group=root mode=0644
+  become: yes
+  become_user: root
+
+- name: remove temp docker creds directory
+  file: path={{ cred_temp_dir }} state=absent

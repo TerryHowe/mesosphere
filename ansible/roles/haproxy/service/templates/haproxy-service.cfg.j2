@@ -1,0 +1,16 @@
+# BEGIN service fragment for {{ haproxy_service_name }}
+frontend frontend_{{ haproxy_service_name }}
+    bind {{ haproxy_service_virtualip }}:{{ haproxy_service_port }}
+{% if haproxy_service_mode is defined %}
+    mode {{ haproxy_service_mode }}
+{% endif %}
+    default_backend backend_{{ haproxy_service_name }}
+
+backend backend_{{ haproxy_service_name }}
+{% for param in haproxy_service_backend_params %}
+    {{ param }}
+{% endfor %}
+{% for backend in groups[haproxy_service_hostgroup] %}
+    server {{ hostvars[backend]['openstack']['human_id'] }} {{ hostvars[backend]['openstack']['private_v4'] }}:{{ haproxy_service_backend_port }} {{ haproxy_service_server_params }}
+{% endfor %}
+# END service fragment for {{ haproxy_service_name }}

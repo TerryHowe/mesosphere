@@ -1,0 +1,22 @@
+---
+- hosts: mysql-common
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+    - deploy/audit
+    - quay/mysql
+    - quay/apioauth
+
+- hosts: worker
+  become: yes
+  roles:
+    - deploy/audit
+    - logstash
+    - filesystem
+    - quay/license
+    - quay/redis
+    - quay/server
+    - role: dns/record
+      domain_name: registry-{{ region }}
+    - docker/login

@@ -1,0 +1,23 @@
+---
+- stat: path="{{certificate_key_file}}"
+  register: certkey
+
+- block:
+  - command: mktemp -t "{{certificate_name}}.XXXXXXXXXX"
+    register: mktemp
+
+  - name: template {{certificate_config_file}} {{mktemp.stdout}}
+    template: src={{certificate_config_file}}.j2 dest={{mktemp.stdout}}
+
+  - name: openssl genrsa -out {{certificate_key_file}} 2048
+    shell: openssl genrsa -out {{certificate_key_file}} 2048
+
+  - name: openssl req -new -key {{certificate_key_file}}  -out {{certificate_csr_file}} -config {{mktemp.stdout}}
+    shell: openssl req -new -key {{certificate_key_file}}  -out {{certificate_csr_file}} -config {{mktemp.stdout}}
+
+  - name: openssl x509 -req -in {{certificate_csr_file}} -out {{certificate_cert_file}} -signkey {{certificate_key_file}} -days 3650
+    shell: openssl x509 -req -in {{certificate_csr_file}} -out {{certificate_cert_file}} -signkey {{certificate_key_file}} -days 3650
+  - file: path={{mktemp.stdout}} state=absent
+  when: certkey.stat.exists == False
+
+- file: path={{certificate_csr_file}} state=absent

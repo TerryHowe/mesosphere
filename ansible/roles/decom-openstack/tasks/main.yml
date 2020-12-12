@@ -1,0 +1,13 @@
+---
+#-- Decom OpenStack resources as defined in group_vars
+- include: server.yml
+  tags: 
+    - server
+
+- include: security_groups.yml
+  tags: 
+    - security_groups
+
+- include: network.yml
+  tags: 
+    - network

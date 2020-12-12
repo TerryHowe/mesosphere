@@ -1,0 +1,42 @@
+---
+#
+# Adds a fact every time a role is applied to a server. Required variables:
+#   * audit_tag_ref: the vcs tag that uniquely identifes the role version
+#   * audit_job_ref: the job reference that identifies a unique deployment run
+#
+# Synopsis:
+#
+#   To append deploy info as part of a playbook run:
+#   ```
+#   $ ansible-playbook -i <inventory> <playbook> \
+#        -e audit_tag_ref=paas-123456789
+#        -e audit_job_ref=jobid-121
+#   ```
+#
+#   To retrieve deploy info:
+#   ```
+#   $ ansible -i <inventory> <hostgroup> -m setup -a "filter=ansible_local"
+#   node-1-ncw | SUCCESS => {
+#    "ansible_facts": {
+#        "ansible_local": {
+#            "deploys": [
+#                {
+#                    "job": "jobid-12",
+#                    "roles": [
+#                        "deploy/audit",
+#                        "avi-controller",
+#                        "dns/record"
+#                    ],
+#                    "tag": "tag-201607112181",
+#                    "timestamp": "1468272584"
+#                },
+#                ...
+#   ```
+#
+#   Note: "roles" list shows order in which roles were applied
+
+- include: instance.yml
+  when: "inventory_hostname != 'localhost'"
+
+- include: controlnode.yml
+  when: "inventory_hostname == 'localhost'"

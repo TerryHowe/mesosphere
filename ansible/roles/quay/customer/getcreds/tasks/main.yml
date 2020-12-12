@@ -1,0 +1,18 @@
+---
+- name: fetch token
+  uri:
+    url: "https://{{docker_registry}}/api/v1/organization/{{ customer_name }}/robots/robotti"
+    method: GET
+    validate_certs: no
+    status_code: 200
+    headers:
+      Authorization: "Bearer {{quay_oauth_token}}"
+      Accept: application/json
+      Content-Type: application/json
+  register: uriresponse
+  no_log: True
+
+- set_fact:
+    docker_registry_credentials: "{{ uriresponse.json.name }}:{{ uriresponse.json.token }}"
+    docker_registry_credentials_file: "{{ customer_credentials_directory }}/{{ uriresponse.json.token|hash('sha1') }}.tar.gz"
+  no_log: True

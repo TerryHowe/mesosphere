@@ -1,0 +1,6 @@
+---
+
+- name: add virtual ip to keepalived
+  copy: content="    {{ keepalived_virtual_ip }}/24" dest=/etc/keepalived/conf.d/888_{{ keepalived_virtual_ip }}.conf
+  notify:
+    - reconfig keepalived

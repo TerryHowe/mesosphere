@@ -1,0 +1,5 @@
+---
+- name: remove docker creds file
+  file: path={{ cred_dir }}/{{ robot_cred_dir }} state=absent
+  become: yes
+  become_user: root

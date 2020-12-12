@@ -1,0 +1,8 @@
+---
+dependencies:
+  - role: collectd
+  - role: haproxy/common
+  - role: moira/trigger
+    moira_triggers: "{{ haproxy_triggers }}"
+    tags:
+      - monitoring

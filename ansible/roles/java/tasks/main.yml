@@ -1,0 +1,6 @@
+---
+- name: Install java
+  package: name=java-1.8.0 state=present
+
+- name: Install java openjdk
+  package: name=java-1.8.0-openjdk state=present

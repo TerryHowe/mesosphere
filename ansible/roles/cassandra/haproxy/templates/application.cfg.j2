@@ -1,0 +1,11 @@
+
+frontend cassandra_{{customer_name}}_frontend
+    bind 0.0.0.0:9000 ssl crt /usr/local/etc/haproxy/application.pem
+    mode tcp
+    default_backend cassandra_{{customer_name}}_backend
+
+backend cassandra_{{customer_name}}_backend
+    mode tcp
+    balance roundrobin
+    server cassandra_{{customer_name}} node.cassandra-{{customer_name}}.l4lb.thisdcos.directory:9042 check
+

@@ -1,0 +1,5 @@
+---
+allow_duplicates: yes
+dependencies:
+  - { role: logrotate, config: "{{ logstash_logrotate_configs.logstash }}" }
+  - { role: java }

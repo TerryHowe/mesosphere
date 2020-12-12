@@ -1,0 +1,4 @@
+---
+- block:
+  - include: "environment.yml"
+  when: runningjenkins != ""

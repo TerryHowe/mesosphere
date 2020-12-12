@@ -1,0 +1,9 @@
+---
+
+- name: haproxy collectd plugin
+  copy: src=haproxy.py dest={{ collectd_python_module_dir }}
+
+- name: haproxy collectd config
+  template: src=haproxy.conf.j2 dest=/etc/collectd.d/haproxy.conf
+  notify:
+    - restart collectd

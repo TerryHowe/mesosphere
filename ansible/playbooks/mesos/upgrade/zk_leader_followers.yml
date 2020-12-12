@@ -1,0 +1,34 @@
+---
+# Dynamically creates two host groups (which should not already be defined) that
+# can be used in dependent playbooks:
+#
+#   mesos-leader:
+#     The ansible hostname of the zookeeper leader
+#
+#   mesos-follower:
+#     A list of ansible hostnames of the zookeeper followers
+
+- hosts: mesos-master
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  serial: 1
+  tasks:
+    - name: "Check zookeeper role"
+      shell: echo stat | /opt/mesosphere/bin/toybox nc localhost 2181 | grep "Mode:"
+      register: zk_role
+
+    - add_host: name={{ inventory_hostname }} groups=mesos-leader
+      when: "'leader' in zk_role.stdout"
+
+    - add_host: name={{ inventory_hostname }} groups=mesos-follower
+      when: "'follower' in zk_role.stdout"
+
+- hosts: localhost
+  tasks:
+
+    - debug: msg="Mesos ZK Leader - {{ item }}"
+      with_items: "{{ groups['mesos-leader'] }}"
+
+    - debug: msg="Mesos ZK Follower - {{ item }}"
+      with_items: "{{ groups['mesos-follower'] }}"

@@ -1,0 +1,11 @@
+---
+#-- Playbook for building Nginx fronted graphite / grafana
+- hosts: graphite
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+  - role: graphite/graphite-web
+    graphite_secret_key: "{{ lookup('vault', '{{vault_environment}}', 'grafana_secret_key') }}"
+    graphite_admin_password: '{{ os_password }}'
+    graphite_role: frontend

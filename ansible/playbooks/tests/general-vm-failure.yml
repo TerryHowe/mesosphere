@@ -1,0 +1,66 @@
+---
+- hosts: localhost
+  user: "{{ remote_user }}"
+
+  vars:
+    graphite_host: "https://graphite-{{ region }}.{{ project }}.cloud.twc.net"
+    target_host: "{{ groups['mesos-slave'][0] }}"
+    ping_droprate_query: >
+      keepLastValue(
+        smartSummarize(
+          groupByNode(
+            collectd.{{ project }}.{{ region }}.graphite*.ping.ping_droprate.{{ target_host }},
+            5,
+            "maxSeries"
+          ),
+          "15s",
+          "last"
+        )
+      )
+
+  tasks:
+    - block:
+        - name: assert initial state
+          assert_last_metric_value:
+            graphite_host: "{{ graphite_host }}"
+            target: "{{ ping_droprate_query }}"
+            asserts:
+              eq: 0
+
+        - name: mimic failure for {{ target_host }} (stop)
+          os_server_actions:
+            server: "{{ target_host }}"
+            action: stop
+            timeout: 300
+
+        - name: assert metric shows failure
+          assert_last_metric_value:
+            graphite_host: "{{ graphite_host }}"
+            target: "{{ ping_droprate_query }}"
+            asserts:
+              eq: 1
+            retries: 20
+            delay: 15
+
+        - name: mimic recovery for {{ target_host }} (start)
+          os_server_actions:
+            server: "{{ target_host }}"
+            action: start
+            timeout: 300
+
+        - name: assert metric shows recovery
+          assert_last_metric_value:
+            graphite_host: "{{ graphite_host }}"
+            target: "{{ ping_droprate_query }}"
+            asserts:
+              eq: 0
+            retries: 20
+            delay: 15
+
+      rescue:
+        # be sure the VM is left in a running state regardless of test outcome
+        - name: ensure {{ target_host }} is started
+          os_server_actions:
+            server: "{{ target_host }}"
+            action: start
+            timeout: 300

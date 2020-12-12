@@ -1,0 +1,6 @@
+---
+- hosts: 'all:!localhost'
+  become: yes
+  become_user: root
+  roles:
+  - system/timezone

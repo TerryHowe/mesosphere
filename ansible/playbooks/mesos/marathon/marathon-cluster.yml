@@ -1,0 +1,54 @@
+---
+# Dynamically creates two host groups (which should not already be defined) that
+# can be used in dependent playbooks:
+#
+#   mesos-marathon-leader:
+#     The ansible hostname of the marathon leader
+#
+#   mesos-marathon-follower:
+#     A list of ansible hostnames of the marathon followers
+- hosts: mesos-master
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  run_once: yes
+  tasks:
+    #Get DCOS Version
+    - name: DCOS Version
+      uri:
+        url: http://leader.mesos/dcos-metadata/dcos-version.json
+        body_format: json
+      register: get_version
+
+    - set_fact:
+        mesos_version: "{{get_version.json.version}}"
+
+    #DCOS Token required for 1.8 onward, go ahead and fetch it since 1.7 won't break
+    - shell: echo $(dcos config show core.dcos_acs_token)
+      delegate_to: 127.0.0.1
+      become: no
+      register: token
+
+    - uri:
+        url: http://marathon.mesos:8080/v2/leader
+        headers: {'Authorization': 'token={{token.stdout}}'}
+      register: marathon_leader
+
+    - set_fact:
+        marathon_leader_ip: "{{ marathon_leader.json.leader | regex_replace(':\\d+$', '') }}"
+        mesos_master_openstack: "{{ groups['mesos-master'] | map('extract', hostvars, 'openstack') | list }}"
+
+    - set_fact:
+        followers: "{{ mesos_master_openstack | rejectattr('private_v4', 'equalto', marathon_leader_ip) | map(attribute='human_id') | list }}"
+        leader: "{{ mesos_master_openstack | selectattr('private_v4', 'equalto', marathon_leader_ip) | map(attribute='human_id') | first }}"
+
+    - add_host: name={{ leader }} groups=mesos-marathon-leader
+      changed_when: false
+
+    - add_host: name={{ item }} groups=mesos-marathon-follower
+      with_items: "{{ followers }}"
+      changed_when: false
+
+    - debug: msg="Marathon Leader{{':'}} {{ leader }}"
+    - debug: msg="Marathon Followers{{':'}} {{ followers | join(', ') }}"
+    - pause: seconds=30

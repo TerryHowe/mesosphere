@@ -1,0 +1,120 @@
+---
+
+- name: Create moira user
+  user: name=moira comment="Moira Account" 
+
+- name: Create moira dirs
+  file: path={{ item }} state=directory owner=moira group=moira mode=0744
+  with_items:
+    - /etc/moira
+    - /etc/moira/cache
+    - /var/log/moira
+    - /var/log/moira/cache
+    - /var/log/moira/notifier
+    - /var/run/moira
+
+- name: Clone moira cache
+  git: repo="https://github.com/moira-alert/cache.git" dest="/usr/local/src/github.com/moira-alert/cache"
+
+- name: Make moira cache
+  command: make
+  args:
+    chdir: /usr/local/src/github.com/moira-alert/cache
+    creates: /usr/local/src/github.com/moira-alert/cache/build/moira-cache
+
+- name: Copy moira-cache go binary to /usr/local/bin
+  copy: remote_src=True src=/usr/local/src/github.com/moira-alert/cache/build/moira-cache dest=/usr/local/bin/moira-cache mode=0755
+
+- name: Copy moira-cache systemd unit file
+  copy: src=moira-cache.service dest=/etc/systemd/system/moira-cache.service
+
+- name: Clone moira notifier
+  git: repo="https://github.com/moira-alert/notifier.git" dest="/usr/local/src/github.com/moira-alert/notifier"
+
+#-- TODO, figure out a check to only run this when needed.
+- name: Prepare to build moira notifier
+  command: make prepare
+  args:
+    chdir: /usr/local/src/github.com/moira-alert/notifier
+
+- name: Make moira notifier
+  command: make build
+  args:
+    chdir: /usr/local/src/github.com/moira-alert/notifier
+    creates: /usr/local/src/github.com/moira-alert/notifier/build/moira-notifier
+
+- name: Copy moira-notifier go binary to /usr/local/bin
+  copy: remote_src=True src=/usr/local/src/github.com/moira-alert/notifier/build/moira-notifier dest=/usr/local/bin/moira-notifier mode=0755
+
+- name: Copy moira-notifier systemd unit file
+  copy: src=moira-notifier.service dest=/etc/systemd/system/moira-notifier.service
+
+- name: See if moira-worker pip already exists
+  shell: pip freeze | grep -i moira-worker
+  register: worker_exists
+  ignore_errors: True
+
+- name: Clone moira worker
+  git: repo="https://github.com/moira-alert/worker.git" dest="/usr/local/src/github.com/moira-alert/worker" force=yes
+  when: worker_exists.rc != 0
+
+- name: Prepare moira worker pip
+  shell: make prepare && make pip 
+  args:
+    chdir: /usr/local/src/github.com/moira-alert/worker
+  when: worker_exists.rc != 0
+
+- name: Register the worker pip tarball
+  shell: ls /usr/local/src/github.com/moira-alert/worker/dist/
+  register: worker_pip_tarball_name
+
+- debug: msg="{{ worker_pip_tarball_name.stdout }}"
+
+- name: Install the worker pip
+  shell: pip install {{ worker_pip_tarball_name.stdout }}
+  args:
+    chdir: /usr/local/src/github.com/moira-alert/worker/dist
+  when: worker_exists.rc != 0
+
+- name: Copy moira-api systemd unit file
+  copy: src=moira-api.service dest=/etc/systemd/system/moira-api.service
+
+- name: Copy moira-checker systemd unit file
+  copy: src=moira-checker.service dest=/etc/systemd/system/moira-checker.service
+
+- name: Get the moira-web rpm
+  get_url: url="https://github.com/moira-alert/web/releases/download/v1.0.21/moira-web-1.0.21-1.x86_64.rpm" dest="/root/moira-web-1.0.21-1.x86_64.rpm"
+
+- name: Install moira-web rpm
+  package: name="/root/moira-web-1.0.21-1.x86_64.rpm" state=present
+
+- name: Moira config file
+  template: src=config.yml.j2 dest=/etc/moira/config.yml owner=moira group=moira
+  notify:
+    - reload moira-cache
+    - restart moira-notifier
+    - restart moira-api
+    - restart moira-checker
+
+- name: Create /var/www/moira/config.json
+  template: src=config.json.j2 dest=/var/www/moira/config.json mode=0664
+  
+- name: Start moira microservices
+  service: name={{ item }} state=started
+  with_items:
+    - moira-cache
+    - moira-notifier
+    - moira-api
+    - moira-checker
+
+- name: Moira retention schema
+  copy: src=storage-schemas.conf dest=/etc/moira/cache/storage-schemas.conf owner=moira group=moira
+  notify:
+    - reload moira-cache
+  tags: [config]
+
+- include: nginx.yml
+  tags: [nginx]
+
+- include: contacts.yml
+  tags: [contacts]

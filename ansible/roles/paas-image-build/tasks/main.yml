@@ -1,0 +1,50 @@
+---
+# This role contains the common configuration for all paas nodes,
+# It is used to create base images used by all other paas server types.
+
+- name: Ensure epel repo is available for CentOS
+  yum: name=epel-release state=present
+  when: ansible_os_family == "RedHat"
+
+- name: Install python-httplib2 for ansible uri support
+  package: name=python-httplib2 state=present
+
+- name: Install nice-to-haves
+  package: name={{ item }} state=present
+  with_items:
+    - screen
+    - nc
+    - bind-utils
+    - curl
+
+- name: Install compression packages
+  package: name={{ item }} state=present
+  with_items:
+    - tar
+    - xz
+    - unzip
+
+- name: Disable IPv6 (all)
+  sysctl: name="net.ipv6.conf.all.disable_ipv6" value=1 sysctl_set=yes state=present reload=yes
+
+- name: Disable IPv6 (default)
+  sysctl: name="net.ipv6.conf.default.disable_ipv6" value=1 sysctl_set=yes state=present reload=yes
+
+- name: check for existence of selinux
+  stat: path=/etc/selinux/config
+  register: selinux_exists
+
+- name: Ensure SELinux is at least permissive if enabled
+  template: src=selinux.config.j2 dest=/etc/selinux/config owner=root group=root mode=0644
+  when: selinux_exists.stat.exists == True
+
+- name: Add the "nogroup" group
+  group: name=nogroup state=present
+
+- name: Upgrade all the yum packages, if applicable
+  yum: name=* state=latest update_cache=yes
+  when: ansible_os_family == "RedHat"
+
+- name: Upgrade all the apt packages, if applicable
+  apt: upgrade=dist update_cache=yes
+  when: ansible_os_family == "Debian"

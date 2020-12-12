@@ -1,0 +1,20 @@
+- set_fact:
+    mesos_master_logstash_conf: /etc/mesos-master-logstash.conf
+
+- name: add logstash config
+  template: src=logstash.conf.j2 dest=/etc/mesos-master-logstash.conf mode=0644
+  notify:
+    - restart mesos-master-logstash service
+
+- name: add mesos-master-logstash service
+  template: src=logstash.service.j2 dest=/etc/systemd/system/mesos-master-logstash.service
+  notify:
+    - restart mesos-master-logstash service
+
+- name: enable mesos-master-logstash service
+  service: name=mesos-master-logstash enabled=true
+
+- name: start mesos-master-logstash service
+  service: name=mesos-master-logstash state=started
+  # logstash service deps wont be ready when this is installed
+  failed_when: false

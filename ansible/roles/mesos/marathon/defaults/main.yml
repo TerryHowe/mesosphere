@@ -1,0 +1,2 @@
+mesos_marathon_reporter_interval_secs: 15
+mesos_marathon_service_opts: tcp://{{ collectd_graphite_host }}:{{ collectd_graphite_port | default(2003) }}?prefix=marathon.{{ project }}.{{ region }}.mesos-master.{{ ansible_hostname }}&interval={{ mesos_marathon_reporter_interval_secs }}

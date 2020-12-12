@@ -1,0 +1,49 @@
+---
+- file: path="{{vault_directory}}" state=directory mode=0750
+- file: path="{{vault_directory}}/config" state=directory mode=0750
+- file: path="{{vault_directory}}/certs" state=directory mode=0700
+- copy: content="{{lookup('file', '{{base_dir}}/roles/vault/populate/files/{{project}}/vault-{{region}}.{{project}}.public')}}" dest="{{vault_directory}}/certs/{{project}}.public.pem" mode=0400
+- copy: content="{{lookup('file', '{{base_dir}}/roles/vault/populate/files/{{project}}/vault-{{region}}.{{project}}.private')}}" dest="{{vault_directory}}/certs/{{project}}.private.pem" mode=0400
+- name: file.hcl file
+  template: src=file.hcl.j2 dest="{{vault_directory}}/config/file.hcl"
+
+- name: check for running vault
+  shell: docker ps --filter name=vault -q
+  changed_when: False
+  register: runningvault
+
+- block:
+  - name: check for dead vault
+    shell: docker ps --filter name=vault -q --all
+    register: deadvault
+
+  - name: remove dead vault
+    shell: docker rm vault
+    register: removedeadvault
+    when: deadvault.stdout != ""
+
+  - name: install the latest version of git
+    yum: name=git state=latest
+
+  - name: git clone vault container
+    git: repo=https://github.webapps.rr.com/Docker/vault.git dest={{vault_directory}}/container
+
+  - name: docker rmi container
+    shell: docker rmi vault
+    failed_when: False
+
+  - name: docker build container
+    shell: cd {{vault_directory}}/container; docker build . | grep 'Successfully built ' | sed -e 's/Successfully built //'
+    register: dockerbuild
+
+  - name: docker tag container
+    shell: docker tag "{{dockerbuild.stdout}}" vault:latest
+
+  - name: start vault
+    shell: docker run -d -p 8200:8200 --restart always --hostname vault --name vault --volume {{vault_directory}}:/vault vault server -config=/vault/config/file.hcl
+
+  when: runningvault.stdout == ""
+
+- include: collectd.yml
+  tags:
+    - monitoring

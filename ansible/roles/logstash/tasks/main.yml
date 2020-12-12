@@ -1,0 +1,26 @@
+---
+
+- name: add logstash yum repo
+  copy: src=logstash.repo dest=/etc/yum.repos.d/ owner=root group=root mode=0644
+  when: ansible_os_family == "RedHat"
+
+- copy: src=GPG-KEY-elasticsearch dest=/var/tmp
+  when: ansible_os_family == "RedHat"
+
+- name: import elasticsearch gpg key
+  rpm_key: state=present key=/var/tmp/GPG-KEY-elasticsearch
+  when: ansible_os_family == "RedHat"
+
+- name: install logstash
+  package: name=logstash-2.1.1 state=present
+
+- name: add grok patterns
+  copy: src=patterns/ dest={{ logstash_patterns_dir }}
+  notify:
+    - restart logstash service
+
+- name: enable logstash service
+  service: name=logstash enabled=yes
+
+- name: start logstash service
+  service: name=logstash state=started

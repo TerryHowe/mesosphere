@@ -1,0 +1,34 @@
+---
+# Applies the mesos/marathon role serially, leader last. Intended to be used
+# when its expected that the role will restart the marathon service.
+
+- include: marathon-cluster.yml
+
+- hosts: mesos-marathon-follower
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  serial: 1
+  roles:
+    - mesos/marathon
+  post_tasks:
+  - shell: systemctl status dcos-marathon |grep active
+    register: result
+    until: result.stdout.find('running') != -1
+    retries: 12
+    delay: 5
+
+# leader
+- hosts: mesos-marathon-leader
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+    - mesos/marathon
+  post_tasks:
+  - shell: systemctl status dcos-marathon |grep active
+    register: result
+    until: result.stdout.find('running') != -1
+    retries: 12
+    delay: 5
+

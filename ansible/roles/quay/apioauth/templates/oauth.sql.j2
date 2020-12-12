@@ -1,0 +1,49 @@
+INSERT INTO `oauthapplication` (
+    client_id,
+    client_secret,
+    redirect_uri,
+    application_uri,
+    organization_id,
+    name,
+    description,
+    gravatar_email
+  )
+  SELECT
+    '{{quay_api_client_id}}',
+    '{{quay_api_client_secret}}',
+    '',
+    '',
+    {{quay_paas_user_id}},
+    '{{quay_api_client_name}}',
+    'Quay API Client',
+    NULL
+  FROM DUAL
+  WHERE NOT EXISTS 
+    (SELECT name FROM `oauthapplication` WHERE name='{{quay_api_client_name}}');
+
+SELECT @application_id:=id FROM `oauthapplication` WHERE name='{{quay_api_client_name}}' LIMIT 1;
+
+INSERT INTO `oauthaccesstoken` (
+    uuid,
+    application_id,
+    authorized_user_id,
+    scope,
+    access_token,
+    token_type,
+    expires_at,
+    refresh_token,
+    data
+  )
+  SELECT
+    '{{quay_api_oauth_uuid}}',
+    @application_id,
+    1,
+    'repo:write repo:read repo:create super:user repo:admin user:admin org:admin user:read',
+    '{{quay_api_oauth_token}}',
+    'Bearer',
+    '2026-07-21 06:38:14',
+    NULL,
+    '{\"username\": \"admin\"}'
+  FROM DUAL
+  WHERE NOT EXISTS 
+    (SELECT uuid FROM `oauthaccesstoken` WHERE uuid='{{quay_api_oauth_uuid}}');

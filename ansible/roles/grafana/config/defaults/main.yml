@@ -1,0 +1,4 @@
+---
+grafana_api_endpoint: https://grafana-{{ region }}.{{ admin_project }}.cloud.twc.net
+grafana_api_username: admin
+grafana_api_password: "{{ os_password }}"

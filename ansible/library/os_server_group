@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+from ansible.module_utils.basic import *
+
+try:
+  import shade
+  HAS_SHADE = True
+except ImportError:
+  HAS_SHADE = False
+
+
+if __name__ == '__main__':
+
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'state': {'default': 'present'},
+            'name': { 'required': True, 'type': 'str' },
+            'policies': { 'type': 'list' },
+        },
+        supports_check_mode=True
+    )
+
+    if not HAS_SHADE:
+        module.fail_json(msg="python shade package is required")
+
+    args = module.params
+
+    absent = module.params['state'] == 'absent'
+    if not absent and not args.get('policies'):
+        module.fail_json(msg="policies required")
+    
+
+    cloud = shade.openstack_cloud()
+    server_group = cloud.get_server_group(args['name'])
+    changed = False
+    if not server_group and not absent:
+        changed = True
+        if not module.check_mode:
+            server_group = cloud.create_server_group(args['name'], args['policies'])
+
+    elif server_group and absent:
+        changed = True
+        if not module.check_mode:
+            server_group = cloud.delete_server_group(args['name'])
+
+    module.exit_json(changed=changed, server_group=server_group)

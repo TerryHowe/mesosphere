@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+
+from ansible.module_utils.basic import *
+
+import requests
+import time
+import operator
+
+if __name__ == '__main__':
+    requests.packages.urllib3.disable_warnings()
+
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'graphite_host': { 'required': True, 'type': 'str' },
+            'target': { 'required': True, 'type': 'str' },
+            'asserts': { 'required': True, 'type': 'dict' },
+            'from': { 'default': '-45s' },
+            'retries': {'default': 0},
+            'delay': {'default': 0},
+        },
+        supports_check_mode=True
+    )
+    args = module.params
+    tries = args['retries'] + 1
+    assertions = []
+    response = {}
+    for operator_, operands in args['asserts'].iteritems():
+        if not isinstance(operands, list):
+            operands = [operands]
+
+        response.setdefault('assertions', []).append([operator_, operands])
+        fn = lambda datapoints: getattr(operator, operator_)(datapoints[-1][0], *operands)
+        assertions.append(fn)
+
+    params = {
+        'target': args['target'],
+        'from': args.get('from'),
+        'format': 'json',
+    }
+    endpoint = '/'.join([args['graphite_host'], 'render'])
+
+    start_time = time.time()
+    for i in range(0, tries):
+        try:
+            resp = requests.get(endpoint, params=params, verify=False)
+            datapoints = resp.json()[0]['datapoints']
+            assert len(datapoints) > 0
+            assert all([fn(datapoints) for fn in assertions])
+            response.update({
+                'changed': False,
+                'result': resp.json(),
+                'retries_attempted': i,
+                'elasped_secs': time.time() - start_time,
+            })
+            module.exit_json(**response)
+            break
+        except AssertionError:
+            if i == args['retries']:
+                module.fail_json(msg='Assertion failure. {0}'.format(datapoints))
+            else:
+                time.sleep(args['delay'])
+            pass
+        except (ValueError, Exception) as e:
+            module.fail_json(msg='Failed to check alerts: {0}'.format(str(e)))

@@ -1,0 +1,15 @@
+---
+#-- Playbook for collectd
+# 
+# Synopsis:
+#   ansible-playbook -i paas-dev-nce playbooks/collectd.yml -e "target_group=all:!localhost"
+#
+# To targert one group:
+#   ansible-playbook -i paas-dev-nce playbooks/collectd.yml -e "target_group=mesos-master"
+#
+- hosts: "{{ target_group }}"
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+  - collectd

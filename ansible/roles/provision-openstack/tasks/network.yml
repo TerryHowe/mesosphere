@@ -1,0 +1,57 @@
+---
+#-- Provision openstack networks as defined by defaults or group_vars
+- name: Create OpenStack networks
+  os_network:
+    name: "{{ item.key }}"
+    state: present
+    shared: "{{ item.value.shared | default('no') }}"
+    external: "{{ item.value.external | default('no') }}"
+  with_dict: "{{ openstack_networks | default({}) }}"
+  tags:
+    - network
+
+#-- Provision openstack subnets as defined by defaults or group_vars
+- name: Create OpenStack subnets
+  os_subnet:
+    state: present
+    name: "{{ item.value.subnet_name }}"
+    cidr: "{{ item.value.cidr }}"
+    network_name: "{{ item.key }}"
+    dns_nameservers: "{{ openstack_dns[region] }}"
+  with_dict: "{{ openstack_networks | default({}) }}"
+  tags:
+    - network
+
+
+- name: Create OpenStack ports between subnets
+  os_port:
+    state: present
+    name: "{{ item.0.name }}_{{ item.1.subnet }}_port"
+    network: "{{ item.0.name }}"
+  with_subelements:
+    - "{{ openstack_interfaces }}"
+    - routes
+  tags:
+    - network
+
+#-- Provision openstack routers as defined by defaults or group_vars
+- name: Create OpenStack routers
+  os_router:
+    state: present
+    name: "{{ item.value.router_name }}"
+    network: "{{ item.value.router_network | default('Ext-Net') }}"
+    enable_snat: "{{ item.value.enable_snat | default('no') }}"
+    interfaces:
+      - "{{ item.value.subnet_name }}"
+  with_dict: "{{ openstack_networks | default({}) }}"
+  tags:
+    - network
+
+- name: Sell your soul to make interfaces work
+  shell: >
+    neutron router-interface-add "{{ item.value.router_name }}" port="{{ item.1.subnet }}_{{ item.0.name }}_port"
+  with_subelements:
+    - "{{ openstack_interfaces }}"
+    - routes
+  tags:
+    - network

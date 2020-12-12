@@ -1,0 +1,12 @@
+---
+- name: remove security group from agents
+  shell: nova remove-secgroup {{item}} "{{application_name}}_security_group"
+  register: deletesecgroup
+  changed_when: deletesecgroup.rc == 0
+  failed_when: deletesecgroup.rc != 1 and "not found" not in deletesecgroup.stderr
+  with_items: "{{ groups['mesos-agent'] }}"
+
+- name: delete security group
+  os_security_group:
+    state: absent
+    name: "{{application_name}}_security_group"

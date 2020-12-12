@@ -1,0 +1,10 @@
+server {
+  listen       443 ssl;
+  server_name  {{ public_url }};
+  ssl_certificate {{ ssl_cert_path }};
+  ssl_certificate_key {{ ssl_key_path }};
+
+  location / {
+    proxy_pass {{ proxy_url }};
+  }
+}

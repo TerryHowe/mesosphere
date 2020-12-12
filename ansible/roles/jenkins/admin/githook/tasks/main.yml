@@ -1,0 +1,6 @@
+---
+#-- Main task to create a github webhook for Jenkins
+
+- name: Create Githook
+  github_hooks_ross: action=create content_type=json hookurl="{{ webhook_url }}" oauthkey="{{ lookup('vault', 'github', 'authkey') }}" repo="{{ repo_name }}" user="{{ username }}" secret="{{ lookup('vault', 'jenkins', 'apitoken') }}"
+  ignore_errors: True

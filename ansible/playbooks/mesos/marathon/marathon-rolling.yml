@@ -1,0 +1,25 @@
+---
+# Performs a systemd daemon-reload and rolling restart of the dcos-marathon
+# processes restarting the leader last.
+
+- include: marathon-cluster.yml
+
+- hosts: mesos-marathon-follower
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  serial: 1
+  tasks:
+  - command: systemctl daemon-reload
+  - service: name=dcos-marathon state=restarted
+  - wait_for: host="{{ hostvars[ansible_hostname]['openstack']['private_v4'] }}" port=8080
+
+# leader
+- hosts: mesos-marathon-leader
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  tasks:
+  - command: systemctl daemon-reload
+  - service: name=dcos-marathon state=restarted
+  - wait_for: host="{{ hostvars[ansible_hostname]['openstack']['private_v4'] }}" port=8080

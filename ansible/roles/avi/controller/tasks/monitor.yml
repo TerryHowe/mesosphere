@@ -1,0 +1,53 @@
+---
+# delete after ASPAAS-822 rolled out
+- name: remove alert configs
+  avi_alertconfig:
+    name: "{{ item.name }}"
+    state: absent
+    controller_user: admin
+    controller_pass: "{{ avi_controller_admin_password }}"
+    controller_host: "{{ avi_controller_base_url }}"
+  with_items: "{{ avi_alertconfigs }}"
+
+# delete after ASPAAS-822 rolled out
+- name: remove action group configs
+  avi_actiongroupconfig:
+    name: "{{ item.name }}"
+    state: absent
+    controller_user: admin
+    controller_pass: "{{ avi_controller_admin_password }}"
+    controller_host: "{{ avi_controller_base_url }}"
+  with_items: "{{ avi_actiongroupconfigs }}"
+
+# delete after ASPAAS-822 rolled out
+- name: remove collectd alertscript to avi
+  avi_alertscriptconfig:
+    name: collectd
+    state: absent
+    controller_user: admin
+    controller_pass: "{{ avi_controller_admin_password }}"
+    controller_host: "{{ avi_controller_base_url }}"
+  register: alertscript_result
+
+- name: ensure avi monitor role exists
+  avi_role:
+    role_name: "{{ avi_controller_monitor_role }}"
+    privileges:
+      PERMISSION_CLOUD: READ_ACCESS
+      PERMISSION_SYSTEMCONFIGURATION: READ_ACCESS
+      PERMISSION_CONTROLLER: READ_ACCESS
+      PERMISSION_VIRTUALSERVICE: READ_ACCESS
+      PERMISSION_SERVICEENGINE: READ_ACCESS
+    controller_user: admin
+    controller_pass: "{{ avi_controller_admin_password }}"
+    controller_host: "{{ avi_controller_base_url }}"
+
+- name: ensure avi monitor user exists
+  avi_user:
+    username: "{{ avi_controller_monitor_user }}"
+    password: "{{ avi_controller_monitor_password }}"
+    tenant: admin
+    role: "{{ avi_controller_monitor_role }}"
+    controller_user: admin
+    controller_pass: "{{ avi_controller_admin_password }}"
+    controller_host: "{{ avi_controller_base_url }}"

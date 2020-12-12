@@ -1,0 +1,128 @@
+mesos_master_alerts:
+  mesos_master_root_disk_space:
+    name: "Mesos Master /root Disk Space"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.df.root.percent_bytes.used, 5), 100), 4)"
+    alert_params:
+      - 90.0
+    alert_type: "gt"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 90.0
+  mesos_master_leader_elected:
+    name: "Mesos Master Leader Elected"
+    target: "aliasByNode(maxSeries(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.mesos-master.gauge.master_elected, 5), 0)), 4)"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1
+  mesos_master_system_load:
+    name: "Mesos Master Relative System Load"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.load.load.relative.shortterm, 5), 1.0), 4)"
+    alert_params:
+      - 0.94
+    alert_type: "gt"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 0.94
+  mesos_master_marathon_process_running:
+    name: "Mesos Master Marathon Process Running"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.processes.mesos-marathon.ps_count.processes, 5), 0), 4)"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    reducer_type: "max"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1
+  mesos_master_num_agents_connected:
+    name: "Mesos Master Number of Agents Connected"
+    target: "alias(transformNull(keepLastValue(minSeries(collectd.{{ project }}.{{ region }}.mesos-master.*.mesos-master.gauge.master_slaves_connected), 5), 0), 'Agents Connected')"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1
+  mesos_master_tasks_error:
+    name: "Mesos Master Tasks Errored"
+    alert_params:
+      - 0.1
+    alert_type: "gt"
+    target: "alias(transformNull(perSecond(maxSeries(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.mesos-master.counter.master_tasks_error, 5))), 1.0), 'Tasks Errored Per Second')"
+    reducer_type: "last"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 0.1
+  mesos_master_tasks_failed:
+    name: "Mesos Master Tasks Failed"
+    alert_params:
+      - 1.0
+    alert_type: "gt"
+    target: "alias(transformNull(perSecond(maxSeries(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.mesos-master.counter.master_tasks_failed, 5))), 1.0), 'Tasks Failed Per Second')"
+    reducer_type: "last"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 1.0
+  mesos_master_tasks_lost:
+    name: "Mesos Master Tasks Lost"
+    alert_params:
+      - 0.10
+    alert_type: "gt"
+    target: "alias(transformNull(perSecond(maxSeries(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.mesos-master.counter.master_tasks_lost, 5))), 1.0), 'Tasks Lost Per Second')"
+    reducer_type: "last"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 0.10
+  mesos_master_uptime:
+    name: "Mesos Master Uptime"
+    alert_params:
+      - 300
+    alert_type: "lt"
+    target: "alias(maxSeries(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.mesos-master.gauge.master_uptime_secs, 5), 0)), 'Mesos Master Uptime (seconds)')"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 300
+  mesos_master_process_running:
+    name: "Mesos Master Process Running Per Node"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    reducer_type: "max"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.processes.mesos-master.ps_count.processes, 5), 0), 4)"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1
+  mesos_no_masters_running:
+    name: "Mesos Master Total Processes Running"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    reducer_type: "max"
+    target: "alias(sumSeries(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.processes.mesos-master.ps_count.processes, 5), 0)), 'Total Number of Master Processes')"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1
+  mesos_masters_quorum:
+    name: "Mesos Masters Quorum"
+    alert_params:
+      - "{{ (((groups['mesos-master'] | length) / 2) | round | int) + 1 }}"
+    alert_type: "lt"
+    reducer_type: "max"
+    target: "alias(sumSeries(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.processes.mesos-master.ps_count.processes, 5), 0)), 'Number of Master processes')"
+    thresholds:
+      lower:
+        op: "lt"
+        val: "{{ (((groups['mesos-master'] | length) / 2) | round | int) + 1 }}"

@@ -1,0 +1,23 @@
+---
+- hosts: graphite
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  vars:
+    - grafana_admin_password: "{{ os_password }}"
+    - grafana_secret_key: "{{ lookup('vault', '{{vault_environment}}', 'grafana_secret_key') }}"
+    - graphite_secret_key: "{{ grafana_secret_key }}"
+    - graphite_admin_password: '{{ os_password }}'
+    - graphite_role: frontend
+  roles:
+  - role: deploy/audit
+  - role: filesystem
+  - role: mariadb
+  - role: collectd
+  - role: graphite/graphite-web
+  - role: aseng-ansible-grafana
+  - role: graphite/graphite-web-ssl
+  - role: dns/record
+    domain_name: graphite-{{ region }}
+  - role: dns/record
+    domain_name: grafana-{{ region }}

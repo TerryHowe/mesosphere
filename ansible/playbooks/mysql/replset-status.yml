@@ -1,0 +1,12 @@
+---
+- hosts: "{{ mysql_hostgroup }}"
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  vars:
+    mysql_role_noop: true
+  roles:
+    - role: mysql/server
+  tasks:
+    - mysql_replication: mode=getmaster
+    - mysql_replication: mode=getslave

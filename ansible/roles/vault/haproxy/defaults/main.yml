@@ -1,0 +1,4 @@
+---
+vault_cert_file: '/etc/ssl/vault-{{region}}.pem'
+vault_private: "{{ lookup('file', '{{secrets}}/vault-{{ region }}.{{ project }}.private') }}"
+vault_public: "{{ lookup('file', '{{secrets}}/vault-{{ region }}.{{ project }}.public') }}"

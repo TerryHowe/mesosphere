@@ -1,0 +1,26 @@
+---
+- hosts: localhost
+  vars:
+    proxy_hostgroup: admin-proxy
+    openstack_virtualip_port_name: "{{ proxy_hostgroup }}"
+    openstack_virtualip_hostgroup: "{{ proxy_hostgroup }}"
+    openstack_virtualip_use_floating_ip: true
+    openstack_virtualip_internal_host_name: "{{ proxy_hostgroup }}-internal-{{ region }}"
+    openstack_virtualip_external_host_name: "{{ proxy_hostgroup }}-{{ region }}"
+  roles:
+  - role: openstack/virtualip
+
+- hosts: admin-proxy
+  become: yes
+  vars:
+    keepalived_script: |
+      script "killall -0 haproxy"     # cheaper than pidof
+      interval 2                      # check every 2 seconds
+    keepalived_virtual_ip: "{{ hostvars['localhost']['virtualip_addr'] }}"
+    haproxy_name: admin-proxy
+    haproxy_stats_ip: "{{ hostvars['localhost']['virtualip_addr'] }}"
+  roles:
+  - role: collectd
+  - role: keepalived/server
+  - role: keepalived/virtualip
+  - role: haproxy/server

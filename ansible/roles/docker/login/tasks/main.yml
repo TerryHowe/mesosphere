@@ -1,0 +1,12 @@
+---
+- name: docker login
+  shell: >
+    docker login
+    -e="{{ docker_client_email }}"
+    -u="{{ docker_client_username }}"
+    -p="{{ docker_client_password }}"
+    {{ docker_client_registry }}
+  args:
+    chdir: /root
+  tags:
+    - docker

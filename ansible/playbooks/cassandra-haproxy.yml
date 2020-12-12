@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  vars:
+    certificate_name: cassandra-{{customer_name}}
+  roles:
+  - role: openstack/virtualip
+    openstack_virtualip_port_name: cassandra-{{customer_name}}
+    openstack_virtualip_external_host_name: cassandra-{{customer_name}}-{{ region }}
+  - role: certificate
+  - role: cassandra/haproxy

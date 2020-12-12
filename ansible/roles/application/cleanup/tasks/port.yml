@@ -1,0 +1,13 @@
+---
+- name: Delete application port
+  shell: neutron port-delete "virtualip:{{application_name}}"
+  register: deleteport
+  failed_when: deleteport.rc != 0 and "Unable to find port with name or id" not in deleteport.stderr
+  changed_when: deleteport.rc == 0
+
+# Support for old naming convention
+- name: Delete application port
+  shell: neutron port-delete "docker-app-vip:{{application_name}}"
+  register: deleteport
+  failed_when: deleteport.rc != 0 and "Unable to find port with name or id" not in deleteport.stderr
+  changed_when: deleteport.rc == 0

@@ -1,0 +1,10 @@
+---
+dependencies:
+  - role: avi/config
+  - role: filesystem
+  - role: collectd
+  - role: docker/collectd
+  - role: moira/trigger
+    moira_triggers: "{{ avi_controller_triggers }}"
+    tags:
+      - monitoring

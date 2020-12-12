@@ -1,0 +1,38 @@
+---
+- name: Query associated floating ips
+  command: neutron floatingip-list -f json
+  register: floatingip_result
+
+- debug: var=floatingip_result
+
+- name: Disassociate all floating ips
+  command: neutron floatingip-disassociate {{ item.id }}
+  when: item.fixed_ip_address != ""
+  with_items: "{{ floatingip_result.stdout | from_json }}"
+
+#-- Delete openstack routers as defined by defaults or group_vars
+- name: Delete OpenStack routers
+  os_router:
+    state: absent
+    name: "{{ item.value.router_name }}"
+  with_dict: "{{ openstack_networks | default({}) }}"
+  tags:
+    - network
+
+#-- Decom openstack subnets as defined by defaults or group_vars
+- name: Delete OpenStack subnets
+  os_subnet:
+    state: absent
+    name: "{{ item.value.subnet_name }}"
+  with_dict: "{{ openstack_networks | default({}) }}"
+  tags:
+    - network
+
+#-- Decom openstack networks as defined by defaults or group_vars
+- name: Delete OpenStack networks
+  os_network:
+    name: "{{ item.key }}"
+    state: absent
+  with_dict: "{{ openstack_networks | default({}) }}"
+  tags:
+    - network

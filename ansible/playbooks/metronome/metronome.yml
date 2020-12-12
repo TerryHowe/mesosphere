@@ -1,0 +1,10 @@
+---
+#-- Playbook to Run Metronome setup
+
+- hosts: mesos-master
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+  - deploy/audit
+  - metronome

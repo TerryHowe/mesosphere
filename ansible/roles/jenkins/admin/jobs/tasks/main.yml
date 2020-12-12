@@ -1,0 +1,31 @@
+---
+- file: path={{jenkins_dir}}/jobs/seed_job state=directory mode=0755 owner={{remote_user}}
+
+- name: seed_job.xml file
+  template: src=seed_job.xml.j2 dest={{jenkins_dir}}/jobs/seed_job/config.xml
+
+- name: create credentials.groovy file
+  template: src=credentials.groovy.j2 dest={{jenkins_dir}}/credentials.groovy
+
+- name: add credentials
+  shell: cat {{jenkins_dir}}/credentials.groovy | docker -H tcp://127.0.0.1:4243 exec -i jenkins java -jar {{jenkins_cli_jar}} -s https://localhost:8443/ -noCertificateCheck -i /var/jenkins_home/.ssh/id_rsa groovy =
+
+- file: path={{jenkins_dir}}/credentials.groovy state=absent
+
+- name: create apitoken.groovy file
+  template: src=apitoken.groovy.j2 dest={{jenkins_dir}}/apitoken.groovy
+
+- name: get apitoken
+  shell: cat {{jenkins_dir}}/apitoken.groovy | docker -H tcp://127.0.0.1:4243 exec -i jenkins java -jar {{jenkins_cli_jar}} -s https://localhost:8443/ -noCertificateCheck -i /var/jenkins_home/.ssh/id_rsa groovy =
+  register: apitoken
+
+- name: add token to vault
+  become: no
+  local_action: hashivault_write
+  args:
+      secret: jenkins
+      update: True
+      data:
+          apitoken: "{{apitoken.stdout}}"
+
+- include: '../../restart.yml'

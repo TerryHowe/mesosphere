@@ -1,0 +1,24 @@
+---
+- name: Get cassandra configuation
+  shell: dcos marathon app show /cassandra-{{customer_name}}
+  register: appshow
+  changed_when: False
+
+- block:
+  - set_fact:
+      configuration: "{{appshow.stdout| regex_replace('AllowAllAuthenticator', 'PasswordAuthenticator') | from_json}}"
+
+  - set_fact:
+      configuration:
+        env: "{{configuration.env}}"
+
+  - name: Update configruation
+    shell: echo '{{configuration | to_nice_json}}' | dcos marathon app update /cassandra-{{customer_name}}
+    register: cassandra_configuration_status
+    until: cassandra_configuration_status.rc == 0
+    changed_when: False
+    retries: 30
+    delay: 10
+
+  - include: wait.yml
+  when: "'AllowAllAuthenticator' in '{{appshow.stdout}}'"

@@ -1,0 +1,10 @@
+---
+- name: Get vip
+  local_action: shell dcos cassandra connection --name cassandra-{{customer_name}}
+  register: connection
+  changed_when: False
+
+- set_fact:
+    cassandra: "{{connection.stdout| from_json}}"
+- set_fact:
+    cassandra_vip: "{{cassandra.vip.split(':')[0]}}"

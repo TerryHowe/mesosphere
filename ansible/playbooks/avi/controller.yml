@@ -1,0 +1,13 @@
+---
+- hosts: avi-controller
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  vars_prompt:
+    - name: avi_controller_archive_url
+      prompt: 'Avi Controller Mesos download url'
+  roles:
+  - role: deploy/audit
+  - role: avi/controller
+  - role: dns/record
+    domain_name: avi-{{ region }}

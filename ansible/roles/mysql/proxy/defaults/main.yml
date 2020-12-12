@@ -1,0 +1,5 @@
+---
+mysql_proxy_stats_username: admin
+mysql_proxy_stats_password: "{{ vault_mysql_proxy_stats_password }}"
+mysql_proxy_writer_port: 3306
+mysql_proxy_reader_port: 3305

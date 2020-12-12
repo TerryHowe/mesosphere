@@ -1,0 +1,150 @@
+---
+# Metronome
+
+#Get DCOS Auth Token
+- name: Get Auth Token
+  shell: echo $(dcos config show core.dcos_acs_token)
+  register: token
+
+#Get List Of Current Statuspage Graphs
+- name: Get Current Statuspage Metrics
+  uri:
+    url: "{{statuspage_url}}"
+    method: GET
+    headers: "{{statuspage_api_auth}}"
+    validate_certs: no
+    status_code: 200
+  register: get_graphs_output
+
+#Create A List From Output
+- set_fact:
+    current_graphs: "{{ get_graphs_output.json | list }}"
+
+#Create List Of Names That Already Exist
+- set_fact: current_graph_names="{{item.name}}"
+  with_items: "{{current_graphs}}"
+  register: graph_name_output
+
+- set_fact:
+    graph_names_to_skip: "{{ graph_name_output.results | map(attribute='ansible_facts.current_graph_names') | map('regex_replace', '\\s+$', '') | list }}"
+
+#Get List Of Current Metronome Jobs
+- name: Get Current Metronome Job List
+  uri:
+    url: "{{metronome_endpoint}}/v1/jobs"
+    headers: {'Authorization': 'token={{token.stdout}}'}
+    method: GET
+    body_format: json
+    validate_certs: no
+  register: metronome_get
+
+#Create A List From Output
+- set_fact:
+    current_jobs: "{{ metronome_get.json | list }}"
+
+#Create List Of Names That Already Exist
+- set_fact: current_job_names="{{item.description}}"
+  with_items: "{{current_jobs}}"
+  register: job_name_output
+
+- set_fact:
+    job_names_to_skip: "{{ job_name_output.results | map(attribute='ansible_facts.current_job_names') | map('regex_replace', '\\s+$', '') | list }}"
+
+# Create New Statuspage Metrics For Newly Added Metrics (Not In "graph_names_to_skip")
+- name: Create Statuspage Metrics
+  uri:
+    url: "{{statuspage_url}}"
+    method: POST
+    headers: "{{statuspage_api_auth}}"
+    body: "metric[display]='t' & metric[name]={{item.value.description}} & metric[suffix]={{item.value.suffix}} & metric[tooltip_description]={{item.value.description}} & metric[decimal_places]={{item.value.decimal_places}}"
+    validate_certs: no
+    status_code: 201
+  register: statuspage_result
+  when: "item.value.description not in graph_names_to_skip"
+  with_dict: "{{metronome_jobs}}"
+  changed_when: statuspage_result.status == 201
+
+#List Of Graphs Just Created
+- set_fact:
+    statuspage_json: "{{ statuspage_result.results | selectattr('json', 'defined') | map(attribute='json') | list }}"
+
+#Get Updated List Of Current Statuspage Graphs
+- name: Get Current Statuspage Metrics
+  uri:
+    url: "{{statuspage_url}}"
+    method: GET
+    headers: "{{statuspage_api_auth}}"
+    validate_certs: no
+    status_code: 200
+  register: get_updated_graphs_output
+
+#Create A List From Output
+- set_fact:
+    current_updated_graphs: "{{ get_updated_graphs_output.json | list }}"
+
+#Create Ansible Variable of all newly created metrics
+- set_fact:
+    _metronome_job:
+      description: "{{ item.1.description }}"
+      name: "{{ item.1.name }}"
+      metric_id: "{{ item.0.id }}"
+      target: "{{ item.1.target }}"
+      cron: "{{item.1.cron}}"
+  when: "{{ item.0.name | regex_replace('\\s+$', '') == item.1.description not in job_names_to_skip}}"
+  with_nested:
+    - "{{ current_updated_graphs }}"
+    - "{{ metronome_jobs.values() }}"
+  register: metronome_job_info
+
+- set_fact:
+    new_metronome_jobs: "{{ metronome_job_info.results | selectattr('ansible_facts', 'defined') | map(attribute='ansible_facts._metronome_job') | list }}"
+
+#Create Metronome Jobs That Do Not Currently Exist
+- name: Create Metronome Jobs
+  uri:
+    url: "{{metronome_endpoint}}/v1/jobs"
+    method: POST
+    body_format: json
+    headers: {'Authorization': 'token={{token.stdout}}'}
+    validate_certs: no
+    body: >
+      {
+        "id": "{{item.name}}",
+        "description": "{{item.description}}",
+        "run": {
+          "args": ["{{statuspage_api_code}},{{statuspage_page_id}},{{item.metric_id}},{{item.target}},{{region}}.{{project}}"],
+          "cpus": 1,
+          "mem": 128,
+          "disk": 0,
+          "artifacts": [ {
+              "uri": "file:///etc/docker.tar.gz"
+          } ],
+          "docker": {
+            "image": "{{docker_reg}}"
+          }
+        }
+      }
+    status_code: 201
+  register: create_job_result
+  changed_when: create_job_result.status == 201
+  with_items: "{{new_metronome_jobs}}"
+
+- name: Create Metronome Schedules
+  uri:
+    url: "{{metronome_endpoint}}/v1/jobs/{{item.name}}/schedules"
+    method: POST
+    body_format: json
+    headers: {'Authorization': 'token={{token.stdout}}'}
+    validate_certs: no
+    body: >
+      {
+        "id": "{{item.name}}",
+        "enabled": true,
+        "cron": "{{item.cron}}",
+        "timezone": "UTC",
+        "concurrencyPolicy": "ALLOW"
+      }
+    status_code: 201
+  register: create_schedule_result
+  changed_when: create_schedule_result.status == 201
+  with_items: "{{new_metronome_jobs}}"

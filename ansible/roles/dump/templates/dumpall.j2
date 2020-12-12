@@ -1,0 +1,21 @@
+Module Variables ("vars"):
+--------------------------------
+{{ vars }} 
+
+Environment Variables ("environment"):
+--------------------------------
+{{ environment | to_nice_json }} 
+
+GROUP NAMES Variables ("group_names"):
+--------------------------------
+{{ group_names | to_nice_json }}
+
+GROUPS Variables ("groups"):
+--------------------------------
+{{ groups | to_nice_json }}
+{% for host in groups['all'] %}
+
+HOST Variables {{host}}:
+--------------------------------
+{{ hostvars[host]|to_nice_json }}
+{% endfor %}

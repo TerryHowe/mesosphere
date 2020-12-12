@@ -1,0 +1,9 @@
+esproxy_triggers:
+  esproxy_response_code:
+    name: "{{ admin_project }}-{{ region }} ES Proxy Status"
+    targets: [ "maxSeries(keepLastValue(collectd.{{ admin_project }}.{{ region }}.mesos-agent.*.curl.elasticsearch_proxy.response_code, 5))" ]
+    expression: "ERROR if t1 != 200.0 else OK"
+  esproxy_response_time:
+    name: "{{ admin_project }}-{{ region }} ES Proxy Response Time"
+    targets: [ "maxSeries(keepLastValue(collectd.{{ admin_project }}.{{ region }}.mesos-agent.*.curl.elasticsearch_proxy.response_time, 5))" ]
+    expression: "ERROR if t1 > 2.00 else OK"

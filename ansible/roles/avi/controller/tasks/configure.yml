@@ -1,0 +1,224 @@
+---
+- block:
+    - name: avi login default password
+      uri:
+        url: "{{ avi_controller_base_url }}/login"
+        method: POST
+        body: "username=admin&password={{ avi_controller_default_password }}"
+        validate_certs: no
+        HEADER_Content-Type: application/x-www-form-urlencoded
+        status_code: "200"
+      register: default_login_result
+      no_log: true
+
+    - set_fact:
+        cookies: "{{ default_login_result.set_cookie }}"
+        csrf_token: "{{ default_login_result.set_cookie | regex_replace('^.*csrftoken=(.*?);.*$', '\\1') }}"
+
+    - name: set admin password
+      uri:
+        url: "{{ avi_controller_base_url }}/api/useraccount/"
+        method: PUT
+        body: >
+          {
+            "username": "admin",
+            "password": "{{ avi_controller_admin_password }}",
+            "old_password": "{{ avi_controller_default_password }}"
+          }
+        body_format: json
+        status_code: 200
+        validate_certs: no
+        HEADER_Cookie: "{{ cookies }}"
+        HEADER_Referer: "{{ avi_controller_base_url }}"
+        HEADER_X-CSRFToken: "{{ csrf_token }}"
+      no_log: true
+
+  when: login_result.status == 401
+
+- name: install license
+  avi_license:
+    license_text: "{{ avi_controller_license }}"
+    controller_host: "{{ avi_controller_base_url }}"
+    controller_user: admin
+    controller_pass: "{{ avi_controller_admin_password }}"
+
+- name: get auth profile
+  uri:
+    url: "{{ avi_controller_base_url }}/api/authprofile?name={{ avi_controller_authprofile.name }}"
+    method: GET
+    status_code: 200
+    validate_certs: no
+    HEADER_Cookie: "{{ cookies }}"
+    HEADER_Referer: "{{ avi_controller_base_url }}"
+    HEADER_X-CSRFToken: "{{ csrf_token }}"
+  register: authprofile_result
+
+- name: create auth profile
+  uri:
+    url: "{{ avi_controller_base_url }}/api/authprofile"
+    body: "{{ avi_controller_authprofile }}"
+    body_format: json
+    method: POST
+    status_code: 201
+    validate_certs: no
+    HEADER_Cookie: "{{ cookies }}"
+    HEADER_Referer: "{{ avi_controller_base_url }}"
+    HEADER_X-CSRFToken: "{{ csrf_token }}"
+  register: create_authprofile_result
+  changed_when: create_authprofile_result.status == 201
+  when: authprofile_result.json.count == 0
+
+- set_fact:
+    authprofile_uuid: "{{ authprofile_result.json.results[0].uuid if authprofile_result.json.count else create_authprofile_result.json.uuid }}"
+
+- set_fact:
+    avi_controller_ssl_cert: "{{ lookup('vault', 'avi-{{ region }}.{{ project }}.public', 'contents') | default(None) }}"
+    avi_controller_ssl_key: "{{ lookup('vault', 'avi-{{ region }}.{{ project }}.private', 'contents') | default(None) }}"
+  no_log: true
+
+- name: install controller cert
+  avi_sslkeyandcertificate:
+    name: "{{ avi_controller_ssl_cert_name }}"
+    key: "{{ avi_controller_ssl_key }}"
+    certificate: "{{ avi_controller_ssl_cert }}"
+    controller_user: admin
+    controller_pass: "{{ avi_controller_admin_password }}"
+    controller_host: "{{ avi_controller_base_url }}"
+  register: sslkeyandcert_result
+
+- set_fact:
+    portal_cert_refs: ["{{ avi_controller_base_url }}/api/sslkeyandcertificate/{{ sslkeyandcert_result['sslkey']['uuid'] }}"]
+
+- name: get systemconfiguration
+  uri:
+    url: "{{ avi_controller_base_url }}/api/systemconfiguration/"
+    method: GET
+    status_code: 200
+    validate_certs: no
+    HEADER_Cookie: "{{ cookies }}"
+    HEADER_Referer: "{{ avi_controller_base_url }}"
+    HEADER_X-CSRFToken: "{{ csrf_token }}"
+  register: sysconfig_result
+
+- set_fact:
+    target_systemconfiguration: "{{ sysconfig_result.json | combine(avi_controller_systemconfiguration) | combine({'admin_auth_configuration': {'auth_profile_ref': '{{ avi_controller_base_url }}/api/authprofile/{{ authprofile_uuid }}' } }, recursive=true) | combine({'portal_configuration': {'sslkeyandcertificate_refs': portal_cert_refs}}, recursive=true) }}"
+
+- name: update systemconfiguration
+  uri:
+    url: "{{ avi_controller_base_url }}/api/systemconfiguration/"
+    body: '{{ target_systemconfiguration }}'
+    body_format: json
+    method: PUT
+    status_code: 200
+    validate_certs: no
+    HEADER_Cookie: "{{ cookies }}"
+    HEADER_Referer: "{{ avi_controller_base_url }}"
+    HEADER_X-CSRFToken: "{{ csrf_token }}"
+  register: update_sysconfig_result
+  changed_when: update_sysconfig_result.status == 200
+  when: sysconfig_result.json != target_systemconfiguration
+
+- name: get cloudconnecteduser
+  uri:
+    url: "{{ avi_controller_base_url }}/api/cloudconnectoruser?name={{ avi_controller_cloudconnectoruser.name }}"
+    method: GET
+    status_code: 200
+    validate_certs: no
+    HEADER_Cookie: "{{ cookies }}"
+    HEADER_Referer: "{{ avi_controller_base_url }}"
+    HEADER_X-CSRFToken: "{{ csrf_token }}"
+  register: cloudconnecteduser_result
+
+- name: create cloudconnecteduser
+  uri:
+    url: "{{ avi_controller_base_url }}/api/cloudconnectoruser"
+    method: POST
+    body: "{{ avi_controller_cloudconnectoruser }}"
+    body_format: json
+    status_code: 201
+    validate_certs: no
+    HEADER_Cookie: "{{ cookies }}"
+    HEADER_Referer: "{{ avi_controller_base_url }}"
+    HEADER_X-CSRFToken: "{{ csrf_token }}"
+  register: create_cloudconnecteduser_result
+  changed_when: create_cloudconnecteduser_result.status == 201
+  when: cloudconnecteduser_result.json.count == 0
+
+- name: get default-cloud config
+  uri:
+    url: "{{ avi_controller_base_url }}/api/cloud?name=Default-Cloud"
+    method: GET
+    status_code: 200
+    validate_certs: no
+    HEADER_Cookie: "{{ cookies }}"
+    HEADER_Referer: "{{ avi_controller_base_url }}"
+    HEADER_X-CSRFToken: "{{ csrf_token }}"
+  register: cloud_result
+
+- name: update default-cloud config
+  uri:
+    url: "{{ avi_controller_base_url }}/api/cloud/{{ cloud_result.json.results[0].uuid }}"
+    body: "{{ cloud_result.json.results[0] | combine(avi_controller_cloud) }}"
+    body_format: json
+    method: PUT
+    status_code: 200
+    validate_certs: no
+    HEADER_Cookie: "{{ cookies }}"
+    HEADER_Referer: "{{ avi_controller_base_url }}"
+    HEADER_X-CSRFToken: "{{ csrf_token }}"
+  register: create_cloud_result
+  changed_when: cloud_result.status == 200
+  when: cloud_result.json.count == 1 and cloud_result.json.results[0].vtype == 'CLOUD_NONE'
+
+- block:
+  - name: get default service engine group config
+    uri:
+      url: "{{ avi_controller_base_url }}/api/serviceenginegroup?name=Default-Group"
+      method: GET
+      status_code: 200
+      validate_certs: no
+      HEADER_Cookie: "{{ cookies }}"
+      HEADER_Referer: "{{ avi_controller_base_url }}"
+      HEADER_X-CSRFToken: "{{ csrf_token }}"
+    register: group_result
+
+  - set_fact:
+      target_servicegroup_config: "{{ group_result.json.results[0] | combine(avi_controller_servicegroup) }}"
+
+  - name: update default service engine group config
+    uri:
+      url: "{{ avi_controller_base_url }}/api/serviceenginegroup/{{ group_result.json.results[0].uuid }}"
+      body: "{{ group_result.json.results[0] | combine(avi_controller_servicegroup) }}"
+      body_format: json
+      method: PUT
+      status_code: 200
+      validate_certs: no
+      HEADER_Cookie: "{{ cookies }}"
+      HEADER_Referer: "{{ avi_controller_base_url }}"
+      HEADER_X-CSRFToken: "{{ csrf_token }}"
+    register: create_group_result
+    changed_when: create_group_result.status == 200
+    when: group_result.json.count == 1 and group_result.json.results[0] != target_servicegroup_config
+  when: maintenance_mode | default(False)
+
+- name: install license
+  avi_license:
+    license_text: "{{ avi_controller_license }}"
+    controller_host: "{{ avi_controller_base_url }}"
+    controller_user: admin
+    controller_pass: "{{ avi_controller_admin_password }}"
+
+- block:
+    # avi only needs to be restarted when its certificate changes but restart
+    # must occur before clustering instances begins
+    - service: name=avicontroller state=restarted
+    - include: wait-for-service.yml
+  when: "sslkeyandcert_result.changed and update_sysconfig_result.changed"
+
+- name: configure cluster
+  avi_cluster:
+    ipv4_addrs: "{{ groups['avi-controller'] | map('extract', hostvars, 'openstack') | map(attribute='private_v4') | list }}"
+    controller_host: "{{ avi_controller_base_url }}"
+    controller_user: admin
+    controller_pass: "{{ avi_controller_admin_password }}"
+  when: groups['avi-controller'] | length == 3

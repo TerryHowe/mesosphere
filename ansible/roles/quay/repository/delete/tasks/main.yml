@@ -1,0 +1,9 @@
+---
+- name: "Delete repository"
+  uri:
+    url: "https://{{docker_registry}}/api/v1/repository/{{quay_namespace}}/{{quay_name}}"
+    method: DELETE
+    validate_certs: no
+    status_code: 204,400
+    headers:
+      Authorization: "Bearer {{quay_oauth_token}}"

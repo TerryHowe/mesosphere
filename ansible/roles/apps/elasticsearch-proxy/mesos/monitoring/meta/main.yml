@@ -1,0 +1,3 @@
+---
+dependencies:
+  - { role: grafana/alerts, grafana_alerts: "{{ esproxy_alerts }}" }

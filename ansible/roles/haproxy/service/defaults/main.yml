@@ -1,0 +1,5 @@
+haproxy_service_backend_params:
+  - mode tcp
+  - balance roundrobin
+haproxy_service_backend_port: "{{ haproxy_service_port }}"
+haproxy_service_server_params: check fall 3 rise 2

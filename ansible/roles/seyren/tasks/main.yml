@@ -1,0 +1,24 @@
+---
+#-- Seyren install and config
+
+- name: Create install dir for Seyren
+  file: path=/opt/seyren state=directory owner=root group=root mode=0744
+
+- name: Download Seyren
+  get_url: url=https://github.com/scobal/seyren/releases/download/{{ seyren_version }}/seyren-{{ seyren_version }}.jar dest=/opt/seyren/seyren-{{ seyren_version }}.jar
+
+- name: systemd unit file
+  template: src=seyren.service.j2 dest=/etc/systemd/system/seyren.service
+
+- name: Enable seyren
+  service: name=seyren enabled=yes
+
+- name: Start Seyren
+  service: name=seyren state=started
+
+#-- This might require a sleep of some kind. Seyren can take a few minutes
+#-- to become available because Java is *awful*
+- include: alerts.yml
+  tags: [alerts]
+
+- include: nginx.yml

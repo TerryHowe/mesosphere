@@ -1,0 +1,7 @@
+---
+#-- Playbook to Run Statuspage setup
+
+- hosts: localhost
+  roles:
+  - deploy/audit
+  - statuspage

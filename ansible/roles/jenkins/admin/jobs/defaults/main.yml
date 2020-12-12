@@ -1,0 +1,8 @@
+---
+jenkins_dir: '/root/jenkins'
+jenkins_github_key: "{{ lookup('vault', 'jenkins-deploy-key.private', 'contents') }}"
+jenkins_github_key_file: /root/.ssh/github-deploy-key
+jenkins_cli_jar: /var/jenkins_home/war/WEB-INF/jenkins-cli.jar
+jenkins_managed_inventories:
+  - "{{ admin_project }}-{{ region }}"
+  - "{{ mesos_project }}-{{ region }}"

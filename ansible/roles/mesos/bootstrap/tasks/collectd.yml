@@ -1,0 +1,14 @@
+---
+- name: install collectd zookeeper plugin
+  package: name=collectd-zookeeper state=present
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: enable zoookeeper
+  copy: content="LoadPlugin zookeeper\n" dest=/etc/collectd.d/zookeeper.conf
+  notify:
+    - restart collectd
+  tags:
+    - monitoring

@@ -1,0 +1,31 @@
+---
+docker_app_defaults:
+  service_port: None
+  container_port: None
+  marathon:
+    container:
+      type: DOCKER
+      docker:
+        forcePullImage: true
+        privileged: false
+        network: BRIDGE
+    upgradeStrategy:
+      minimumHealthCapacity: 1
+      maximumOverCapacity: 0.5
+    uris:
+      - /etc/docker.tar.gz
+  avi:
+    tenant: admin
+    virtualservice:
+      analytics_policy:
+        metrics_realtime_update:
+          duration: 0
+          enabled: True
+        client_insights: NO_INSIGHTS
+      application_profile_ref: /api/applicationprofile?name=System-HTTP
+
+# example SSL config:
+#      application_profile_ref: /api/applicationprofile?name=System-Secure-HTTP
+#      ssl_key_and_certificate_refs:
+#        - /api/sslkeyandcertificate/?name=MY-CERT-NAME
+#      ssl_profile_ref: /api/sslprofile/?name=System-Standard

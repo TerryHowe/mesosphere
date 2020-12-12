@@ -1,0 +1,8 @@
+PATHELEM [^/]+
+TASKPATH ^/var/lib/mesos/slave/slaves/%{PATHELEM:agent}/frameworks/%{PATHELEM:framework}/executors/(?:%{DATA:mesos_taskname}.%{UUID:mesos_taskuuid}|%{PATHELEM:executor})/runs/%{PATHELEM:run}
+
+NGUSERNAME [a-zA-Z\.\@\-\+_%]+
+NGUSER %{NGUSERNAME}
+NGINXACCESS %{WORD:nginx_hostname} nginx: %{IPORHOST:nginx_clientip} %{NGUSER:nginx_ident} %{NGUSER:nginx_auth} \[%{HTTPDATE:nginx_timestamp}\] "%{WORD:nginx_verb} %{URIPATHPARAM:nginx_request} HTTP/%{NUMBER:nginx_httpversion}" %{NUMBER:nginx_response} (?:%{NUMBER:nginx_bytes}|-) (?:"(?:%{URI:nginx_referrer}|-)"|%{QS:nginx_referrer}) %{QS:nginx_agent}
+
+JAVAAPP \[%{WORD:severity}\] %{TIMESTAMP_ISO8601:timestamp} %{JAVACLASS:class} <?%{DATA:method}>? \-%{SPACE}%{GREEDYDATA:message}

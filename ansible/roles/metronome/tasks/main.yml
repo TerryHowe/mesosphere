@@ -1,0 +1,114 @@
+---
+
+#Get DCOS Auth Token
+- name: Get Auth Token
+  shell: echo $(dcos config show core.dcos_acs_token)
+  register: token
+
+#Check To See If Job Exists
+- name: Check Job Existence
+  uri:
+    url: "{{metronome_endpoint}}/v1/jobs/{{job_name}}"
+    method: GET
+    body_format: json
+    headers: {'Authorization': 'token={{token.stdout}}'}
+    validate_certs: no
+  register: job_check
+  ignore_errors: True
+
+#Create Metronome Job If It Doesn't Already Exist
+- name: Create a Metronome Job
+  uri:
+    url: "{{metronome_endpoint}}/v1/jobs"
+    method: POST
+    body_format: json
+    headers: {'Authorization': 'token={{token.stdout}}'}
+    validate_certs: no
+    body: >
+      {
+        "id": "{{ job_name }}",
+        "description": "{{ job_description }}",
+        "run": {
+          "cmd": "{{ command }}",
+          "cpus": {{ job_cpus | default(1) }},
+          "mem": {{ job_mem | default(128) }},
+          "disk": {{ job_disk | default(0) }},
+        }
+      }
+    status_code: 201
+  when: job_check.status == 404
+  register: create_job_result
+  changed_when: create_job_result.status == 201
+  delegate_to: "{{ groups['mesos-master'][0] }}"
+  remote_user: cloud-user
+  become: yes
+  become_user: root
+
+#Add Docker Job Requirements If Necessary
+- name: Add Docker Info If Needed
+  uri:
+    url: "{{metronome_endpoint}}/v1/jobs/{{ job_name }}"
+    method: PUT
+    body_format: json
+    headers: {'Authorization': 'token={{token.stdout}}'}
+    validate_certs: no
+    body: >
+      {
+        "id": "{{ job_name }}",
+        "run": {
+          "cmd": "{{ command }}",
+          "cpus": {{ job_cpus | default(1) }},
+          "mem": {{ job_mem | default(128) }},
+          "disk": {{ job_disk | default(0) }},
+          "artifacts": [ {
+              "uri": "file:///etc/docker.tar.gz"
+          } ],
+          "docker": {
+            "image": "{{ job_container }}"
+          }
+        }
+      }
+    status_code: 200
+  when: job_container is defined and job_check.status == 404
+  register: add_docker_job
+  changed_when: add_docker_job.status == 200
+  delegate_to: "{{ groups['mesos-master'][0] }}"
+  remote_user: cloud-user
+  become: yes
+  become_user: root
+
+#If Job Exists, Check To See If Schedule Exists
+- name: Check Scheulde Existence
+  uri:
+    url: "{{metronome_endpoint}}/v1/jobs/{{job_name}}/schedules"
+    method: GET
+    body_format: json
+    headers: {'Authorization': 'token={{token.stdout}}'}
+    validate_certs: no
+  register: schedule_check
+  ignore_errors: True
+
+#Create Metronome Job Schdule If Required
+- name: Create Metronome Schedules
+  uri:
+    url: "{{metronome_endpoint}}/v1/jobs/{{ job_name }}/schedules"
+    method: POST
+    body_format: json
+    headers: {'Authorization': 'token={{token.stdout}}'}
+    validate_certs: no
+    body: >
+      {
+        "id": "{{ job_name }}",
+        "enabled": true,
+        "cron": "{{ job_interval | default('0 23 * * *') }}",
+        "timezone": "UTC",
+        "concurrencyPolicy": "ALLOW"
+      }
+    status_code: 201
+  when: job_schedule_enabled == "true" and schedule_check.json == []
+  register: create_schedule_result
+  changed_when: create_schedule_result.status == 201
+  delegate_to: "{{ groups['mesos-master'][0] }}"
+  remote_user: cloud-user
+  become: yes
+  become_user: root

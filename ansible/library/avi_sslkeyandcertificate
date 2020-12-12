@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+import base64
+from ansible.module_utils.basic import *
+
+try:
+  from avi.sdk.avi_api import ApiSession
+  HAS_AVISDK = True
+except ImportError:
+  HAS_AVISDK = False
+
+
+if __name__ == '__main__':
+
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'state': {'default': 'present'},
+            'name': { 'required': True, 'type': 'str' },
+            'key': { 'type': 'str' },
+            'certificate': { 'type': 'str' },
+            'controller_user': { 'required': True, 'type': 'str' },
+            'controller_pass': { 'required': True, 'type': 'str' },
+            'controller_host': { 'required': True, 'type': 'str' },
+            'controller_tenant': { 'default': 'admin' },
+        },
+        supports_check_mode=True
+    )
+
+    if not HAS_AVISDK:
+        module.fail_json(msg="avisdk package is required")
+
+    args = module.params
+    ensure_present = module.params['state'] != 'absent'
+    if ensure_present:
+        if not args.get('key'):
+            module.fail_json(msg="key required")
+        elif not args.get('certificate'):
+            module.fail_json(msg="certificate required")
+
+    #module.exit_json(changed=False, args_debug=args)
+    api = ApiSession.get_session(args['controller_host'], args['controller_user'],
+                                 args['controller_pass'], tenant=args['controller_tenant'])
+
+    changed = False
+    key_and_cert = api.get_object_by_name('sslkeyandcertificate', args['name'])
+    if not key_and_cert and ensure_present:
+        changed = True
+        if not module.check_mode:
+            data = {
+                'name': args['name'],
+                'key': base64.b64encode(args['key']),
+                'key_base64': True,
+                'certificate': base64.b64encode(args['certificate']),
+                'certificate_base64': True,
+            }
+            resp = api.post('sslkeyandcertificate/importkeyandcertificate', data=data)
+            key_and_cert = resp.json()
+    elif key_and_cert and not ensure_present:
+        changed = True
+        if not module.check_mode:
+            data = {
+                'name': args['name'],
+            }
+            resp = api.delete('sslkeyandcertificate/{uuid}'.format(**key_and_cert))
+            key_and_cert = resp.json()
+
+    module.exit_json(changed=changed, sslkey=key_and_cert)

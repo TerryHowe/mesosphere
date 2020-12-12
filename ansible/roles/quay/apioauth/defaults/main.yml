@@ -1,0 +1,8 @@
+---
+tmp_sql_file: "/tmp/oauth.sql"
+quay_api_oauth_uuid: "{{ lookup('vault', '{{vault_environment}}', 'quay_api_oauth_uuid') }}"
+quay_api_oauth_token: "{{ lookup('vault', '{{vault_environment}}', 'quay_api_oauth_token') }}"
+quay_api_client_id: "{{ lookup('vault', '{{vault_environment}}', 'quay_api_client_id') }}"
+quay_api_client_secret: "{{ lookup('vault', '{{vault_environment}}', 'quay_api_client_secret') }}"
+quay_api_client_name: 'qapi'
+quay_paas_user_id: 2

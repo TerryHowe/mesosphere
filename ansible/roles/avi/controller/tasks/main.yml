@@ -1,0 +1,47 @@
+---
+- include: collectd.yml
+  tags:
+    - monitoring
+
+- include: install.yml
+
+- include: ../../cluster-state.yml
+  tags:
+    - configure
+    - monitoring
+
+- block:
+    - name: avi login
+      uri:
+        url: "{{ avi_controller_base_url }}/login"
+        method: POST
+        body: "username=admin&password={{ avi_controller_admin_password }}"
+        validate_certs: no
+        HEADER_Content-Type: application/x-www-form-urlencoded
+        status_code: "200,401"
+      register: login_result
+      no_log: true
+
+    - set_fact:
+        cookies: "{{ login_result.set_cookie }}"
+        csrf_token: "{{ login_result.set_cookie | regex_replace('^.*csrftoken=(.*?);.*$', '\\1') }}"
+      when: login_result.status == 200
+      no_log: true
+
+    - include: configure.yml
+      tags:
+        - configure
+
+    - include: monitor.yml
+      tags:
+        - monitoring
+
+  when: is_cluster_leader | default(False)
+
+- name: ensure monitored log files exist
+  file: path={{ item }} state=touch owner=root group=root mode=0644
+  with_items:
+    - /var/lib/controller/root1/var/lib/avi/log/cc_agent_Default-Cloud.log
+    - /var/lib/controller/root2/var/lib/avi/log/cc_agent_Default-Cloud.log
+  tags:
+    - monitoring

@@ -1,0 +1,20 @@
+- name: Generate grafana dashboards and alerts
+  uri:
+    url: "{{ grafana_api_endpoint }}/api/dashboards/db"
+    body: "{{ lookup('template', '{{ item }}') }}"
+    body_format: json
+    user: admin
+    password: "{{ os_password }}"
+    validate_certs: no
+    force_basic_auth: yes
+    method: POST
+    HEADER_Content_Type: "application/json"
+    status_code: 200
+  with_fileglob:
+    - 'templates/dashboards/*.json.j2'
+  delegate_to: localhost
+  become: no
+  run_once: True
+  tags:
+    - monitoring
+    - dashboards

@@ -1,0 +1,8 @@
+---
+- include: secgroup.yml
+  when: app_spec.get('access') in ['internet', 'private']
+
+- include: vip.yml
+  when: app_spec.get('access') in ['internet', 'private']
+
+- include: marathon.yml

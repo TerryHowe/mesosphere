@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+
+from ansible.module_utils.basic import *
+import requests
+import json
+from requests.auth import HTTPBasicAuth
+
+
+def notify_equals(a, b):
+    return (a.get('name') == b.get('name') and
+            a.get('type') == b.get('type') and
+            a.get('isDefault') == b.get('isDefault') and
+            a.get('settings') == b.get('settings'))
+
+
+def redact(notification):
+    # settings often contain sensitive data, brute force it away
+    if 'settings' in notification:
+        redacted = dict(notification)
+        redacted['settings'] = 'REDACTED'
+        return redacted
+    return notification
+
+if __name__ == '__main__':
+
+    module = AnsibleModule(
+        argument_spec={
+            'name': {'type': 'str'},
+            'type': {'type': 'str'},
+            'isDefault': {'type': 'bool'},
+            'settings': {'type': 'dict'},
+            'state': {'default': 'present', 'type': 'str',
+                      'choices': ['present', 'absent']},
+            'grafana_url': {'type': 'str'},
+            'grafana_username': {'type': 'str'},
+            'grafana_password': {'type': 'str'},
+        },
+    )
+
+    args = module.params
+    notification_url = args['grafana_url'] + '/api/alert-notifications/'
+    notification = None
+    result = {'changed': False}
+
+    auth = HTTPBasicAuth(args['grafana_username'], args['grafana_password'])
+    headers = {'content-type': 'application/json;charset=UTF-8'}
+
+    notifications = requests.get(notification_url, auth=auth).json()
+    for n in notifications:
+        if n['name'] == args['name']:
+            notification = requests.get(notification_url + str(n['id']),
+                                        auth=auth, headers=headers).json()
+            break
+
+    target_notification = {
+        'name': args['name'],
+        'type': args['type'],
+        'isDefault': args['isDefault'],
+        'settings': args['settings'],
+    }
+    if notification:
+        updated_notification = dict(notification)
+        updated_notification.update(target_notification)
+        result['notification'] = redact(updated_notification)
+        if not notify_equals(notification, updated_notification):
+            result['changed'] = True
+            if not module.check_mode:
+                resp = requests.put(notification_url + str(notification['id']),
+                                    data=json.dumps(updated_notification),
+                                    auth=auth, headers=headers)
+                result['response'] = resp.text
+                result['status'] = resp.status_code
+    else:
+        result['changed'] = True
+        result['notification'] = redact(target_notification)
+        if not module.check_mode:
+            resp = requests.post(notification_url,
+                                 data=json.dumps(target_notification),
+                                 auth=auth, headers=headers)
+            result['response'] = resp.text
+            result['status'] = resp.status_code
+
+    module.exit_json(**result)

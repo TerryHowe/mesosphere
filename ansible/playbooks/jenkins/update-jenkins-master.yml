@@ -1,0 +1,11 @@
+---
+- hosts: jenkins
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  tasks:
+  - shell: "docker ps | grep jenkins && docker stop jenkins || echo 'jenkins container not running'"
+    environment:
+      DOCKER_HOST: 127.0.0.1:4243
+
+- include: admin.yml

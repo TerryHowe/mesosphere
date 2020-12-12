@@ -1,0 +1,37 @@
+---
+dependencies:
+ - role: docker-app
+   app_spec:
+     app_name: elasticsearch-scheduler
+     tenant_name: admin
+     access: internal
+     marathon:
+       cpus: 1
+       mem: 2048
+       instances: 1
+       container:
+         docker:
+           image: "mesos/elasticsearch-scheduler"
+           forcePullImage: True
+           network: HOST
+       constraints:
+         - ['hostname', 'UNIQUE']
+       env:
+         JAVA_OPTS: "-Xms1g -Xmx1g"
+       args:
+         - "--zookeeperMesosUrl"
+         - "zk://leader.mesos:2181/mesos"
+         - "--elasticsearchNodes"
+         - "{{ apps_elasticsearch_nodes | string }}"
+         - "--elasticsearchRam"
+         - "{{ apps_elasticsearch_ram | string }}"
+         - "--elasticsearchCpu"
+         - "{{ apps_elasticsearch_cpu | string }}"
+         - "--elasticsearchClusterName"
+         - "mesos-logs"
+         - "--elasticsearchDockerImage"
+         - "elasticsearch:2.4.1"
+         - "--useIpAddress"
+         - "true"
+         - "--dataDir"
+         - /data/elasticsearch

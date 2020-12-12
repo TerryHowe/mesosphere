@@ -1,0 +1,16 @@
+---
+- name: Set timezone to UTC
+  command: timedatectl set-timezone UTC
+  when: ansible_date_time.tz != "UTC" and ansible_hostname != "localhost"
+
+- name: Install ntp packages
+  package: name={{ item }} state=present
+  with_items:
+    - ntp
+    - ntpdate
+
+- name: Enable clock sync
+  command: timedatectl set-ntp true
+
+- name: Restart ntpd
+  service: name=ntpd state=restarted

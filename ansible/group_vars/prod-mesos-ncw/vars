@@ -1,0 +1,113 @@
+---
+collectd_graphite_host: carbon-relay-{{ region }}.{{ admin_domain }}
+
+grafana_alerts_default_notifications:
+  - pagerduty high priority
+
+logstash_elasticsearch_hostport: elasticsearch-proxy-{{ region }}.{{ admin_domain }}:9200
+
+nfs_server:
+  jenkins:
+    local_mount_dir: /mnt/jenkins
+    nfs_export_opts: "*(rw,sync,no_root_squash,no_all_squash)"
+
+nfs_mounts:
+  jenkins:
+    local_mount_dir: /mnt/jenkins
+    nfs_mount_source: "/mnt/jenkins"
+    nfs_mount_opts: "rsize=8192,wsize=8192,timeo=14,intr"
+
+nfs_port_locks:
+  - "RQUOTAD_PORT=875\n"
+  - "LOCKD_TCPPORT=32803\n"
+  - "LOCKD_UDPPORT=32769\n"
+  - "MOUNTD_PORT=892\n"
+  - "STATD_PORT=662\n"
+
+openstack_networks:
+  M-Mesos-01:
+    router_name: M-01-Net
+    subnet_name: M-01-A
+    cidr: 192.168.1.0/24
+    vip_cidr: 192.168.1.128/25
+    shared: no
+    external: no
+    enable_snat: yes
+
+default_server_network: M-Mesos-01
+
+openstack_security_groups_override: {}
+
+openstack_common:
+  image: paas-centos7-1460411126
+  keypair: cloud-user-prod
+  security_groups:
+   - default
+   - corp_vpn
+
+openstack_server_templates:
+
+  avi-controller:
+    flavor: m3.4CPU.16GB
+    instances: 3
+    meta:
+      group: avi-controller
+    static_port: true
+    security_groups:
+      - avi-controller
+    volumes:
+      - name: avi-data
+        dir: /var/lib/controller
+        size: 100
+        fstype: xfs
+    server_group:
+      name: anti-affinity-avi-controller
+      policies:
+        - anti-affinity
+
+  nfs-server:
+    flavor: m3.1CPU.2GB
+    instances: 1
+    meta:
+      group: nfs-server
+    volumes:
+      - name: jenkins
+        dir: /mnt/jenkins
+        size: 100
+        fstype: xfs
+
+  mesos-bootstrap:
+    flavor: m3.1CPU.2GB
+    instances: 1
+    meta:
+      group: mesos-bootstrap
+
+  mesos-master:
+    flavor: m4.8CPU.16GB
+    instances: 5
+    meta:
+      group: mesos-master
+    security_groups:
+      - mesos-master
+    static_port: true
+    server_group:
+      name: anti-affinity-mesos-master
+      policies:
+        - anti-affinity
+
+  mesos-agent:
+    flavor: m4.16CPU.32GB
+    instances: 15
+    meta:
+      group: mesos-agent
+    security_groups:
+      - mesos-agent
+    volumes:
+      - name: data
+        dir: /data
+        size: 100
+        fstype: xfs
+    server_group:
+      name: anti-affinity-mesos-agent
+      policies:
+        - anti-affinity

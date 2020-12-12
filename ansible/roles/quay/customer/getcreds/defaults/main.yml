@@ -1,0 +1,3 @@
+---
+quay_oauth_token: "{{lookup('vault', '{{vault_environment}}', 'quay_api_oauth_token')}}"
+customer_credentials_directory: "/etc/dockercreds/{{ customer_name }}+robotti"

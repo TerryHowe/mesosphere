@@ -1,0 +1,15 @@
+[Unit]
+Description=uWSGI server for graphite
+After=syslog.target
+
+[Service]
+ExecStart=/usr/bin/uwsgi --ini /etc/uwsgi_default.ini --ini /etc/uwsgi_graphite.ini
+RuntimeDirectory=uwsgi
+Restart=always
+KillSignal=SIGQUIT
+Type=notify
+StandardError=syslog
+NotifyAccess=all
+
+[Install]
+WantedBy=local.target

@@ -1,0 +1,36 @@
+---
+- name: install python module
+  copy: src=dockerplugin.py dest={{ collectd_python_module_dir }}
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: install python-pip
+  package: name=python-pip state=installed
+  tags:
+    - monitoring
+
+- name: install python package requirements
+  pip: name={{ item }}
+  with_items:
+    - py-dateutil
+    - docker-py
+    - jsonpath_rw
+  tags:
+    - monitoring
+
+- name: add dockerplugin types
+  copy: src=dockerplugin.db dest={{ collectd_python_module_dir }}/dockerplugin.db
+        mode=0600 owner=root group=root
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: configure plugin
+  template: src=docker.conf.j2 dest=/etc/collectd.d/docker.conf
+  notify:
+    - restart collectd
+  tags:
+    - monitoring

@@ -1,0 +1,14 @@
+---
+- file: path="{{secrets}}" state=directory mode=0755
+
+- hashivault_init:
+    url: '{{vault_url}}'
+  register: vault_init
+  no_log: True
+
+- block:
+  - copy: content="{{vault_init.root_token}}" dest="{{vault_token}}"
+  - copy: content="{{vault_init['keys'] | join('\n')}}" dest="{{vault_keys}}"
+  - shell: ansible-vault encrypt "{{vault_keys}}"
+  - shell: ansible-vault encrypt "{{vault_token}}"
+  when: vault_init.changed

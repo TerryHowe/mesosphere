@@ -1,0 +1,104 @@
+- set_fact:
+    vip_cidr: "{{ openstack_networks[app_spec.network | default(default_server_network)]['vip_cidr'] }}"
+
+- name: available ips
+  os_port_available_ips:
+    cidr: "{{ vip_cidr }}"
+  register: available_ips_result
+
+- name: Check for existing port
+  shell: >
+    neutron port-show "docker-app-vip:{{ app_spec.app_name }}" -F fixed_ips -f value |
+    sed -e 's/://g' -e 's/\"//g' -e 's/\}//g' |
+    awk '$3 == "ip_address" {print $4}'
+  register: check_existing_port
+
+- set_fact:
+    fixed_ip: "{{ (check_existing_port.stdout | ipaddr) | ternary(check_existing_port.stdout, available_ips_result.available_ips[-2]) }}"
+
+- name: create vip (neutron port)
+  os_port:
+    name: "docker-app-vip:{{ app_spec.app_name }}"
+    state: present
+    network: "{{ app_spec.network | default(default_server_network) }}"
+    security_groups: "{{ secgroup.id | default([]) }}"
+    fixed_ips:
+      - ip_address: "{{ fixed_ip }}"
+  register: neutron_port_result
+
+- debug: var=neutron_port_result
+
+- set_fact:
+    virtual_ip: "{{ neutron_port_result.port.fixed_ips[0].ip_address }}"
+    use_floating_ip: "{{ app_spec.access in ['internet'] }}"
+
+- name: allow vip on mesos-agents
+  os_port_allow_address:
+    address: "{{ vip_cidr }}"
+    server_metadata_attr: group
+    server_metadata_value: mesos-agent
+  register: port_update_result
+  #when: neutron_port_result.changed
+
+- debug: var=port_update_result
+
+- block:
+    - name: check if vip has floating ip
+      shell: >
+        neutron floatingip-list -c id -c port_id |
+        sed 's/ //g' |
+        awk -F\| '$3 == "{{ neutron_port_result.id }}" {print $2}'
+      failed_when: false
+      register: check_floatingip_result
+      changed_when: not check_floatingip_result.stdout_lines
+
+    - name: see if there is an available floating ip
+      shell: >
+        neutron floatingip-list -c id -c status -c fixed_ip_address -f value |
+        awk '$2 == "DOWN" && $3 == "" { print $1 }' | head -n 1
+      failed_when: False
+      register: available_floating_ip
+      when: check_floatingip_result.changed
+
+    - name: allocate a floating ip if there is not one available
+      shell: neutron floatingip-create Ext-Net -c id -f value
+      failed_when: False
+      register: allocate_floating_ip
+      when: check_floatingip_result.changed and available_floating_ip.stdout == ""
+
+    - set_fact:
+        floating_ip: "{{ check_floatingip_result.get('stdout') or available_floating_ip.get('stdout') or allocate_floating_ip.stdout_lines[1] or '' }}"
+
+    - debug: var=check_floatingip_result
+
+    - debug: var=floating_ip
+
+    - name: associate floating ip to vip
+      shell: >
+        neutron floatingip-associate {{ floating_ip }} {{ neutron_port_result.id }}
+      failed_when: "'Associated floating IP' not in assoc_floatingip_result.stdout"
+      register: assoc_floatingip_result
+      when: check_floatingip_result.changed and floating_ip != ''
+
+    - debug: var=assoc_floatingip_result
+
+    - name: get IP from floating ip
+      command: >
+        neutron floatingip-show {{ floating_ip }}
+        -c floating_ip_address --format value
+      register: floating_ip_address_result
+
+    - name: register dns name to floating ip
+      command: >
+          designate record-create --name "{{ app_spec.app_name }}"
+          --type A --data
+          "{{ floating_ip_address_result.stdout }}" "{{project_domain}}."
+
+  when: use_floating_ip
+
+- name: register dns name to virtual ip
+  command: >
+      designate record-create --name "{{ app_spec.app_name }}"
+      --type A --data
+      "{{ virtual_ip }}" "{{project_domain}}."
+  when: not use_floating_ip

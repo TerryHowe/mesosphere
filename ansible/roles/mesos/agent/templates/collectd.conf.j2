@@ -1,0 +1,18 @@
+<LoadPlugin "python">
+    Globals true
+</LoadPlugin>
+
+<Plugin "python">
+    ModulePath "{{ collectd_python_module_dir }}"
+
+    Import "mesos-agent"
+
+    <Module "mesos-agent">
+        Host "{{ ansible_default_ipv4['address'] }}"
+        Port 5051
+        Verbose false
+        Version "0.22.1"
+    </Module>
+</Plugin>
+
+LoadPlugin "processes"

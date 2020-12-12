@@ -1,0 +1,11 @@
+# requirements for ansible control node
+ansible==2.1.0.0
+avisdk==16.4b1
+jenkins-job-builder==1.4.0
+python-neutronclient==4.1.1
+python-openstackclient==2.2.0
+python-designateclient==2.0.0
+shade==1.9.0
+ansible-modules-hashivault==2.5.6
+ansible-modules-dcos==1.3.0
+certifi==2016.2.28

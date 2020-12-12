@@ -1,0 +1,7 @@
+---
+#-- Playbook to decommission project
+
+- hosts: localhost
+  roles:
+    - role: decom-openstack
+    - role: dns/decom

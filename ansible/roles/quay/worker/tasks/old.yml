@@ -1,0 +1,8 @@
+---
+- name: look for old workers
+  shell: docker ps --filter ancestor='quay.io/coreos/registry-build-worker:{{item}}' -q
+  register: oldworker
+
+- name: kill old workers
+  shell: docker stop "{{oldworker.stdout}}" ; docker rm "{{oldworker.stdout}}"
+  when: oldworker.stdout

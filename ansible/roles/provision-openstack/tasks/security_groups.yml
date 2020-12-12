@@ -1,0 +1,21 @@
+---
+- set_fact:
+    # TODO: reduce to those actually used by servers in this env
+    security_groups: "{{ openstack_security_groups | combine(openstack_security_groups_override) }}"
+  tags:
+    - access
+
+#-- Create a security group for each unqiue security_group defined in rules
+- name: Create OpenStack Security Groups
+  os_security_group:
+    state: present
+    name: "{{ item }}"
+    description: Security group for {{ item }} - managed by ansible
+  with_items: "{{ security_groups }}"
+  tags:
+    - access
+
+- include: security_group_rules.yml
+  with_dict: "{{ security_groups }}"
+  tags:
+    - access

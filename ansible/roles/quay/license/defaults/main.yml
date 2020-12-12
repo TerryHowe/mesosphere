@@ -1,0 +1,6 @@
+---
+quay_username: "{{lookup('vault', 'quay', 'username')}}"
+quay_password: "{{lookup('vault', 'quay', 'password')}}"
+quay_email: "{{lookup('vault', 'quay', 'email')}}"
+quay_registry: "quay.io"
+

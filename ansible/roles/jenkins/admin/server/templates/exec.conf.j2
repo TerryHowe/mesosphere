@@ -1,0 +1,5 @@
+[Service]
+EnvironmentFile=-/etc/sysconfig/docker
+ExecStart=
+ExecStart=/usr/bin/docker daemon --storage-driver=overlay -H tcp://0.0.0.0:4243 \
+          $INSECURE_REGISTRY

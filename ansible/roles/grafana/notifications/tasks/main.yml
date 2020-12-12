@@ -1,0 +1,10 @@
+---
+- grafana_alert_notification:
+    name: "{{ item.name }}"
+    type: "{{ item.type }}"
+    isDefault: "{{ item.isDefault }}"
+    settings: "{{ item.settings }}"
+    grafana_url: "{{ grafana_api_endpoint }}"
+    grafana_username: "{{ grafana_api_username }}"
+    grafana_password: "{{ grafana_api_password }}"
+  with_items: "{{ grafana_notifications }}"

@@ -1,0 +1,91 @@
+---
+
+# Install graphite
+
+- name: Create user
+  user: name={{ graphite_user }} comment="Graphite user" state=present
+
+- include: RedHat.yml
+  when: ansible_os_family == "RedHat"
+
+- include: Debian.yml
+  when: ansible_os_family == "Debian"
+
+- include_vars: "{{ graphite_role }}.yml"
+
+- name: Setup graphite with pip
+  pip: name={{ item }} state=present
+  with_items: graphite_install_requirements[graphite_install_version]
+  environment:
+    PYTHONPATH: "{{ graphite_install_path }}/lib:{{ graphite_install_path }}/webapp"
+
+- name: Install webapp settings
+  template: src=local_settings.py.j2 dest={{ graphite_install_path }}/webapp/graphite/local_settings.py
+  notify:
+    - restart uwsgi
+
+- name: Install uwsgi configuration
+  template: src=wsgi.py.j2 dest={{ graphite_install_path }}/conf/wsgi.py
+  notify:
+    - restart uwsgi
+
+- name: Install nginx configuration
+  template: src=nginx.conf.j2 dest={{ nginx_site_dir }}/graphite-web.conf
+  notify:
+    - reload nginx
+
+- name: Fix permissions
+  file: path=/opt/graphite state=directory owner={{ graphite_user }} group={{ graphite_user }} recurse=yes
+
+- name: Create uwsgi run directory
+  file: path=/run/uwsgi state=directory owner={{ graphite_user }} group={{ graphite_user }}
+
+- name: Inspect graphite db
+  command: python {{ graphite_install_path }}/webapp/graphite/manage.py inspectdb
+  become: yes
+  become_user: "{{ graphite_user }}"
+  register: result
+  changed_when: False
+
+- name: Check for secret key warning
+  command: echo SECRET_KEY is set to an unsafe default.
+  failed_when: "'SECRET_KEY' in result.stderr"
+  changed_when: False
+
+- name: Sync/create database
+  command: python {{ graphite_install_path }}/webapp/graphite/manage.py syncdb --noinput
+  become: yes
+  become_user: "{{ graphite_user }}"
+  when: result.stdout.find("AccountMygraph") == -1
+
+- name: Create superuser account
+  command: python {{ graphite_install_path }}/webapp/graphite/manage.py createsuperuser --username={{ graphite_admin_username }} --email={{ graphite_admin_email }} --noinput
+  become: yes
+  become_user: "{{ graphite_user }}"
+  register: superuser_created
+  args:
+    creates: "{{ graphite_install_path }}/webapp/graphite/.superuser_created"
+
+- name: Prepare to set up superuser password
+  template: src=createsuperuser.py.j2 dest=/tmp/createsuperuser.py
+  when: superuser_created|changed
+  register: debug2
+
+- name: Set superuser password
+  shell: "python {{ graphite_install_path }}/webapp/graphite/manage.py shell < /tmp/createsuperuser.py"
+  become: yes
+  become_user: "{{ graphite_user }}"
+  when: superuser_created|changed
+
+- name: Create lock file
+  file: path="{{ graphite_install_path }}/webapp/graphite/.superuser_created" state=touch
+  when: superuser_created|changed
+
+- name: Remove temp file
+  file: path=/tmp/createsuperuser.py state=absent
+
+- name: Enable uwsgi service
+  service: name=uwsgi enabled=yes
+
+- name: Start uwsgi service
+  service: name=uwsgi state=started

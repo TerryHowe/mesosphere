@@ -1,0 +1,25 @@
+---
+- name: install psmisc for killall
+  package: name=psmisc state=present
+
+- name: persist state on change
+  copy: src=keepalived_state.sh dest=/usr/local/bin/
+        owner=root group=root mode=0750
+  tags:
+    - monitoring
+
+- name: collectd exec script
+  copy: src=keepalived_collectd.sh dest=/usr/local/bin/
+        owner=root group=nobody mode=0750
+  tags:
+    - monitoring
+  notify:
+    - restart collectd
+
+- name: collectd exec config
+  copy: src=collectd.conf dest=/etc/collectd.d/keepalived.conf
+        owner=root group=root mode=0750
+  tags:
+    - monitoring
+  notify:
+    - restart collectd

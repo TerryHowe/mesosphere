@@ -1,0 +1,13 @@
+---
+
+#Get DCOS Auth Token
+- name: Get Auth Token
+  shell: echo $(dcos config show core.dcos_acs_token)
+  delegate_to: localhost
+  become: no
+  register: token
+
+- name: configure collectd plugin
+  template: src=collectd.conf.j2 dest=/etc/collectd.d/metronome_jobs.conf
+  notify:
+    - restart collectd

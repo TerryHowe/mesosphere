@@ -1,0 +1,4 @@
+---
+jenkins_dir: '/root/jenkins'
+jenkins_version: 1.658
+jenkins_sha: a1e0c298db70195b8ac3202a3758463a1148bbb2

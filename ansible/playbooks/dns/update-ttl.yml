@@ -1,0 +1,47 @@
+---
+#
+# Modify the TTL for all records having a given DNS record name
+#
+- hosts: localhost
+  become: no
+  vars_prompt:
+    - name: dns_record_name
+      prompt: DNS record name? (must be relative, can contain jinja expression)
+      private: no
+    - name: dns_record_ttl
+      prompt: New TTL for record in seconds
+      private: no
+  tasks:
+    - name: validate record name
+      assert:
+        that: "{{ '.' not in dns_record_name }}"
+        msg: "provide a relative, not absolute record name"
+
+    - name: validate ttl
+      assert:
+        that: "{{ dns_record_ttl }} > 0"
+        msg: "positive integer required"
+
+    - name: get domain-id for current domain
+      command: designate domain-list -f json
+      changed_when: false
+      register: designate_domain_list
+
+    - set_fact:
+        domain_details: "{{ designate_domain_list.stdout | from_json | first }}"
+
+    - set_fact:
+        absolute_record_name: "{{ dns_record_name ~ '.' ~ domain_details.name }}"
+
+    - name: get record-id for DNS record name
+      command: designate record-list -c id -c name -c ttl -f json {{ domain_details.id }}
+      register: designate_record_list
+      changed_when: false
+
+    - set_fact:
+        record_list: "{{ designate_record_list.stdout | from_json | selectattr('name', 'equalto', absolute_record_name) | list }}"
+
+    - name: update DNS record for {{ absolute_record_name }}
+      command: designate record-update --ttl {{ dns_record_ttl }} {{ domain_details.id }} {{ item.id }}
+      register: designate_record_update
+      with_items: "{{ record_list }}"

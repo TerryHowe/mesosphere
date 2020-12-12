@@ -1,0 +1,47 @@
+---
+#-- Metronome Vars
+
+metronome_endpoint: "https://mesos-{{region}}.{{project}}.cloud.twc.net/service/metronome"
+statuspage_api_code: "{{lookup('vault', 'chronos', 'api_code')}}"
+statuspage_page_id: "{{lookup('vault', 'chronos', 'page_id')}}"
+statuspage_member_id: "{{lookup('vault', 'chronos', 'member_id')}}"
+statuspage_url: "https://api.statuspage.io/v1/pages/{{statuspage_page_id}}/metrics_providers/{{statuspage_member_id}}/metrics.json"
+statuspage_api_auth: {'Authorization': 'OAuth {{statuspage_api_code}}'}
+docker_reg: "registry-{{region}}.{{project}}.cloud.twc.net/paas/statuspage"
+
+metronome_jobs:
+  dcos-endpoint:
+    name: "dcos-{{region}}-uptime"
+    suffix: ""
+    decimal_places: "0"
+    description: "DCOS {{os_region_name}} Uptime"
+    cron: "* * * * *"
+    target: "group(collectd.{{admin_project}}.{{region}}.mesos-master.mesos-master-*-{{region}}.curl.dcos_adminrouter.response_code)"
+  quay-endpoint:
+    name: "quay-{{region}}-repository-uptime"
+    suffix: ""
+    decimal_places: "0"
+    description: "Quay {{os_region_name}} Repository Uptime"
+    cron: "* * * * *"
+    target: "group(collectd.{{admin_project}}.{{region}}.worker.worker-*-{{region}}.curl.quay_heartbeat.response_code)"
+  avi-endpoint:
+    name: "avi-{{region}}-controller-uptime"
+    suffix: ""
+    decimal_places: "0"
+    description: "AVI {{os_region_name}} Controller Uptime"
+    cron: "* * * * *"
+    target: "group(collectd.{{admin_project}}.{{region}}.avi-controller.avi-controller-*-{{region}}.curl.avi_controller.response_code)"
+  grafana-endpoint:
+    name: "{{region}}-cluster-metrics-dashboard-uptime"
+    suffix: ""
+    decimal_places: "0"
+    description: "{{os_region_name}} Cluster Metrics Dashboard Uptime"
+    cron: "* * * * *"
+    target: "group(collectd.{{admin_project}}.{{region}}.graphite.graphite-*-{{region}}.curl.graphite_heartbeat.response_code)"
+  vault-endpoint:
+    name: "vault-{{region}}-services-uptime"
+    suffix: ""
+    decimal_places: "0"
+    description: "Vault {{os_region_name}} Services Uptime"
+    cron: "* * * * *"
+    target: "group(collectd.{{admin_project}}.{{region}}.worker.worker-*-{{region}}.curl.vault_heartbeat.response_code)"

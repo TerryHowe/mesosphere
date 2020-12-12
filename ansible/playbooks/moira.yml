@@ -1,0 +1,21 @@
+---
+#-- This is a workaround for a change introduced in ansible 2.0.1 about env facts
+#-- Without this first section that calls setup, ansible_env will be undefined
+- hosts: graphite
+  remote_user: "{{ remote_user }}"
+
+- hosts: graphite
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/usr/local/bin:/usr/local/go/bin:/home/jenkins/.venv/bin"
+    GOPATH: "/usr/local"
+  roles:
+  - deploy/audit
+  - moira
+  - moira/trigger
+  - role: dns/record
+    domain_name: moira-{{ region }}
+  - role: dns/record
+    domain_name: monitor-{{ region }}

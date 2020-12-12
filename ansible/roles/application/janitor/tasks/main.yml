@@ -1,0 +1,8 @@
+---
+#- shell: test $(hostname -I | cut -f1 -d' ') == $(dig +short leader.mesos)
+#  register: is_leader
+#  failed_when: False
+
+- name: docker run mesosphere/janitor /janitor.py -r {{zookeeper_role_name}} -p {{zookeeper_principal_name}} -z {{name}}
+  shell: docker run mesosphere/janitor /janitor.py -r {{zookeeper_role_name}} -p {{zookeeper_principal_name}} -z {{name}}
+  become: yes

@@ -1,0 +1,9 @@
+- name: Collectd config to check elasticsearch-proxy endpoint status
+  template: src=es-proxy.conf.j2 dest=/etc/collectd.d/es-proxy.conf
+  delegate_to: "{{ item }}"
+  become: yes
+  become_user: root
+  remote_user: "{{ remote_user }}"
+  with_items: "{{ groups['mesos-agent'] }}"
+  notify:
+    - restart collectd

@@ -1,0 +1,39 @@
+{
+  "id": "/drone-{{customer_name}}",
+  "cpus": 0.5,
+  "mem": 128.0,
+  "instances": 1,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "drone/drone:0.5",
+      "network": "BRIDGE",
+      "portMappings": [
+        { "containerPort": 80, "hostPort": 0 },
+        { "containerPort": 8000, "hostPort": 0 }
+      ]
+    },
+    "volumes": [
+      {
+        "containerPath": "/drone",
+        "hostPath": "/mnt/jenkins/drone",
+        "mode": "RW"
+      }
+    ]
+  },
+  "env": {
+    "DRONE_OPEN": "true",
+    "DRONE_GITHUB": "true",
+    "DRONE_GITHUB_CLIENT": "foo",
+    "DRONE_GITHUB_SECRET": "bar",
+    "DRONE_SECRET": "onthemove"
+  },
+  "labels": {
+      "FE-Proxy": "yes",
+      "FE-Proxy-VIP": "{{virtualip_addr}}",
+      "avi_proxy": "{\"virtualservice\": {\"services\": [{\"port\": 80}, {\"port\": 8000}], \"analytics_policy\": {\"metrics_realtime_update\": {\"duration\": 0, \"enabled\":true}, \"client_insights\": \"NO_INSIGHTS\", \"full_client_logs\": {\"enabled\":true}}}, \"tenant\": \"admin\" }"
+  },
+  "uris":  [
+    "file:///etc/docker.tar.gz"
+  ]
+}

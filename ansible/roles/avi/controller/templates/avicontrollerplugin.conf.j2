@@ -1,0 +1,16 @@
+LoadPlugin python
+
+TypesDB "{{ collectd_python_module_dir }}/avicontrollerplugin.db"
+
+<Plugin python>
+  ModulePath "{{ collectd_python_module_dir }}"
+  LogTraces true
+  Import "avicontrollerplugin"
+
+  <Module avicontrollerplugin>
+    controller_ip "{{ openstack['private_v4'] }}"
+    controller_port "9443"
+    username "{{ avi_controller_monitor_user }}"
+    password "{{ avi_controller_monitor_password }}"
+  </Module>
+</Plugin>

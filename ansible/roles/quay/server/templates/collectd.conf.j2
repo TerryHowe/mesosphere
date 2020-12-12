@@ -1,0 +1,11 @@
+LoadPlugin curl
+<Plugin curl>
+  <Page "quay_heartbeat">
+    URL "https://{{ openstack['private_v4'] }}"
+    Digest false
+    VerifyPeer true
+    VerifyHost false
+    MeasureResponseTime true
+    MeasureResponseCode true
+  </Page>
+</Plugin>

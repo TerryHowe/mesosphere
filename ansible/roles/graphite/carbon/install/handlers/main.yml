@@ -1,0 +1,5 @@
+---
+
+- name: restart carbon-cache
+  service: name=carbon-cache-{{ item }} state=restarted
+  with_items: "{{ carbon_instances | map(attribute='name') | list }}"

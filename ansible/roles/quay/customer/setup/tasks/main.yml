@@ -1,0 +1,349 @@
+---
+# Sets up customer related artifacts in Docker Registry (Quay). Expects the following
+# data structure:
+#
+#  quay:
+#    team: "test"                             # name of the customer team ( >4 and <=10 chars)
+#    team_desc: "Acme Test"                   # desc. of the customer team
+#    user: "some_user"                        # name of the customer user
+#    user_email: "some_user@bobby.com"      # name of the customer user email
+#    user_password: "blah"                    # user password
+#    org: "test"                              # name of customer org.
+#    org_email: "some_org_user@bobby.com"   # org email/dl address for customer, different that the user email address
+#
+- name: "Checking for presence of quay user '{{quay.user}}'..."
+  uri:
+    url: "{{quay_registry_host}}/api/v1/users/{{quay.user}}"
+    method: GET
+    validate_certs: no
+    status_code: "200, 404"
+    headers:
+      Authorization: "Bearer {{quay_oauth_token}}"
+      Accept: application/json
+      Content-Type: application/json
+    return_content: no
+  register: user_exists_result
+
+- debug: msg="Quay user '{{quay.user}}' exists."
+  when: user_exists_result.status == 200
+
+- block: # if user does not exist, create it
+  - name: "Creating quay user '{{quay.user}}'..."
+    uri:
+      url: "{{quay_registry_host}}/api/v1/superuser/users/"
+      method: POST
+      body_format: json
+      validate_certs: no
+      status_code: "200"
+      body: '{"username": "{{quay.user}}", "email": "{{quay.user_email}}"}'
+      headers:
+        Authorization: "Bearer {{quay_oauth_token}}"
+        Accept: application/json
+        Content-Type: application/json
+      return_content: no
+    register: user_create_result
+  - name: "Update quay user password for user '{{quay.user}}'..."
+    uri:
+      url: "{{quay_registry_host}}/api/v1/superuser/users/{{quay.user}}"
+      method: PUT
+      body_format: json
+      validate_certs: no
+      status_code: "200"
+      body: '{"password": "{{quay.user_password}}"}'
+      headers:
+        Authorization: "Bearer {{quay_oauth_token}}"
+        Accept: application/json
+        Content-Type: application/json
+      return_content: no
+    register: user_update_pass
+    when: user_create_result.status == 200
+  when: user_exists_result.status != 200
+
+- block: # if user exists
+  - name: "Checking for presence of quay org '{{quay.org}}'..."
+    uri:
+      url: "{{quay_registry_host}}/api/v1/organization/{{quay.org}}"
+      method: GET
+      validate_certs: no
+      status_code: "200,404"
+      headers:
+        Authorization: "Bearer {{quay_oauth_token}}"
+        Accept: application/json
+        Content-Type: application/json
+      return_content: no
+    register: org_exists_result
+    no_log: true
+
+  - debug: msg="Quay org '{{quay.org}}' already exists."
+    when: org_exists_result.status == 200
+
+  - name: "Creating quay org '{{quay.org}}'..."
+    uri:
+      url: "{{quay_registry_host}}/api/v1/organization/"
+      method: POST
+      body_format: json
+      validate_certs: no
+      status_code: 201
+      body: '{"name": "{{quay.org}}", "email": "{{quay.org_email}}"}'
+      headers:
+        Authorization: "Bearer {{quay_oauth_token}}"
+        Accept: application/json
+        Content-Type: application/json
+      return_content: no
+    register: org_created_result
+    no_log: true
+    when: org_exists_result.status != 200
+
+  - block: # if org exists
+    - name: "Checking for presence of members of quay team 'owners' for quay org '{{quay.org}}'..."
+      uri:
+        url: "{{quay_registry_host}}/api/v1/organization/{{quay.org}}/team/owners/members"
+        method: GET
+        validate_certs: no
+        status_code: "200"
+        headers:
+          Authorization: "Bearer {{quay_oauth_token}}"
+          Accept: application/json
+          Content-Type: application/json
+        return_content: no
+      register: owners_members_result
+      no_log: true
+
+    - set_fact:
+        owner_member_exists: false
+
+    - set_fact:
+        owner_member_exists: true
+      when: "{{ quay.user in owners_members_result.json.members | map(attribute='name') }}"
+
+    - debug: msg="Quay user '{{quay.user}}' already exists in team 'owners'"
+      when:  "{{ owner_member_exists }}"
+
+    - name: "Adding quay user '{{quay.user}}' to team 'owners' for org '{{quay.org}}'..."
+      uri:
+        url: "{{quay_registry_host}}/api/v1/organization/{{quay.org}}/team/owners/members/{{quay.user}}"
+        method: PUT
+        body_format: json
+        validate_certs: no
+        status_code: 200
+        body: ''
+        headers:
+          Authorization: "Bearer {{quay_oauth_token}}"
+          Accept: application/json
+          Content-Type: application/json
+        return_content: no
+      no_log: true
+      when: "{{ not owner_member_exists }}"
+
+  
+    - name: "Checking for presence of quay team '{{quay.team}}' for quay org '{{quay.org}}'..."
+      uri:
+        url: "{{quay_registry_host}}/api/v1/organization/{{quay.org}}/team/{{quay.team}}/members"
+        method: GET
+        validate_certs: no
+        status_code: "200,404"
+        headers:
+          Authorization: "Bearer {{quay_oauth_token}}"
+          Accept: application/json
+          Content-Type: application/json
+        return_content: no
+      register: team_exists_result
+      no_log: true
+
+    - debug: msg="Quay team '{{quay.team}}' exists."
+      when: team_exists_result.status == 200
+
+    - name: "Creating quay team '{{quay.team}}' for org '{{quay.org}}'..."
+      uri:
+        url: "{{quay_registry_host}}/api/v1/organization/{{quay.org}}/team/{{quay.team}}"
+        method: PUT
+        body_format: json
+        validate_certs: no
+        status_code: 200
+        body: '{"role": "member", "description": "{{quay.team_desc}}"}'
+        headers:
+          Authorization: "Bearer {{quay_oauth_token}}"
+          Accept: application/json
+          Content-Type: application/json
+        return_content: no
+      register: team_created_result
+      no_log: true
+      when: team_exists_result.status != 200
+
+    - block: # if team exists
+      - name: "Checking for presence of members of quay team '{{quay.team}}' for quay org '{{quay.org}}'..."
+        uri:
+          url: "{{quay_registry_host}}/api/v1/organization/{{quay.org}}/team/{{quay.team}}/members"
+          method: GET
+          validate_certs: no
+          status_code: "200"
+          headers:
+            Authorization: "Bearer {{quay_oauth_token}}"
+            Accept: application/json
+            Content-Type: application/json
+          return_content: no
+        register: team_members_result
+        no_log: true
+
+      - set_fact:
+          member_exists: false
+
+      - set_fact:
+          member_exists: true
+        when: "{{ quay.user in team_members_result.json.members | map(attribute='name') }}"
+
+      - debug: msg="Quay user '{{quay.user}}' already exists in team '{{quay.team}}'"
+        when:  "{{ member_exists }}"
+
+      - name: "Adding quay user '{{quay.user}}' to team '{{quay.team}}' for org '{{quay.org}}'..."
+        uri:
+          url: "{{quay_registry_host}}/api/v1/organization/{{quay.org}}/team/{{quay.team}}/members/{{quay.user}}"
+          method: PUT
+          body_format: json
+          validate_certs: no
+          status_code: 200
+          body: ''
+          headers:
+            Authorization: "Bearer {{quay_oauth_token}}"
+            Accept: application/json
+            Content-Type: application/json
+          return_content: no
+        no_log: true
+        when: "{{ not member_exists }}"    
+      
+      - name: "Checking for presence of quay default permissions for org '{{quay.org}}'..."
+        uri:
+          url: "{{quay_registry_host}}/api/v1/organization/{{quay.org}}/prototypes"
+          method: GET
+          validate_certs: no
+          status_code: "200,403,404"
+          headers:
+            Authorization: "Bearer {{quay_oauth_token}}"
+            Accept: application/json
+            Content-Type: application/json
+          return_content: no
+        register: defperms_exists_result
+        no_log: true
+
+      - set_fact:
+          defperms_exists: false
+
+      - set_fact:
+          defperms_exists: true
+        when: "{{ defperms_exists_result.status == 200 and defperms_exists_result.json.prototypes != []}}"
+
+      - debug: msg="Quay user default permissions already exists in org '{{quay.org}}'"
+        when: "{{defperms_exists}}"
+
+      - name: "Adding quay default permissions for team '{{quay.team}}' for org '{{quay.org}}'..."
+        uri:
+          url: "{{quay_registry_host}}/api/v1/organization/{{quay.org}}/prototypes"
+          method: POST
+          body_format: json
+          validate_certs: no
+          status_code: 200
+          body: '{"activating_user": {"name": ""},"role": "write","delegate": {"kind": "team","name": "{{quay.team}}"}}'
+          headers:
+            Authorization: "Bearer {{quay_oauth_token}}"
+            Accept: application/json
+            Content-Type: application/json
+          return_content: no
+        no_log: true
+        when: "{{not defperms_exists}}"
+
+      - name: "Adding quay default permissions for user '{{quay.user}}' for org '{{quay.org}}'..."
+        uri:
+          url: "{{quay_registry_host}}/api/v1/organization/{{quay.org}}/prototypes"
+          method: POST
+          body_format: json
+          validate_certs: no
+          status_code: 200
+          body: '{"activating_user": {"name": ""},"role": "admin","delegate": {"kind": "user","name": "{{quay.user}}"}}'
+          headers:
+            Authorization: "Bearer {{quay_oauth_token}}"
+            Accept: application/json
+            Content-Type: application/json
+          return_content: no
+        no_log: true
+        when: "{{not defperms_exists}}"
+
+      - name: check for customer robot
+        uri:
+          url: "{{ quay_registry_host }}/api/v1/organization/{{ quay.org }}/robots/robotti"
+          method: GET
+          validate_certs: no
+          status_code: 200,400
+          headers:
+            Authorization: "Bearer {{quay_oauth_token}}"
+            Accept: application/json
+            Content-Type: application/json
+        register: get_robot_response
+
+      - name: create customer robot
+        uri:
+          url: "{{ quay_registry_host }}/api/v1/organization/{{ quay.org }}/robots/robotti"
+          method: PUT
+          validate_certs: no
+          status_code: 201
+          headers:
+            Authorization: "Bearer {{quay_oauth_token}}"
+            Accept: application/json
+            Content-Type: application/json
+        register: robot_created_result
+        when: get_robot_response.status == 400
+
+      - set_fact:
+          robot_name: "{{quay.org}}+robotti"
+        
+      - name: "Adding quay default permissions for robot '{{robot_name}}' for org '{{quay.org}}'..."
+        uri:
+          url: "{{quay_registry_host}}/api/v1/organization/{{quay.org}}/prototypes"
+          method: POST
+          body_format: json
+          validate_certs: no
+          status_code: 200
+          body: '{"activating_user": {"name": ""},"role": "read","delegate": {"kind": "user","name": "{{robot_name}}"}}'
+          headers:
+            Authorization: "Bearer {{quay_oauth_token}}"
+            Accept: application/json
+            Content-Type: application/json
+          return_content: no
+        no_log: true
+        when: "{{ (get_robot_response.status == 200 or robot_created_result.status == 201) and (not defperms_exists) }}"
+
+      - name: "Checking for presence of quay test repository 'hello_world' for org '{{quay.org}}'..."
+        uri:
+          url: "{{quay_registry_host}}/api/v1/repository/{{quay.org}}/hello_world"
+          method: GET
+          validate_certs: no
+          status_code: "200,404"
+          headers:
+            Authorization: "Bearer {{quay_oauth_token}}"
+            Accept: application/json
+            Content-Type: application/json
+          return_content: no
+        register: repo_exists_result
+        no_log: true
+
+      - debug: msg="Quay test repository 'hello_world' for org '{{quay.org}}' exists."
+        when: repo_exists_result.status == 200
+
+      - name: "Creating quay test repository 'hello_world' for org '{{quay.org}}'..."
+        uri:
+          url: "{{quay_registry_host}}/api/v1/repository"
+          method: POST
+          body_format: json
+          validate_certs: no
+          status_code: 201
+          body: '{"namespace": "{{quay.org}}","visibility": "private","repository": "hello_world","description": "Test repo created via the onboarding process"}'
+          headers:
+            Authorization: "Bearer {{quay_oauth_token}}"
+            Accept: application/json
+            Content-Type: application/json
+          return_content: no
+        no_log: true
+        when: repo_exists_result.status != 200
+
+      when: team_exists_result.status == 200 or team_created_result.status == 200
+    when: org_exists_result.status == 200 or org_created_result.status == 201
+  when: user_exists_result.status == 200 or (user_create_result.status == 200 and user_update_pass.status == 200)

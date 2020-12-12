@@ -1,0 +1,10 @@
+- name: restart collectd
+  service: name=collectd state=restarted
+  delegate_to: "{{ item }}"
+  become: yes
+  become_user: root
+  remote_user: "{{ remote_user }}"
+  with_items: "{{ groups['mesos-agent'] }}"
+  tags: 
+    - monitoring
+ 

@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Make sure we are running on the admin project
+      assert:  { that: "'mesos' not in '{{project}}'" }
+
+- name: Create an admin database
+  hosts: mysql-common
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  vars_files:
+    - vars/{{ customer_name }}.yml
+  roles:
+   - { role: mysql/customer/setup, when: customer.admin_database is defined }

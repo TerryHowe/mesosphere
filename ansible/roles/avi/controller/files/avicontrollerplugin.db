@@ -1,0 +1,6 @@
+node_role             value:GAUGE:0:1
+node_state            value:GAUGE:0:1
+cluster_state         value:GAUGE:0:1
+progress              value:GAUGE:0:100
+health                value:GAUGE:0:100
+performance           value:GAUGE:0:100

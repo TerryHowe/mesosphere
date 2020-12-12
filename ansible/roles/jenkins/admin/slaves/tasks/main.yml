@@ -1,0 +1,38 @@
+---
+- name: git clone jenkins slave container
+  git: repo="https://github.webapps.rr.com/Docker/jenkins-slave.git" dest="/root/containers/jenkins-slave"
+
+- name: check for image
+  shell: docker -H tcp://127.0.0.1:4243 images |grep python-slave
+  register: slave_exists
+  failed_when: False
+
+- block:
+  - name: docker -H tcp://127.0.0.1:4243 build python-slave
+    shell: cd /root/containers/jenkins-slave; docker -H tcp://127.0.0.1:4243 build -f python-slave .
+    register: pythonslavebuild
+
+  - local_action: set_fact pythonslave="{{pythonslavebuild.stdout_lines[-1] | regex_replace('Successfully built ', '')}}"
+
+  - name: docker tag container
+    shell: docker -H tcp://127.0.0.1:4243 tag "{{pythonslave}}" "python-slave:latest"
+  when: slave_exists.rc != 0
+
+- name: copy requirements.txt
+  copy: src={{base_dir}}/requirements.txt dest=/root/containers/jenkins-slave/requirements.txt
+
+- name: create dcos.toml
+  template: src=dcos.toml.j2 dest=/root/containers/jenkins-slave/dcos.toml
+
+- name: docker -H tcp://127.0.0.1:4243 rmi dcos-slave
+  shell: docker -H tcp://127.0.0.1:4243 rmi dcos-slave
+  failed_when: False
+
+- name: docker -H tcp://127.0.0.1:4243 build dcos-slave
+  shell: cd /root/containers/jenkins-slave; docker -H tcp://127.0.0.1:4243 build -f dcos-slave .
+  register: dcosslavebuild
+
+- local_action: set_fact dcosslave="{{dcosslavebuild.stdout_lines[-1] | regex_replace('Successfully built ', '')}}"
+
+- name: docker tag container
+  shell: docker -H tcp://127.0.0.1:4243 tag "{{dcosslave}}" "dcos-slave:latest"

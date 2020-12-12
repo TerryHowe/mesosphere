@@ -1,0 +1,3 @@
+---
+dependencies:
+  - { role: grafana/alerts, grafana_alerts: "{{ mesos_agent_alerts }}" }

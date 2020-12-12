@@ -1,0 +1,6 @@
+---
+- name: test local vault configuration
+  hosts: localhost
+  tasks:
+    - debug:
+        msg: "{{lookup('vault', 'test', 'data')}}"

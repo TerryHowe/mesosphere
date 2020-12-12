@@ -1,0 +1,49 @@
+LoadPlugin zookeeper
+
+<LoadPlugin "python">
+    Globals true
+</LoadPlugin>
+
+<Plugin "python">
+    ModulePath "{{ collectd_python_module_dir }}"
+
+    Import "mesos-master"
+
+    <Module "mesos-master">
+        Host "{{ ansible_default_ipv4['address'] }}"
+        Port 5050
+        Verbose false
+        Version "0.22.1"
+    </Module>
+</Plugin>
+
+LoadPlugin ping
+<Plugin "ping">
+{% for host in groups['mesos-master'] if host != ansible_hostname %}
+  Host "{{ hostvars[host]['openstack']['private_v4'] }}"
+{% endfor %}
+</Plugin>
+
+LoadPlugin target_replace
+PreCacheChain "ip2hostname"
+
+<Chain "ip2hostname">
+{% for host in groups['mesos-master'] if host != ansible_hostname %}
+  <Rule "rename_{{ host }}">
+    <Target "replace">
+      TypeInstance "\\<{{ hostvars[host]['openstack']['private_v4'] | regex_replace('\.', '\\.') }}\\>" "{{ host }}"
+    </Target>
+  </Rule>
+{% endfor %}
+</Chain>
+
+LoadPlugin curl
+<Plugin curl>
+  <Page "dcos_adminrouter">
+    URL "https://{{ openstack['private_v4'] }}"
+    VerifyPeer false
+    VerifyHost false
+    MeasureResponseTime false
+    MeasureResponseCode true
+  </Page>
+</Plugin>

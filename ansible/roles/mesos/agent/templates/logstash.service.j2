@@ -1,0 +1,13 @@
+[Unit]
+Description=Mesos Slave Logstash
+
+[Service]
+Environment=LOGSTASH_CONFIG={{ mesos_slave_logstash_conf }}
+Environment=ELASTICSEARCH_HOSTPORT={{ logstash_elasticsearch_hostport }}
+Restart=always
+RestartSec=15
+ExecStartPre=/bin/curl -XHEAD ${ELASTICSEARCH_HOSTPORT}
+ExecStart=/bin/bash -c "/usr/bin/journalctl --since=\"now\" -o json -u {{ dcos_logstash_services | join (" -u ") }}  -f | /opt/logstash/bin/logstash -f ${LOGSTASH_CONFIG}"
+
+[Install]
+WantedBy=local.target

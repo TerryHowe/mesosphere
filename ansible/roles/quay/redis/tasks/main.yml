@@ -1,0 +1,13 @@
+---
+- name: quayredis.service file
+  template: src=quayredis.service.j2 dest=/usr/lib/systemd/system/quayredis.service
+
+- name: enable quayredis service
+  shell: systemctl enable /usr/lib/systemd/system/quayredis.service
+
+- name: systemctl daemon-reload
+  shell: systemctl daemon-reload
+  changed_when: False
+
+- name: name=quayredis.service enabled=yes state=started
+  service: name=quayredis.service enabled=yes state=started

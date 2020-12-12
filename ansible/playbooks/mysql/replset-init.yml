@@ -1,0 +1,48 @@
+---
+- hosts: mysql-common
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  vars:
+    master_hostname: "{{ 'mysql-common-1-' ~ region }}"
+    mysql_allowed_hosts:
+      - '192.168.1.%'
+    mysql_repl_username: "{{ project }}-{{ region }}-repl"
+    mysql_repl_password: "{{ mysql_common_repl_password }}"
+  roles:
+  - role: deploy/audit
+  tasks:
+    - block:
+        - name: create replication user
+          mysql_user: name={{ mysql_repl_username }}
+                      password={{ mysql_repl_password }}
+                      host='{{ item }}'
+                      priv="*.*:REPLICATION SLAVE,REPLICATION CLIENT"
+                      state=present
+                      config_file=~/.local.my.cnf
+          with_items: "{{ mysql_allowed_hosts }}"
+
+      when: "{{ ansible_hostname == master_hostname }}"
+
+    - block:
+        - mysql_replication: mode=stopslave
+                             config_file=~/.local.my.cnf
+
+        - mysql_replication: mode=resetslave
+                             config_file=~/.local.my.cnf
+
+        - mysql_replication: mode=changemaster
+                             master_host={{ hostvars[master_hostname]['openstack']['private_v4'] }}
+                             master_port=3307
+                             master_auto_position=yes
+                             config_file=~/.local.my.cnf
+
+        - mysql_variables: variable=super_read_only value=1
+                           config_file=~/.local.my.cnf
+
+        # mysql_replication mode=startslave doesnt pass on user and password
+        - name: start slave
+          command: mysql --defaults-file=~/.local.my.cnf -e "START SLAVE USER='{{ mysql_repl_username }}' PASSWORD='{{ mysql_repl_password }}';"
+          no_log: yes
+
+      when: "{{ ansible_hostname != master_hostname }}"

@@ -1,0 +1,175 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<hudson>
+  <disabledAdministrativeMonitors/>
+  <version>1.642.2</version>
+  <numExecutors>{{ jenkins_executors }}</numExecutors>
+  <mode>NORMAL</mode>
+  <useSecurity>true</useSecurity>
+  <authorizationStrategy class="hudson.security.GlobalMatrixAuthorizationStrategy">
+    <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Create:paas-devops</permission>
+    <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Delete:paas-devops</permission>
+    <permission>com.cloudbees.plugins.credentials.CredentialsProvider.ManageDomains:paas-devops</permission>
+    <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Update:paas-devops</permission>
+    <permission>com.cloudbees.plugins.credentials.CredentialsProvider.View:paas-devops</permission>
+    <permission>hudson.model.Computer.Build:paas-devops</permission>
+    <permission>hudson.model.Computer.Configure:paas-devops</permission>
+    <permission>hudson.model.Computer.Connect:paas-devops</permission>
+    <permission>hudson.model.Computer.Create:paas-devops</permission>
+    <permission>hudson.model.Computer.Delete:paas-devops</permission>
+    <permission>hudson.model.Computer.Disconnect:paas-devops</permission>
+    <permission>hudson.model.Hudson.Administer:paas-devops</permission>
+    <permission>hudson.model.Hudson.ConfigureUpdateCenter:paas-devops</permission>
+    <permission>hudson.model.Hudson.Read:paas-devops</permission>
+    <permission>hudson.model.Hudson.RunScripts:paas-devops</permission>
+    <permission>hudson.model.Hudson.UploadPlugins:paas-devops</permission>
+    <permission>hudson.model.Item.Build:paas-devops</permission>
+    <permission>hudson.model.Item.Cancel:paas-devops</permission>
+    <permission>hudson.model.Item.Configure:paas-devops</permission>
+    <permission>hudson.model.Item.Create:paas-devops</permission>
+    <permission>hudson.model.Item.Delete:paas-devops</permission>
+    <permission>hudson.model.Item.Discover:paas-devops</permission>
+    <permission>hudson.model.Item.Move:paas-devops</permission>
+    <permission>hudson.model.Item.Read:paas-devops</permission>
+    <permission>hudson.model.Item.Workspace:paas-devops</permission>
+    <permission>hudson.model.Run.Delete:paas-devops</permission>
+    <permission>hudson.model.Run.Replay:paas-devops</permission>
+    <permission>hudson.model.Run.Update:paas-devops</permission>
+    <permission>hudson.model.View.Configure:paas-devops</permission>
+    <permission>hudson.model.View.Create:paas-devops</permission>
+    <permission>hudson.model.View.Delete:paas-devops</permission>
+    <permission>hudson.model.View.Read:paas-devops</permission>
+    <permission>hudson.scm.SCM.Tag:paas-devops</permission>
+  </authorizationStrategy>
+  <securityRealm class="hudson.security.HudsonPrivateSecurityRealm">
+    <disableSignup>true</disableSignup>
+    <enableCaptcha>false</enableCaptcha>
+  </securityRealm>
+  <disableRememberMe>false</disableRememberMe>
+  <projectNamingStrategy class="jenkins.model.ProjectNamingStrategy$DefaultProjectNamingStrategy"/>
+  <workspaceDir>${JENKINS_HOME}/workspace/${ITEM_FULLNAME}</workspaceDir>
+  <buildsDir>${ITEM_ROOTDIR}/builds</buildsDir>
+  <markupFormatter class="hudson.markup.EscapedMarkupFormatter"/>
+  <jdks/>
+  <viewsTabBar class="hudson.views.DefaultViewsTabBar"/>
+  <myViewsTabBar class="hudson.views.DefaultMyViewsTabBar"/>
+  <clouds>
+    <com.nirima.jenkins.plugins.docker.DockerCloud plugin="docker-plugin@0.16.0">
+      <name>docker</name>
+      <templates>
+        <com.nirima.jenkins.plugins.docker.DockerTemplate>
+          <configVersion>2</configVersion>
+          <labelString>dcos-slave</labelString>
+          <launcher class="com.nirima.jenkins.plugins.docker.launcher.DockerComputerSSHLauncher">
+            <sshConnector plugin="ssh-slaves@1.9">
+              <port>22</port>
+              <credentialsId>jenkins-slave</credentialsId>
+              <jvmOptions></jvmOptions>
+              <javaPath></javaPath>
+              <maxNumRetries>0</maxNumRetries>
+              <retryWaitTime>0</retryWaitTime>
+            </sshConnector>
+          </launcher>
+          <remoteFsMapping></remoteFsMapping>
+          <remoteFs>/home/jenkins</remoteFs>
+          <instanceCap>{{ jenkins_executors }}</instanceCap>
+          <mode>NORMAL</mode>
+          <retentionStrategy class="com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy">
+            <idleMinutes>10</idleMinutes>
+            <idleMinutes defined-in="com.nirima.jenkins.plugins.docker.strategy.DockerOnceRetentionStrategy">10</idleMinutes>
+          </retentionStrategy>
+          <numExecutors>1</numExecutors>
+          <dockerTemplateBase>
+            <image>dcos-slave</image>
+            <dockerCommand></dockerCommand>
+            <lxcConfString></lxcConfString>
+            <hostname></hostname>
+            <dnsHosts/>
+            <volumes/>
+            <volumesFrom2/>
+            <environment/>
+            <bindPorts></bindPorts>
+            <bindAllPorts>false</bindAllPorts>
+            <privileged>false</privileged>
+            <tty>false</tty>
+            <extraHosts class="java.util.Collections$UnmodifiableRandomAccessList" resolves-to="java.util.Collections$UnmodifiableList">
+              <c class="list"/>
+              <list reference="../c"/>
+            </extraHosts>
+          </dockerTemplateBase>
+          <removeVolumes>false</removeVolumes>
+          <pullStrategy>PULL_LATEST</pullStrategy>
+        </com.nirima.jenkins.plugins.docker.DockerTemplate>
+      </templates>
+      <serverUrl>http://172.17.0.1:4243</serverUrl>
+      <connectTimeout>5</connectTimeout>
+      <readTimeout>15</readTimeout>
+      <credentialsId></credentialsId>
+      <containerCap>100</containerCap>
+    </com.nirima.jenkins.plugins.docker.DockerCloud>
+  </clouds>
+  <quietPeriod>5</quietPeriod>
+  <scmCheckoutRetryCount>0</scmCheckoutRetryCount>
+  <views>
+    <hudson.model.AllView>
+      <owner class="hudson" reference="../../.."/>
+      <name>All</name>
+      <filterExecutors>false</filterExecutors>
+      <filterQueue>false</filterQueue>
+      <properties class="hudson.model.View$PropertyList"/>
+    </hudson.model.AllView>
+{% for inventory_env in jenkins_managed_inventories | map('regex_replace', '-.*$', '') | unique %}
+    <listView>
+      <owner class="hudson" reference="../../.."/>
+      <name>Inventory: {{ inventory_env | capitalize }}</name>
+      <filterExecutors>false</filterExecutors>
+      <filterQueue>false</filterQueue>
+      <properties class="hudson.model.View$PropertyList"/>
+      <jobNames>
+        <comparator class="hudson.util.CaseInsensitiveComparator"/>
+      </jobNames>
+      <jobFilters/>
+      <columns>
+        <hudson.views.StatusColumn/>
+        <hudson.views.WeatherColumn/>
+        <hudson.views.JobColumn/>
+        <hudson.views.LastSuccessColumn/>
+        <hudson.views.LastFailureColumn/>
+        <hudson.views.LastDurationColumn/>
+        <hudson.views.BuildButtonColumn/>
+      </columns>
+      <includeRegex>({{ inventory_env }}-pipeline|tag-commit|{{ inventory_env }}.*playbook)</includeRegex>
+      <recurse>false</recurse>
+    </listView>
+  {% endfor %}
+  </views>
+  <primaryView>All</primaryView>
+  <slaveAgentPort>50000</slaveAgentPort>
+  <label></label>
+  <nodeProperties/>
+
+  <globalNodeProperties>
+    <hudson.slaves.EnvironmentVariablesNodeProperty>
+      <envVars serialization="custom">
+        <unserializable-parents/>
+        <tree-map>
+          <default>
+            <comparator class="hudson.util.CaseInsensitiveComparator"/>
+          </default>
+          <int>5</int>
+          <string>MANAGED_INVENTORIES</string>
+          <string>{{ jenkins_managed_inventories | join(",") }}</string>
+          <string>OS_REGION_NAME</string>
+          <string>{{ os_region_name }}</string>
+          <string>OS_AUTH_URL</string>
+          <string>{{ os_auth_url }}</string>
+          <string>OS_TENANT_NAME</string>
+          <string>{{ admin_project }}</string>
+          <string>VAULT_SKIP_VERIFY</string>
+          <string>"true"</string>
+        </tree-map>
+      </envVars>
+    </hudson.slaves.EnvironmentVariablesNodeProperty>
+  </globalNodeProperties>
+
+  <noUsageStatistics>true</noUsageStatistics>
+</hudson>

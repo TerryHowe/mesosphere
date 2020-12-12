@@ -1,0 +1,11 @@
+carbon_receiver_interface: 127.0.0.1
+carbon_cache_instances: "{{ ansible_processor_count / 2 }}"
+carbon_user: carbon
+carbon_group: carbon
+carbon_whisper_dir: /var/lib/carbon/whisper
+carbon_cache_replication_factor: 2
+
+carbon_storage_retentions:
+    - name: "default"
+      pattern: ".*"
+      retentions: "60s:7d,5m:14d,30m:30d"

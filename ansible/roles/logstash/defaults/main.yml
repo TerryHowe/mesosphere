@@ -1,0 +1,15 @@
+logstash_patterns_dir: /etc/logstash/patterns/
+logstash_elasticsearch_hostport: elasticsearch-executor.elasticsearch.mesos:1025
+logstash_logrotate_configs:
+  logstash:
+    name: "/var/log/logstash logrotate config"
+    logrotate_filename: logstash
+    logfile_pattern: "/var/log/logstash/*.log /var/log/logstash/*.err /var/log/logstash/*.stdout"
+    logrotate_settings:
+      - "missingok"
+      - "notifempty"
+      - "daily"
+      - "rotate 7"
+      - "compress"
+      - "delaycompress"
+      - "copytruncate"

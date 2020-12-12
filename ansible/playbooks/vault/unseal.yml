@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  roles:
+    - role: vault/unseal
+      vault_url: 'https://worker-1-{{region}}.{{admin_domain}}:8200'
+      vault_verify: False
+    - role: vault/unseal
+      vault_url: 'https://worker-2-{{region}}.{{admin_domain}}:8200'
+      vault_verify: False

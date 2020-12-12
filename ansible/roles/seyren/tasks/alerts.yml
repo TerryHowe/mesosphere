@@ -1,0 +1,120 @@
+---
+- name: Wait for seyren api to be available
+  uri: url="{{ seyren_url }}/api/checks/" return_content=yes validate_certs=no
+  register: seyren_ready
+  until: seyren_ready.status == 200
+  retries: 10
+  delay: 10
+  
+
+#-- Configure default alerts
+- name: See if the check already exists
+  uri: url="{{ seyren_url }}/api/checks/?fields=name&regexes={{ item.value.name }}" return_content=yes
+  register: check_exists
+  with_dict: "{{ seyren_checks | default({}) }}"
+
+- name: Create the checks
+  uri:
+    url: "{{ seyren_url }}/api/checks/"
+    body: >
+      {
+        "name": "{{ item.item.value.name }}",
+        "description": "{{ item.item.value.description | default('') }} (managed by ansible)",
+        "target": "{{ item.item.value.query }}",
+        "from": "{{ item.item.value.from }}",
+        "warn": "{{ item.item.value.warn }}",
+        "error": "{{ item.item.value.error }}",
+        "enabled": "true"
+      }
+    body_format: json
+    method: POST
+    HEADER_Content_Type: "application/json"
+    status_code: 201
+  when: item.json.total == 0
+  with_items: "{{ check_exists.results }}"
+
+- name: Get updated list of checks
+  uri: url="{{ seyren_url }}/api/checks/?fields=name&regexes={{ item.value.name }}" return_content=yes
+  register: existing_checks
+  with_dict: "{{ seyren_checks | default({}) }}"
+
+- name: Ensure checks are up to date with any changes since creation
+  uri:
+    url: "{{ seyren_url }}/api/checks/{{ item.json['values'][0].id }}"
+    body: >
+      {
+        "name": "{{ item.item.value.name }}",
+        "target": "{{ item.item.value.query }}",
+        "from": "{{ item.item.value.from }}",
+        "warn": "{{ item.item.value.warn }}",
+        "error": "{{ item.item.value.error }}",
+        "enabled": "true",
+        "state": "{{ item.json['values'][0].state }}",
+        "id": "{{ item.json['values'][0].id }}"
+      }
+    body_format: json
+    method: PUT
+    HEADER_Content_Type: "application/json"
+  with_items: "{{ existing_checks.results }}"
+
+- name: Create PagerDuty subscription
+  uri:
+    url: "{{ seyren_url }}/api/checks/{{ item.json['values'][0].id }}/subscriptions"
+    body: >
+      {
+        "type": "PAGERDUTY",
+        "target": "{{ pagerduty_api_token }}",
+        "ignoreError": "{{ item.item.value.ignore_error }}",
+        "ignoreWarn": "{{ item.item.value.ignore_warn }}",
+        "ignoreOk": "false",
+        "enabled": "true",
+        "fromTime": "0000",
+        "toTime": "2359",
+        "su": "true",
+        "mo": "true",
+        "tu": "true",
+        "we": "true",
+        "th": "true",
+        "fr": "true",
+        "sa": "true"
+      }
+    body_format: json
+    method: POST
+    HEADER_Content_Type: "application/json"
+    status_code: 201
+  when: item.json['values'][0].subscriptions.0 is not defined and item.item.value.notify == "pagerduty"
+  with_items: "{{ existing_checks.results }}"
+
+- name: Get updated list of checks
+  uri: url="{{ seyren_url }}/api/checks/?fields=name&regexes={{ item.value.name }}" return_content=yes
+  register: existing_checks
+  with_dict: "{{ seyren_checks | default({}) }}"
+
+- name: Update PagerDuty subscriptions
+  uri:
+    url: "{{ seyren_url }}/api/checks/{{ item.json['values'][0].id }}/subscriptions/{{ item.json['values'][0].subscriptions.0.id }}"
+    body: >
+      {
+        "id": "{{ item.json['values'][0].subscriptions.0.id }}",
+        "type": "PAGERDUTY",
+        "target": "{{ pagerduty_api_token }}",
+        "ignoreError": "{{ item.item.value.ignore_error }}",
+        "ignoreWarn": "{{ item.item.value.ignore_warn }}",
+        "ignoreOk": "false",
+        "enabled": "true",
+        "fromTime": "0000",
+        "toTime": "2359",
+        "su": "true",
+        "mo": "true",
+        "tu": "true",
+        "we": "true",
+        "th": "true",
+        "fr": "true",
+        "sa": "true"
+      }
+    body_format: json
+    method: PUT
+    HEADER_Content_Type: "application/json"
+    status_code: 204
+  when: item.json['values'][0].subscriptions.0 is defined and item.item.value.notify == "pagerduty"
+  with_items: "{{ existing_checks.results }}"

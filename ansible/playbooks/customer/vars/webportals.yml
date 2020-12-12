@@ -1,0 +1,7 @@
+---
+customer:
+  name: "Web Portals DevOps"
+  shortname: "webportals"
+  email: "stephen@bobby.com"
+  password: "{{ lookup('vault', 'customer/webportals', 'password') }}"
+  org_email: "dl-wes-devops@bobby.com"

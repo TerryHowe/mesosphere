@@ -1,0 +1,32 @@
+---
+- name: create mysql database
+  mysql_db: name=quay
+            state=present
+            login_host=127.0.0.1
+            config_file='~/.writer.my.cnf'
+  register: databasecreate
+  run_once: True
+
+- mysql_user: name="{{mysql_user}}"
+              password="{{mysql_password}}"
+              priv='quay.*:ALL'
+              host='%'
+              state=present
+              login_host=127.0.0.1
+              config_file='~/.writer.my.cnf'
+  run_once: True
+
+- block:
+  - name: generate quay.sql file
+    template: src=quay_{{project_environment}}.sql.j2 dest=/tmp/quay.sql
+
+  - name: upload mysql database
+    mysql_db: name=quay
+              state=import
+              target=/tmp/quay.sql
+              login_host=127.0.0.1
+              config_file=~/.writer.my.cnf
+
+  - file: path=/tmp/quay.sql state=absent
+  run_once: True
+  when: databasecreate.changed

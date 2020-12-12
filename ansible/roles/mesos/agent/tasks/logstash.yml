@@ -1,0 +1,22 @@
+- set_fact:
+    mesos_slave_logstash_conf: /etc/mesos-slave-logstash.conf
+
+- name: add config for mesos-slave-logstash
+  template: src=mesos-slave-logstash.conf.j2 dest={{ mesos_slave_logstash_conf }} mode=0644
+  notify:
+    - systemd daemon-reload
+    - restart mesos-slave-logstash service
+
+- name: add mesos-slave-logstash service
+  template: src=logstash.service.j2 dest=/etc/systemd/system/mesos-slave-logstash.service
+  notify:
+    - systemd daemon-reload
+    - restart mesos-slave-logstash service
+
+- name: enable mesos-slave-logstash service
+  service: name=mesos-slave-logstash enabled=true
+
+- name: start mesos-slave-logstash service
+  service: name=mesos-slave-logstash state=started
+  # logstash service deps wont be ready when this is installed
+  failed_when: false

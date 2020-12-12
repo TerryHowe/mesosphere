@@ -1,0 +1,17 @@
+[Unit]
+Description=StatsD Collector
+
+[Service]
+ExecStart=/bin/node /opt/statsd/stats.js /opt/statsd/server_config.js
+ExecStop=/bin/kill $MAINPID
+Restart=always
+User=node
+Group=node
+Environment=PATH=/usr/bin:/usr/local/bin:/opt/statsd/bin
+WorkingDirectory=/opt/statsd
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=statsd
+
+[Install]
+WantedBy=multi-user.target

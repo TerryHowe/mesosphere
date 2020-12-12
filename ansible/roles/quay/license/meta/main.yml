@@ -1,0 +1,8 @@
+---
+dependencies:
+  - role: docker/login
+    docker_client_username: "{{quay_username}}"
+    docker_client_password: "{{quay_password}}"
+    docker_client_email: "{{quay_email}}"
+    docker_client_registry: "{{quay_registry}}"
+

@@ -1,0 +1,12 @@
+- hosts: mesos-master
+  become: yes
+  tasks:
+#    - shell: netstat -ntpl | grep 8443
+    #- shell: systemctl restart dcos-marathon
+    - shell: df /
+#
+- hosts: mesos-agent
+  become: yes
+  tasks:
+#    - shell: docker rm $(docker ps -a | grep haproxy | cut -f1 -d' ')
+    - shell: df /

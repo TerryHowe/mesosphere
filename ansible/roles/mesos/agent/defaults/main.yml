@@ -1,0 +1,15 @@
+bootstrap_host_port: "{{ 10 ~ mesos_version | replace('.', '')}}"
+dcos_logstash_services:
+  - dcos-ddt.service
+  - dcos-download.service
+  - dcos-epmd.service
+  - dcos-gen-resolvconf.service
+  - dcos-link-env.service
+  - dcos-logrotate.service
+  - dcos-mesos-slave.service
+  - dcos-minuteman.service
+  - dcos-rexray.service
+  - dcos-setup.service
+  - dcos-spartan-watchdog.service
+  - dcos-spartan.service
+  - dcos-vol-discovery-priv-agent.service

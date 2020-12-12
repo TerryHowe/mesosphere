@@ -1,0 +1,6 @@
+---
+- include: mesos/upgrade/leader_followers.yml
+
+- hosts: mesos-leader
+  roles:
+    - application/janitor

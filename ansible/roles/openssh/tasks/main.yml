@@ -1,0 +1,20 @@
+---
+
+- name: add TWC internal certs
+  copy: src=ca-trust/ dest=/etc/pki/ca-trust/source/anchors/
+  register: internal_cert_result
+
+- file: path="/etc/docker" state=directory mode=0755 owner=root group=root
+- file: path="/etc/docker/cert.d" state=directory mode=0750 owner=root group=root
+- file: path="/etc/docker/cert.d/{{docker_registry}}" state=directory mode=0750 owner=root group=root
+- name: add TWC internal certs
+  copy: src=ca.crt dest="/etc/docker/cert.d/{{docker_registry}}/"
+
+- block:
+    - name: update trusted CAs
+      command: update-ca-trust
+
+    - name: restart docker
+      service: name=docker state=restarted
+  # handlers not used since we need immediate side-effects
+  when: internal_cert_result.changed

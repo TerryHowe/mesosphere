@@ -1,0 +1,11 @@
+dcos_username: admin
+dcos_hashed_password: $6$rounds=656000$3nIM8KPimBciQFDW$WOVxZ5Hy4txEJ8QTOHEsMtPkwcFtnFKJHsc78OMWPPwtNlPS5epsHQhEyUBtcWOwnl3uRHXug/bUSS6nagoZy.
+mesos_version: "1.7.3"
+dcos_root_dir: "/root/dcos/{{ mesos_version }}"
+dcos_genconf_dir: "{{ dcos_root_dir }}/genconf"
+mesos_bootstrap_dcos_url: "https://downloads.mesosphere.com/dcos-enterprise/{{ mesos_version }}/dcos_generate_config.ee.sh"
+customer_key: "4c62a6e8-c714-40f5-ddab-b8d7fb7156fc"
+default_port: "{{ 10 ~ mesos_version | replace('.', '')}}"
+bootstrap_host_port: "{{ default_port }}"
+bootstrap_dns_resolvers:
+  - 8.8.8.8

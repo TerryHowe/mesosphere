@@ -1,0 +1,12 @@
+---
+quay_registry_host: "https://{{docker_registry}}"
+quay_oauth_token: "{{lookup('vault', '{{vault_environment}}', 'quay_api_oauth_token')}}"
+# customer structure is passed from playbook vars
+quay:
+  user: "{{customer.shortname}}_admin"
+  user_email: "{{customer.email}}"
+  user_password: "{{customer.password}}"
+  org: "{{customer.shortname}}"
+  org_email: "{{customer.org_email}}"
+  team: "{{customer.shortname}}"
+  team_desc: "{{customer.name}} development team"

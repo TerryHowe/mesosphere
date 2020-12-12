@@ -1,0 +1,5 @@
+---
+- name: template src={{hipchat_file}}.j2 dest={{persistent_store}}/{{hipchat_file}}
+  become: yes
+  template: src={{hipchat_file}}.j2 dest={{persistent_store}}/{{hipchat_file}}
+  run_once: True

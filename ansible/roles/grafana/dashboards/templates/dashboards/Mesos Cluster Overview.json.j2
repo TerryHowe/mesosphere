@@ -1,0 +1,485 @@
+{
+"overwrite": true,
+"dashboard": {
+  "id": null,
+  "title": "Mesos Cluster Overview",
+  "originalTitle": "Mesos Cluster Overview",
+  "tags": [
+    "overview"
+  ],
+  "style": "dark",
+  "timezone": "utc",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "title": "Overall Mesos Usage",
+          "error": false,
+          "span": 3,
+          "editable": true,
+          "type": "singlestat",
+          "isNew": true,
+          "id": 7,
+          "links": [],
+          "datasource": null,
+          "maxDataPoints": 100,
+          "interval": null,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "scale(consolidateBy(maxSeries(collectd.$project.$region.mesos-master.*.mesos-master.percent.*), 'max'), 100)",
+              "textEditor": true
+            }
+          ],
+          "cacheTimeout": null,
+          "format": "none",
+          "prefix": "",
+          "postfix": "%",
+          "nullText": null,
+          "valueMaps": [],
+          "nullPointMode": "connected",
+          "valueName": "current",
+          "prefixFontSize": "50%",
+          "valueFontSize": "80%",
+          "postfixFontSize": "80%",
+          "thresholds": "0,75, 95",
+          "colorBackground": true,
+          "colorValue": false,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "sparkline": {
+            "show": false,
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "fillColor": "rgba(31, 118, 189, 0.18)"
+          }
+        },
+        {
+          "columns": [
+            {
+              "text": "Current",
+              "value": "current"
+            }
+          ],
+          "editable": true,
+          "error": false,
+          "fontSize": "100%",
+          "id": 4,
+          "isNew": true,
+          "links": [],
+          "pageSize": null,
+          "scroll": true,
+          "showHeader": true,
+          "sort": {
+            "col": 0,
+            "desc": false
+          },
+          "span": 3,
+          "styles": [
+            {
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "pattern": "Time",
+              "type": "number"
+            },
+            {
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "decimals": 0,
+              "pattern": "/.*/",
+              "thresholds": [],
+              "type": "number",
+              "unit": "short"
+            }
+          ],
+          "targets": [
+            {
+              "refId": "A",
+              "target": "alias(sumSeries(collectd.$project.$region.mesos-master.*.mesos-master.gauge.master_cpus_total), \"Total CPU Shares\")",
+              "textEditor": true
+            },
+            {
+              "refId": "B",
+              "target": "alias(sumSeries(collectd.$project.$region.mesos-master.*.mesos-master.gauge.master_cpus_used), \"Used CPU Shares\")",
+              "textEditor": true
+            }
+          ],
+          "title": "CPU Resources",
+          "transform": "timeseries_aggregations",
+          "type": "table"
+        },
+        {
+          "columns": [
+            {
+              "text": "Current",
+              "value": "current"
+            }
+          ],
+          "editable": true,
+          "error": false,
+          "fontSize": "100%",
+          "id": 5,
+          "isNew": true,
+          "links": [],
+          "pageSize": null,
+          "scroll": true,
+          "showHeader": true,
+          "sort": {
+            "col": 0,
+            "desc": false
+          },
+          "span": 3,
+          "styles": [
+            {
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "pattern": "Time",
+              "type": "string"
+            },
+            {
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "decimals": 0,
+              "pattern": "Current",
+              "thresholds": [],
+              "type": "string",
+              "unit": "short"
+            }
+          ],
+          "targets": [
+            {
+              "refId": "A",
+              "target": "alias(sumSeries(collectd.$project.$region.mesos-master.*.mesos-master.gauge.master_mem_total), \"Total Memory\")",
+              "textEditor": true
+            },
+            {
+              "refId": "B",
+              "target": "alias(sumSeries(collectd.$project.$region.mesos-master.*.mesos-master.gauge.master_mem_used), \"Used Memory\")",
+              "textEditor": true
+            }
+          ],
+          "title": "Memory Resources",
+          "transform": "timeseries_aggregations",
+          "type": "table"
+        },
+        {
+          "columns": [
+            {
+              "text": "Current",
+              "value": "current"
+            }
+          ],
+          "editable": true,
+          "error": false,
+          "fontSize": "100%",
+          "id": 6,
+          "isNew": true,
+          "links": [],
+          "pageSize": null,
+          "scroll": true,
+          "showHeader": true,
+          "sort": {
+            "col": 0,
+            "desc": false
+          },
+          "span": 3,
+          "styles": [
+            {
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "pattern": "Time",
+              "type": "string"
+            },
+            {
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
+              ],
+              "decimals": 0,
+              "pattern": "Current",
+              "thresholds": [],
+              "type": "string",
+              "unit": "short"
+            }
+          ],
+          "targets": [
+            {
+              "refId": "A",
+              "target": "alias(sumSeries(collectd.$project.$region.mesos-master.*.mesos-master.gauge.master_disk_total), \"Total Disk\")",
+              "textEditor": true
+            },
+            {
+              "refId": "B",
+              "target": "alias(sumSeries(collectd.$project.$region.mesos-master.*.mesos-master.gauge.master_disk_used), \"Used Disk\")",
+              "textEditor": true
+            }
+          ],
+          "title": "Disk Resources",
+          "transform": "timeseries_aggregations",
+          "type": "table"
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Graphite",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 1,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "alias(sumSeries(scale(keepLastValue(collectd.$project.$region.mesos-master.*.mesos-master.percent.master_cpus_percent, 5), 100)), \"CPU\")",
+              "textEditor": true
+            },
+            {
+              "refId": "B",
+              "target": "alias(sumSeries(scale(keepLastValue(collectd.$project.$region.mesos-master.*.mesos-master.percent.master_mem_percent, 5), 100)), \"Memory\")",
+              "textEditor": true
+            },
+            {
+              "refId": "C",
+              "target": "alias(sumSeries(scale(keepLastValue(collectd.$project.$region.mesos-master.*.mesos-master.percent.master_disk_percent, 5), 100)), \"Disk\")",
+              "textEditor": true
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Overall Capacity (%)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Graphite",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 2,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "alias(sumSeries(keepLastValue(collectd.$project.$region.mesos-master.*.mesos-master.gauge.master_tasks_running, 5)), \"Running\")",
+              "textEditor": true
+            },
+            {
+              "refId": "B",
+              "target": "alias(sumSeries(keepLastValue(collectd.$project.$region.mesos-master.*.mesos-master.gauge.master_tasks_staging, 5)), \"Staging\")",
+              "textEditor": true
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Number of Tasks",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "Row"
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "now": true,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "allFormat": "glob",
+        "current": {
+          "text": "{{ mesos_project }}",
+          "value": "{{ mesos_project }}"
+        },
+        "datasource": "Graphite",
+        "includeAll": false,
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "project",
+        "options": [
+          {
+            "text": "{{ admin_project }}",
+            "value": "{{ admin_project }}",
+            "selected": false
+          },
+          {
+            "text": "{{ mesos_project }}",
+            "value": "{{ mesos_project }}",
+            "selected": true
+          }
+        ],
+        "query": "collectd.*",
+        "refresh": true,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "allFormat": "glob",
+        "current": {
+          "text": "{{ region }}",
+          "value": "{{ region }}"
+        },
+        "datasource": "Graphite",
+        "includeAll": false,
+        "multi": false,
+        "multiFormat": "glob",
+        "name": "region",
+        "options": [
+          {
+            "text": "{{ region }}",
+            "value": "{{ region }}",
+            "selected": true
+          }
+        ],
+        "query": "collectd.$project.*",
+        "refresh": true,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": "30s",
+  "schemaVersion": 8,
+  "version": 4,
+  "links": []
+}
+}

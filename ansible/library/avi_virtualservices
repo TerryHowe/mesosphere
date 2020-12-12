@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+
+import base64
+from ansible.module_utils.basic import *
+
+try:
+    from avi.sdk.avi_api import ApiSession
+    HAS_AVISDK = True
+except ImportError:
+    HAS_AVISDK = False
+
+
+if __name__ == '__main__':
+
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'filters': {'default': {}, 'type': 'dict'},
+            'state': {'type': 'str', 'choices': ['enabled', 'disabled']},
+            'controller_user': {'required': True, 'type': 'str'},
+            'controller_pass': {'required': True, 'type': 'str'},
+            'controller_host': {'required': True, 'type': 'str'},
+        },
+        supports_check_mode=True
+    )
+
+    if not HAS_AVISDK:
+        module.fail_json(msg="avisdk package is required")
+
+    args = module.params
+    api = ApiSession.get_session(args['controller_host'], args['controller_user'],
+                                 args['controller_pass'], tenant='*')
+
+    response = {'changed': False, 'affected': []}
+    enabled = args['state'] == 'enabled'
+    vs_resp = api.get('virtualservice', params=args['filters']).json()
+    for vs in vs_resp.get('results', []):
+        if vs['enabled'] != enabled:
+            vs['enabled'] = enabled
+            response['changed'] = True
+            if not module.check_mode:
+                upd_resp = api.put('virtualservice/{0}'.format(vs['uuid']), vs)
+                response.setdefault('affected', []).append({
+                    'uuid': vs['uuid'],
+                    'name': vs['name'],
+                    'status_code': upd_resp.status_code,
+                    'response': upd_resp.json(),
+                })
+                if upd_resp.status_code != 200:
+                    module.fail_json(msg="Failed to update virtual service: {0} {1}".format(
+                        upd_resp.status_code, upd_resp.text))
+    module.exit_json(**response)

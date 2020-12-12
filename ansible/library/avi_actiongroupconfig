@@ -1,0 +1,96 @@
+#!/usr/bin/env python
+
+import base64
+import functools
+
+from ansible.module_utils.basic import *
+
+try:
+    from avi.sdk.avi_api import ApiSession
+    HAS_AVISDK = True
+except ImportError:
+    HAS_AVISDK = False
+
+
+if __name__ == '__main__':
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'state': {'default': 'present', 'choices': ['present', 'absent']},
+            'name': {'required': True, 'type': 'str'},
+            'action_script_config_ref': {'type': 'str'},
+            'autoscale_trigger_notification': {'default': False, 'type': 'bool'},
+            'external_only': {'default': False, 'type': 'bool'},
+            'level': {'choices': ['ALERT_LOW', 'ALERT_MEDIUM', 'ALERT_HIGH']},
+            'tenant_ref': {'default': '/api/tenant/admin'},
+            'controller_user': {'required': True, 'type': 'str'},
+            'controller_pass': {'required': True, 'type': 'str'},
+            'controller_host': {'required': True, 'type': 'str'},
+            'controller_tenant': {'default': 'admin'},
+        },
+        supports_check_mode=True
+    )
+
+    if not HAS_AVISDK:
+        module.fail_json(msg="avisdk package is required")
+
+    args = dict(module.params)
+    ensure_present = module.params['state'] != 'absent'
+    api = ApiSession.get_session(args['controller_host'],
+                                 args['controller_user'],
+                                 args['controller_pass'],
+                                 tenant=args['controller_tenant'])
+
+    changed = False
+    response = {}
+    agc = api.get_object_by_name('actiongroupconfig', args['name'])
+
+    if ensure_present:
+        action_script_config_ref = args.get('action_script_config_ref')
+        if action_script_config_ref and not action_script_config_ref.startswith('/api/alertscriptconfig'):
+            ref = api.get_object_by_name('alertscriptconfig', action_script_config_ref)
+            if not ref:
+                module.fail_json("Could not find alert script config by name: {0}".format(
+                                 action_script_config_ref))
+            action_script_config_ref = '/api/alertscriptconfig/{uuid}'.format(**ref)
+
+        if not agc:
+            changed = True
+            data = {
+                'name': args['name'],
+                'tenant_ref': args['tenant_ref'],
+                'level': args['level'],
+                'external_only': args['external_only'],
+                'autoscale_trigger_notification':
+                    args['autoscale_trigger_notification'],
+                'action_script_config_ref': action_script_config_ref,
+            }
+            fn = functools.partial(api.post, 'actiongroupconfig', data=data)
+        else:
+            for attr in ('level', 'external_only', 'autoscale_trigger_notification'):
+                if args[attr] != agc[attr]:
+                    changed = True
+                    agc[attr] = args[attr]
+
+            if args['tenant_ref'] not in agc['tenant_ref']:
+                changed = True
+                agc['tenant_ref'] = args['tenant_ref']
+
+            if action_script_config_ref not in agc['action_script_config_ref']:
+                changed = True
+                agc['action_script_config_ref'] = action_script_config_ref
+            fn = functools.partial(api.put, 'actiongroupconfig/{uuid}'.format(
+                                   **agc), data=agc)
+
+        if changed and not module.check_mode:
+            resp = fn()
+            response['api-status-code'] = resp.status_code
+            response['uuid'] = resp.json()['uuid']
+        elif agc:
+            response['uuid'] = agc['uuid']
+    elif agc:
+        changed = True
+        resp = api.delete('actiongroupconfig/{uuid}'.format(**agc))
+        response['api-status-code'] = resp.status_code
+
+    module.exit_json(changed=changed, **response)

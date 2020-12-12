@@ -1,0 +1,16 @@
+---
+- name: reload moira-cache
+  service: name=moira-cache state=reloaded
+  tags: [config]
+
+- name: restart moira-notifier
+  service: name=moira-notifier state=restarted
+  tags: [config]
+
+- name: restart moira-api
+  service: name=moira-api state=restarted
+  tags: [config]
+
+- name: restart moira-worker
+  service: name=moira-worker state=restarted
+  tags: [config]

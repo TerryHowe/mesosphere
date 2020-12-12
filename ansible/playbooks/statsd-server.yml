@@ -1,0 +1,15 @@
+---
+- hosts: graphite
+  remote_user: "{{ remote_user }}"
+
+#-- Playbook for building statsd servers
+#- hosts: FIND ME A HOME
+#  remote_user: "{{ remote_user }}"
+#  become: yes
+#  become_user: root
+#  roles:
+#  #- filesystem
+#  #- mariadb
+#  #- icinga-master
+#  #- icinga-web
+#  - statsd

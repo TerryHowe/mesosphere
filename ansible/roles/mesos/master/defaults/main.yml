@@ -1,0 +1,28 @@
+# Apply additional dcos installer roles
+bootstrap_host_port: "{{ 10 ~ mesos_version | replace('.', '')}}"
+mesos_master_additional_roles: ''
+dcos_logstash_services:
+  - dcos-adminrouter-reload.service
+  - dcos-adminrouter.service
+  - dcos-cluster-id.service
+  - dcos-cosmos.service
+  - dcos-ddt.service
+  - dcos-download.service
+  - dcos-epmd.service
+  - dcos-exhibitor.service
+  - dcos-gen-resolvconf.service
+  - dcos-gunicorn-bouncer.service
+  - dcos-history-service.service
+  - dcos-keepalived.service
+  - dcos-link-env.service
+  - dcos-logrotate.service
+  - dcos-marathon-stew.service
+  - dcos-marathon.service
+  - dcos-mesos-dns.service
+  - dcos-mesos-master.service
+  - dcos-minuteman.service
+  - dcos-networking_api.service
+  - dcos-setup.service
+  - dcos-signal.service
+  - dcos-spartan-watchdog.service
+  - dcos-spartan.service

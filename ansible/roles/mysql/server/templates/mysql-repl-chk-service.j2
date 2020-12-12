@@ -1,0 +1,14 @@
+service mysql_repl_chk
+{
+    disable = no
+    flags = REUSE
+    type = UNLISTED
+    socket_type = stream
+    port = 3{{ mysql_db_port }}
+    wait = no
+    user = root
+    server = /usr/local/bin/mysql_repl_chk
+    log_on_failure += USERID
+    only_from = 192.168.1.0/24
+    per_source = UNLIMITED
+}

@@ -1,0 +1,23 @@
+#-- Expires field uses EPOCH seconds for now until we need to get fancier
+#-- Default expire on all accounts of 2038-01-01 Y2k Part Deux.
+- name: Create local user account on host
+  user:
+    name: "{{ item.key }}"
+    comment: "{{ item.value.comment | default('No Comment') }}"
+    shell: "{{ item.value.shell | default('/bin/bash') }}"
+    password: "{{ item.value.password | default('!!') }}"
+    createhome: yes
+    expires: "{{ item.value.expires | default('2145916800') }}"
+    state: "{{ item.value.state | default('present') }}"
+  with_dict:
+    "{{ users }}"
+
+#-- This is a bit brittle since it will fail when a user is defined but no ssh key exists.
+#-- We don't allow access via methods other than ssh though, so acceptable to me.
+- name: Create authorized keys if present
+  authorized_key: 
+    user: "{{ item.key }}"
+    key: "{{ lookup('file', 'files/pubkeys/'+(item.value.pubkey | default(item.key))) }}"
+  when: (item.value.state is not defined) or (item.value.state is defined and item.value.state != "absent")
+  with_dict:
+    "{{ users }}"

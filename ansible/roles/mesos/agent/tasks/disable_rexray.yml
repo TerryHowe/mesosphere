@@ -1,0 +1,15 @@
+---
+- name: Check for dcos version 1.7
+  shell: curl -s http://leader.mesos/dcos-metadata/dcos-version.json | grep version | grep 1.7
+  ignore_errors: true
+  register: dcos_17_check
+
+#-- Using systemctl directly b/c dcos-rexray is fucking stupid
+- name: Stop dcos-rexray service
+  command: systemctl stop dcos-rexray
+  when: dcos_17_check.rc == 0
+
+- name: Disable dcos-rexray service
+  command: systemctl disable dcos-rexray
+  when: dcos_17_check.rc == 0
+

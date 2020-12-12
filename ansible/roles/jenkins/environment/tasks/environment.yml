@@ -1,0 +1,11 @@
+---
+- command: mktemp -t "{{application_name}}.XXXXXXXXXX"
+  register: mktemp
+
+- name: create environment groovy file
+  template: src=environment.groovy.j2 dest={{mktemp.stdout}}
+
+- name: set environment variables
+  shell: cat {{mktemp.stdout}} | docker exec -i {{runningjenkins}} sh -c '{{jenkins_cli_groovy}}'
+
+- file: path={{mktemp.stdout}} state=absent

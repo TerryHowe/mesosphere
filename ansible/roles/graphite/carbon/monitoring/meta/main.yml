@@ -1,0 +1,3 @@
+---
+dependencies:
+  - { role: grafana/alerts, grafana_alerts: "{{ carbon_alerts }}" }

@@ -1,0 +1,22 @@
+- block:
+    - name: app-based secgroup
+      os_security_group:
+        state: present
+        name: "{{ app_spec.app_name }}_security_group"
+        description: Security group for docker-app '{{ app_spec.app_name }}' service port
+      register: secgroup
+
+    - name: app-based secgroup rule
+      os_security_group_rule:
+        protocol: tcp
+        port_range_min: "{{ app_spec.service_port }}"
+        port_range_max: "{{ app_spec.service_port }}"
+        security_group: "{{ app_spec.app_name }}_security_group"
+        remote_ip_prefix: "{{ item }}"
+      with_items: "{{ app_spec.get('allowed_cidrs') }}"
+
+    - name: add app-based secgroup to slave
+      command: nova add-secgroup {{ item }} "{{ app_spec.app_name }}_security_group"
+      with_items: "{{ groups['mesos-agent'] }}"
+
+  when: app_spec.get('allowed_cidrs')

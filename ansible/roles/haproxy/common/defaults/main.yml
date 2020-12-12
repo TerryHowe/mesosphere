@@ -1,0 +1,15 @@
+---
+haproxy_socket: /var/lib/haproxy/stats
+haproxy_user: haproxy
+haproxy_group: haproxy
+haproxy_global_vars: []
+haproxy_stats_port: 80
+haproxy_stats_uri: /
+haproxy_stats_ip: 0.0.0.0
+haproxy_triggers: []
+    
+# !! REQUIRED VARS !!
+# haproxy_name:
+# haproxy_vip_name:
+# haproxy_stats_user: admin
+# haproxy_stats_pass: admin

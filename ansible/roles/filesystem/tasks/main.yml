@@ -1,0 +1,31 @@
+---
+- set_fact:
+    # There is no explicit way to define where a volume will attach the device
+    # so we anticipate it based on the order of the attachments. Don't attach
+    # volumes outside of ansible and this just might work!
+    device_map:
+      - '/dev/vdb'
+      - '/dev/vdc'
+      - '/dev/vdd'
+      - '/dev/vde'
+      - '/dev/vdf'
+      - '/dev/vdg'
+      - '/dev/vdh'
+    server_definition: "{{ openstack_server_templates | expand_servers(region) | selectattr('name', 'equalto', ansible_hostname) | list }}"
+
+- set_fact:
+    host_volumes: "{{ server_definition | selectattr('volumes', 'defined') | map(attribute='volumes') | list }}"
+
+- name: Create filesystem on Openstack volumes
+  filesystem: fstype="{{ item.1.fstype | default('xfs') }}" dev="{{ item.1.device | default(device_map[item.0]) }}"
+  when: device_map[item.0] or item.1.device
+  with_indexed_items: "{{host_volumes}}"
+
+- name: Create local directories for Openstack volumes
+  file: path="{{ item.dir }}" state=directory mode=0755
+  with_items: "{{host_volumes}}"
+
+- name: Mount the directories for Openstack volumes
+  mount: name="{{ item.1.dir }}" src="{{ item.1.device | default(device_map[item.0]) }}" fstype="{{ item.1.fstype | default('xfs') }}" state=mounted
+  when: device_map[item.0] or item.1.device
+  with_indexed_items: "{{host_volumes}}"

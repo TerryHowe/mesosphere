@@ -1,0 +1,10 @@
+[old-cluster]
+DESTINATIONS = {{ carbonate_old_cluster_nodes | map('extract', hostvars, 'openstack') | map(attribute='private_v4') | map('regex_replace', '$', ':2003') | join(',') }}
+REPLICATION_FACTOR = {{ old_replication_factor }}
+SSH_USER = carbon
+
+# default is the updated cluster
+[main]
+DESTINATIONS = {{ carbonate_updated_cluster_nodes | map('extract', hostvars, 'openstack') | map(attribute='private_v4') | map('regex_replace', '$', ':2003') | join(',') }}
+REPLICATION_FACTOR = {{ carbon_cache_replication_factor }}
+SSH_USER = carbon

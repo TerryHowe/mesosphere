@@ -1,0 +1,21 @@
+---
+- name: look for marathon {{application_name}} deployments
+  shell: echo $(dcos marathon deployment list {{application_name}} | grep {{application_name}}) | cut -f4 -d' '
+  register: deployments
+
+- name: stop marathon {{application_name}} deployements
+  shell: dcos marathon deployment stop {{item}}
+  with_items: "{{deployments.stdout}}"
+  when: deployments.stdout != ""
+
+- name: stop marathon app {{application_name}}
+  shell: dcos marathon app stop {{application_name}}
+  register: appstop
+  failed_when: False
+  changed_when: appstop.rc == 0
+
+- name: remove marathon app {{application_name}}
+  shell: dcos marathon app remove {{application_name}}
+  register: appremove
+  failed_when: appremove.rc != 0 and "does not exist" not in appremove.stderr
+  changed_when: appremove.rc == 0

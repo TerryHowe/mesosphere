@@ -1,0 +1,29 @@
+global
+  log /dev/log  local0
+  log /dev/log  local1 notice
+{% if haproxy_socket != '' %}
+  stats socket {{ haproxy_socket }} level admin
+{% endif %}
+  user {{ haproxy_user }}
+  group {{ haproxy_group }}
+  daemon
+{% for global_var in haproxy_global_vars %}
+  {{ global_var }}
+{% endfor %}
+
+defaults
+  log global
+  mode tcp
+  timeout connect 5000
+  timeout client 50000
+  timeout server 50000
+
+listen stats {{ haproxy_stats_ip }}:{{ haproxy_stats_port }}
+    mode http
+    stats enable
+    stats hide-version
+    stats realm HAProxy\ {{ haproxy_name | regex_replace(' ', '\\ ') }}
+    stats uri {{ haproxy_stats_uri }}
+{% if haproxy_stats_user is defined and haproxy_stats_pass %}
+    stats auth {{ haproxy_stats_user }}:{{ haproxy_stats_pass }}
+{% endif %}

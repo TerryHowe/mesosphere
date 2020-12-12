@@ -1,0 +1,250 @@
+---
+mysql_common_root_password: "{{  vault_mysql_common_root_password }}"
+mysql_common_repl_password: "{{  vault_mysql_common_repl_password }}"
+mysql_common_healthcheck_password: "{{  vault_mysql_common_healthcheck_password  }}"
+collectd_graphite_host: carbon-relay-internal-{{ region }}.{{ admin_domain }}
+grafana_alerts_default_notifications:
+  - pagerduty low priority
+
+openstack_networks:
+  A-Admin-01:
+    router_name: A-01-Net
+    subnet_name: A-01-A
+    cidr: 192.168.1.0/24
+    vip_cidr: 192.168.1.128/25
+    shared: no
+    external: no
+    enable_snat: yes
+
+default_server_network: A-Admin-01
+
+openstack_interfaces: []
+
+openstack_common:
+  image: paas-centos7-1460411126
+  keypair: cloud-user-dev
+  security_groups:
+   - default
+   - corp_vpn
+
+admin_clients:
+  - 71.74.188.61/32
+  - 71.74.188.55/32
+  - 71.74.188.69/32
+  - 71.74.188.71/32
+  - 71.74.188.65/32
+  - 71.74.188.53/32
+  - 71.74.188.59/32
+  - 71.74.188.67/32
+  - 71.74.188.70/32
+  - 71.74.188.39/32
+  - 24.161.243.195/32
+  - 24.161.244.44/32
+  - 24.161.245.208/32
+  - 24.161.245.209/32
+  # os ip floating list -c 'Floating IP Address' -f value |
+  # sort | sed -e 's/^/  - /' -e 's,$,/32,'
+  - 24.161.228.192/32
+  - 24.161.228.212/32
+  - 24.161.229.202/32
+  - 24.161.229.203/32
+  - 24.161.229.204/32
+  - 24.161.229.205/32
+  - 24.161.229.206/32
+  - 24.161.229.207/32
+  - 24.161.229.210/32
+  - 24.161.229.211/32
+  - 24.161.229.212/32
+  - 24.161.229.213/32
+  - 24.161.229.214/32
+  - 71.74.176.42/32
+  - 71.74.177.203/32
+  - 71.74.177.25/32
+  - 71.74.177.251/32
+  - 71.74.180.156/32
+  - 71.74.180.166/32
+  - 71.74.180.172/32
+  - 71.74.180.181/32
+  - 71.74.180.19/32
+  - 71.74.180.197/32
+  - 71.74.180.198/32
+  - 71.74.180.199/32
+  - 71.74.180.205/32
+  - 71.74.180.229/32
+  - 71.74.181.235/32
+  - 71.74.182.117/32
+
+openstack_security_groups_override:
+  carbon-relay:
+    - port_min: 2003
+      remote_ip_prefixes: "{{ admin_clients }}"
+
+openstack_server_templates:
+
+  admin-proxy:
+    flavor: m3.4CPU.8GB
+    instances: 2
+    meta:
+      group: admin-proxy
+    security_groups:
+      - carbon-relay
+    server_group:
+      name: anti-affinity-admin-proxy
+      policies:
+        - anti-affinity
+
+  avi-controller:
+    flavor: m3.4CPU.16GB
+    instances: 3
+    meta:
+      group: avi-controller
+    static_port: true
+    security_groups:
+      - avi-controller
+    volumes:
+      - name: avi-data
+        dir: /var/lib/controller
+        size: 64
+        fstype: xfs
+    server_group:
+      name: anti-affinity-avi-controller
+      policies:
+        - anti-affinity
+
+  nfs-server:
+    flavor: m3.1CPU.2GB
+    instances: 1
+    meta:
+      group: nfs-server
+    volumes:
+      - name: jenkins
+        dir: /mnt/jenkins
+        size: 40
+        fstype: xfs
+
+  grafana:
+    flavor: m3.4CPU.8GB
+    instances: 1
+    security_groups:
+      - graphite
+    meta:
+      group: grafana
+
+  graphite:
+    flavor: m3.4CPU.8GB
+    instances: 1
+    security_groups:
+      - graphite
+    meta:
+      group: graphite
+    volumes:
+      - name: mysql-data
+        dir: /mnt/data
+        size: 40
+        fstype: ext4
+
+  worker:
+    flavor: m4.8CPU.32GB
+    instances: 2
+    security_groups:
+      - webserver
+      - vault
+      - redis
+    meta:
+      group: worker
+    volumes:
+      - name: admin-data
+        dir: /mnt/persistent
+        size: 40
+        fstype: xfs
+
+  mysql-common:
+    flavor: m3.4CPU.16GB
+    instances: 3
+    static_port: true
+    meta:
+      group: mysql-common
+    server_group:
+      name: anti-affinity-mysql-common
+      policies:
+        - anti-affinity
+    volumes:
+      - name: mysql-data
+        dir: /var/lib/mysql
+        size: 20
+        fstype: xfs
+
+  jenkins:
+    flavor: m3.4CPU.16GB
+    instances: 1
+    security_groups:
+      - webserver
+    meta:
+      group: jenkins
+    volumes:
+      - name: jenkins-data
+        dir: /root/jenkins
+        size: 20
+        fstype: xfs
+
+
+  mesos-bootstrap:
+    flavor: m3.1CPU.2GB
+    instances: 1
+    meta:
+      group: mesos-bootstrap
+
+  mesos-master:
+    flavor: m3.4CPU.8GB
+    instances: 3
+    meta:
+      group: mesos-master
+    security_groups:
+      - mesos-master
+    static_port: true
+    server_group:
+      name: anti-affinity-mesos-master
+      policies:
+        - anti-affinity
+
+  mesos-agent:
+    flavor: m3.8CPU.16GB
+    instances: 3
+    meta:
+      group: mesos-agent
+    security_groups:
+      - mesos-agent
+    volumes:
+      - name: data
+        dir: /data
+        size: 100
+        fstype: xfs
+    server_group:
+      name: anti-affinity-mesos-agent
+      policies:
+        - anti-affinity
+
+  carbon-cache:
+    flavor: m3.8CPU.16GB
+    instances: 3
+    static_port: true
+    meta:
+      group: carbon-cache
+    server_group:
+      name: anti-affinity-carbon-cache
+      policies:
+        - anti-affinity
+    volumes:
+      - name: carbon-data
+        dir: /var/lib/carbon
+        size: 100
+        fstype: xfs
+        volume_type: Performance-SSD
+
+  carbon-relay:
+    flavor: m3.1CPU.2GB
+    instances: 2
+    meta:
+      group: carbon-relay
+    security_groups:
+      - carbon-relay

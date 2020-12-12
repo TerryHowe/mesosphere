@@ -1,0 +1,24 @@
+---
+- name: "Create repository {{quay_name}}"
+  uri:
+    url: "https://{{docker_registry}}/api/v1/repository"
+    method: POST
+    validate_certs: no
+    status_code: 201,400
+    body_format: json
+    body: '{"namespace": "{{quay_namespace}}",
+            "visibility": "{{quay_visibility}}",
+            "repository": "{{quay_name}}",
+            "description": "{{quay_description}}"
+           }'
+    headers:
+      Authorization: "Bearer {{quay_oauth_token}}"
+      Accept: application/json
+      Content-Type: application/json
+  register: createrepository
+
+- block:
+  - name: "Only a failure if repository does not already exist"
+    action: fail
+    when: "createrepository.json.detail != 'Repository already exists'"
+  when: createrepository.status == 400

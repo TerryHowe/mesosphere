@@ -1,0 +1,10 @@
+---
+- name: Wait for vault to come up
+  uri:
+    url: "{{vault_url}}/v1/sys/init"
+    status_code: 200
+    validate_certs: no
+  register: vault_result
+  until: vault_result.status == 200
+  retries: 60
+  delay: 3

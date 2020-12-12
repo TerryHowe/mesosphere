@@ -1,0 +1,5 @@
+---
+- name: copy src=gather_data.sh dest=/root/gather_data.sh
+  copy: src=gather_data.sh dest=/root/gather_data.sh mode=0755
+- name: copy src=get_task_logs.sh dest=/root/get_task_logs.sh
+  copy: src=get_task_logs.sh dest=/root/get_task_logs.sh mode=0755

@@ -1,0 +1,13 @@
+---
+
+- name: Copy at input file
+  template: src=whisper_resize.at.j2 dest=/root/whisper_resize.at
+
+#-- Need to figure out a good way to check just for this job.
+- name: Check for any existing at jobs
+  shell: /bin/atq | wc -l
+  register: atq_count
+
+- name: Enqueue the at job if no others are running
+  command: /bin/at -f /root/whisper_resize.at now
+  when: atq_count.stdout == "0"

@@ -1,0 +1,9 @@
+---
+- name: get domain
+  shell: designate domain-get "{{project_domain}}."
+  register: domain_get
+  changed_when: False
+
+- name: create domain
+  shell: designate domain-create --name "{{project_domain}}." --ttl "{{dns_ttl}}" --email "{{dns_email}}"
+  when: domain_get.rc != 0

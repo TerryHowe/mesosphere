@@ -1,0 +1,52 @@
+---
+- include_vars: ../../../clair/defaults/main.yml
+
+- name: create directory for clair config
+  file: path="{{clair_directory}}/config" state=directory owner=root group=root mode=0755
+  become: yes
+  
+- copy: content="{{scanner_private_key}}" dest="{{clair_directory}}/config/{{scanner_private_key_filename}}" mode=0400
+
+- name: create clair config.yaml file
+  template: src=clair-ha-config.yaml.j2 dest="{{clair_directory}}/config/config.yaml"
+  register: clairconfig
+  
+- name: install clair.service
+  register: clairservice
+  template: src=clair.service.j2 dest=/usr/lib/systemd/system/clair.service
+
+- block:
+  - name: systemctl daemon-reload
+    shell: systemctl daemon-reload
+    changed_when: False
+
+  - name: name=clair.service enabled=yes state=started
+    service: name=clair.service enabled=yes state=started
+
+  - name: "wait for clair service to come up"
+    uri:
+      url: "{{clair_scanner_health_endpoint}}"
+      validate_certs: no
+      status_code: 200
+    register: clairhealthcheck
+    until: clairhealthcheck.status == 200
+    retries: 5
+    delay: 10
+
+  - block:
+    # restart quay service after enabling clair scanner
+    - name: restart quay service after enabling clair scanner
+      command: systemctl restart quay.service
+      
+    - name: "wait for quay service to restart and come up"
+      uri:
+        url: "{{quay_registry_host}}"
+        validate_certs: no
+        status_code: 200
+      register: quayhealthcheck
+      until: quayhealthcheck.status == 200
+      retries: 5
+      delay: 10
+      
+    when: clairhealthcheck.status == 200
+  when: clairconfig.changed and clairservice.changed

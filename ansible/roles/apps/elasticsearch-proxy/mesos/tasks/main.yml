@@ -1,0 +1,14 @@
+---
+
+- name: Copy delete_es_index.sh script into place for use by Metronome
+  template: src=delete_es_index.sh.j2 dest=/usr/local/bin/delete_es_index.sh mode=0755
+  delegate_to: "{{ item }}"
+  become: yes
+  become_user: root
+  remote_user: "{{ remote_user }}"
+  with_items: "{{ groups['mesos-agent'] }}"
+  tags: [templates]
+
+- include: collectd.yml
+  tags: [monitoring]
+

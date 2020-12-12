@@ -1,0 +1,10 @@
+---
+#-- Create the sudo config(s)
+- name: sudoers file defined by ansible
+  template:
+    src: sudoers.j2
+    dest: "/etc/sudoers.d/ansible"
+    validate: "visudo -cf %s"
+    owner: root
+    group: root
+    mode: 0440

@@ -1,0 +1,28 @@
+---
+- file: path={{jenkins_dir}}/secrets state=directory mode=0755 owner={{remote_user}}
+
+- name: config.xml file
+  template: src=config.xml.j2 dest={{jenkins_dir}}/config.xml
+
+- name: jenkins.model.DownloadSettings.xml file
+  template: src=jenkins.model.DownloadSettings.xml.j2 dest={{jenkins_dir}}/jenkins.model.DownloadSettings.xml
+
+- name: jenkins.security.QueueItemAuthenticatorConfiguration.xml file
+  template: src=jenkins.security.QueueItemAuthenticatorConfiguration.xml.j2 dest={{jenkins_dir}}/jenkins.security.QueueItemAuthenticatorConfiguration.xml
+
+- name: configure jira-ext plugin
+  template: src=org.jenkinsci.plugins.jiraext.Config.xml.j2 dest={{jenkins_dir}}/org.jenkinsci.plugins.jiraext.Config.xml
+
+- name: configure jenkins location
+  template: src=jenkins.model.JenkinsLocationConfiguration.xml.j2 dest={{jenkins_dir}}/jenkins.model.JenkinsLocationConfiguration.xml
+
+- name: restart new jenkins
+  uri: url="{{ jenkins_url }}/restart" method=POST validate_certs=no
+  register: jenkinsrestart
+  failed_when: False
+
+- pause: seconds=20
+  when: jenkinsrestart.status == 302
+
+- include: '../../restart.yml'
+  when: jenkinsrestart.status != 302

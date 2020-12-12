@@ -1,0 +1,16 @@
+---
+- set_fact:
+    # TODO: reduce to those actually used by servers in this env
+    security_groups: "{{ openstack_security_groups | combine(openstack_security_groups_override) }}"
+  tags:
+    - access
+
+#-- Delete a security group for each unqiue security_group defined in rules
+- name: Delete OpenStack Security Groups
+  os_security_group:
+    state: absent
+    name: "{{ item }}"
+  when: item is defined and item != "default"
+  with_items: "{{ security_groups }}"
+  tags:
+    - access

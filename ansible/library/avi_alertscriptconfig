@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+
+import base64
+import functools
+
+from ansible.module_utils.basic import *
+
+try:
+    from avi.sdk.avi_api import ApiSession
+    HAS_AVISDK = True
+except ImportError:
+    HAS_AVISDK = False
+
+
+if __name__ == '__main__':
+
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'state': {'default': 'present'},
+            'name': {'required': True, 'type': 'str'},
+            'action_script': {'type': 'str'},
+            'controller_user': {'required': True, 'type': 'str'},
+            'controller_pass': {'required': True, 'type': 'str'},
+            'controller_host': {'required': True, 'type': 'str'},
+            'controller_tenant': {'default': 'admin'},
+        },
+        supports_check_mode=True
+    )
+
+    if not HAS_AVISDK:
+        module.fail_json(msg="avisdk package is required")
+
+    args = module.params
+    ensure_present = module.params['state'] != 'absent'
+    if ensure_present:
+        if not args.get('action_script'):
+            module.fail_json(msg="action_script required")
+
+    api = ApiSession.get_session(args['controller_host'],
+                                 args['controller_user'],
+                                 args['controller_pass'],
+                                 tenant=args['controller_tenant'])
+
+    changed = False
+    alertscriptconfig = api.get_object_by_name('alertscriptconfig',
+                                               args['name'])
+
+    response = {}
+    if ensure_present:
+        if not alertscriptconfig:
+            changed = True
+            fn = functools.partial(api.post, 'alertscriptconfig')
+        elif alertscriptconfig['action_script'] != args['action_script']:
+            changed = True
+            fn = functools.partial(api.put, 'alertscriptconfig/{uuid}'.format(
+                    **alertscriptconfig))
+
+        if not module.check_mode and changed:
+            data = {
+                'name': args['name'],
+                'action_script': args['action_script'],
+            }
+            resp = fn(data=data)
+            response['api-status-code'] = resp.status_code
+            response['uuid'] = resp.json()['uuid']
+        elif alertscriptconfig:
+            response['uuid'] = alertscriptconfig['uuid']
+    elif not ensure_present and alertscriptconfig:
+        changed = True
+        if not module.check_mode:
+            resp = api.delete('alertscriptconfig/{uuid}'.format(
+                              **alertscriptconfig))
+            response['api-status-code'] = resp.status_code
+
+    module.exit_json(changed=changed, **response)

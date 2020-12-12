@@ -1,0 +1,4 @@
+---
+- hosts: localhost
+  roles:
+    - apps/elasticsearch-proxy/mesos/monitoring

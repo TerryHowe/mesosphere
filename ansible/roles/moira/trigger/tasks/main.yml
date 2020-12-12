@@ -1,0 +1,58 @@
+---
+- name: Create simple Moira triggers
+  uri: 
+    url: "{{ moira_url }}/api/trigger/{{ moira_project }}-{{ moira_region }}-{{ item.key }}"
+    body: >
+      {
+        "name": "{{ item.value.name }}",
+        "targets": {{ item.value.targets }},
+        "warn_value": "{{ item.value.warn | default('') }}",
+        "error_value": "{{ item.value.error }}",
+        "ttl": "{{ item.value.ttl_for_no_data | default('600') }}",
+        "ttl_state": "{{ item.value.ttl_state_for_no_data | default('ERROR') }}",
+        "tags": {{ item.value.tags | default([default_trigger_tag]) }},
+      }
+    body_format: json
+    user: "{{ basic_auth_username }}"
+    password: "{{ basic_auth_password }}"
+    force_basic_auth: yes
+    method: PUT
+    HEADER_Content_Type: "application/json"
+    status_code: 200
+    validate_certs: no
+  when: item.value.expression is not defined
+  with_dict: "{{ moira_triggers | default({}) }}"
+  delegate_to: localhost
+  become: no
+  run_once: True
+  tags: [monitoring]
+
+- name: Create advanced Moira triggers
+  uri: 
+    url: "{{ moira_url }}/api/trigger/{{ moira_project }}-{{ moira_region }}-{{ item.key }}"
+    body: >
+      {
+        "name": "{{ item.value.name }}",
+        "targets": {{ item.value.targets }},
+        "ttl": "{{ item.value.ttl_for_no_data | default('600') }}",
+        "ttl_state": "{{ item.value.ttl_state_for_no_data | default('ERROR') }}",
+        "tags": {{ item.value.tags | default([default_trigger_tag]) }},
+        "expression": "{{ item.value.expression }}"
+      }
+    body_format: json
+    user: "{{ basic_auth_username }}"
+    password: "{{ basic_auth_password }}"
+    force_basic_auth: yes
+    method: PUT
+    HEADER_Content_Type: "application/json"
+    status_code: 200
+    validate_certs: no
+  when: item.value.expression is defined
+  with_dict: "{{ moira_triggers | default({}) }}"
+  delegate_to: localhost
+  become: no
+  run_once: True
+  tags: [monitoring]
+
+
+

@@ -1,0 +1,10 @@
+---
+- name: create acl
+  dcos_acl:
+    rid: "{{ item }}"
+    description: "{{ item }}"
+
+- dcos_acl_group:
+    rid: "{{ item }}"
+    gid: "{{ customer.shortname }}-admins"
+    permission: full

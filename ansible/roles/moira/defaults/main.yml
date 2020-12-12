@@ -1,0 +1,13 @@
+carbon_relay: "{{ hostvars[groups['carbon-relay'][0]]['openstack']['private_v4'] }}"
+moira_public_url: "monitor-{{ region }}.{{ project }}.cloud.twc.net"
+moira_url: "http://127.0.0.1:8082"
+
+moira_contacts:
+  prod_pagerduty:
+    type: "mail"
+    contact_value: "paas-moira@bobby.pagerduty.com"
+    tags: ['prod']
+  staging_pagerduty:
+    type: "mail"
+    contact_value: "paas-moira-lowpri@bobby.pagerduty.com"
+    tags: ['staging']

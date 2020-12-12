@@ -1,0 +1,70 @@
+# Required var in scope:
+#   port_name: string
+#   security_groups: list
+#   network: string
+#   hostgroup: string
+
+- set_fact:
+    vip_cidr: "{{ openstack_networks[openstack_virtualip_network]['vip_cidr'] }}"
+
+- name: available ips
+  os_port_available_ips:
+    cidr: "{{ vip_cidr }}"
+  register: available_ips_result
+
+- name: Check for existing port
+  shell: >
+    neutron port-show "virtualip:{{ openstack_virtualip_port_name }}" -F fixed_ips -f value |
+    sed -e 's/://g' -e 's/\"//g' -e 's/\}//g' |
+    awk '$3 == "ip_address" {print $4}'
+  changed_when: False
+  register: check_existing_port
+
+- set_fact:
+    fixed_ip: "{{ (check_existing_port.stdout | ipaddr) | ternary(check_existing_port.stdout, available_ips_result.available_ips[-1]) }}"
+
+- name: create vip (neutron port)
+  os_port:
+    name: "virtualip:{{ openstack_virtualip_port_name }}"
+    state: present
+    network: "{{ openstack_virtualip_network }}"
+    security_groups: "{{ openstack_virtualip_security_groups }}"
+    fixed_ips:
+      - ip_address: "{{ fixed_ip }}"
+  register: neutron_port_result
+
+- debug: var=neutron_port_result
+
+- set_fact:
+    virtualip_addr: "{{ neutron_port_result.port.fixed_ips[0].ip_address }}"
+
+- name: allow vip on hostgroup
+  os_port_allow_address:
+    address: "{{ vip_cidr }}"
+    server_metadata_attr: group
+    server_metadata_value: "{{ openstack_virtualip_hostgroup }}"
+  register: port_update_result
+  when: neutron_port_result.changed
+
+- debug: var=port_update_result
+  when: port_update_result is defined
+
+- include: floatingip.yml
+  when: openstack_virtualip_use_floating_ip
+
+- include: dns.yml
+  vars:
+    hostname: "{{ openstack_virtualip_internal_host_name }}"
+    ip_addr: "{{ virtualip_addr }}"
+  when: openstack_virtualip_internal_host_name is defined
+
+- include: dns.yml
+  vars:
+    hostname: "{{ openstack_virtualip_external_host_name }}"
+    ip_addr: "{{ floatingip_addr }}"
+  when: openstack_virtualip_use_floating_ip | bool and openstack_virtualip_external_host_name is defined
+
+- debug: msg="virtual_ip{{':'}} {{ virtualip_addr }}"
+
+- debug: msg="floating_ip{{':'}} {{ floatingip_addr }}"
+  when: openstack_virtualip_use_floating_ip

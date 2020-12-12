@@ -1,0 +1,142 @@
+avi_controller_version: 16.2.5-9007
+avi_controller_docker_tag: 16.2.5-9007-20161020.033126
+avi_controller_archive_md5: e527e2f71ec57aeff419396d235aa2bb
+#avi_controller_archive_url: "https://avinetworks.com/software-downloads/Version-16.1.7/controller_docker-16.1.7-9006.tgz?Signature=4yFJplsALDoKnv5sm%2B3xkqLBAdA%3D&Expires=1468820710&AWSAccessKeyId=AKIAITTDZ2YGKHISSPWQ"
+avi_controller_dir: /var/lib/controller/
+avi_archive_name: "{{ avi_controller_archive_url | regex_replace('^.*/(.*)\\.tgz.*$', '\\1') }}"
+# initial password set in avi distribution
+avi_controller_default_password: "{{ lookup('vault', 'avi', 'password') }}"
+avi_controller_num_cpu: 4
+avi_controller_num_memg: 12
+avi_controller_disk_gb: 64
+avi_controller_base_url: https://127.0.0.1:9443
+avi_controller_upgrade_dir: /var/lib/avi-upgrades
+
+avi_controller_ssl_cert_name: TWC-Avi-Controller-Cert
+avi_controller_license: "{{ lookup('vault', 'avi-license.yaml', 'contents') }}"
+avi_controller_monitor_role: Collectd-Monitor
+avi_controller_monitor_user: collectd-monitor
+avi_controller_monitor_password: "{{ lookup('vault', 'collectd-monitor', 'password') }}"
+avi_controller_triggers:
+  avi_controller_portal_process_listening:
+    name: "{{ moira_project }}-{{ moira_region }} Avi Controller Portal Port Listening"
+    targets: [ "{{ collectd_base_ns }}.avi-controller.*.tcpconns.9443-local.tcp_connections.LISTEN" ]
+    expression: "ERROR if t1 < 1 else OK"
+  avi_controller_service_process_listening:
+    name: "{{ moira_project }}-{{ moira_region }} Avi Controller Service Port Listening"
+    targets: [ "{{ collectd_base_ns }}.avi-controller.*.tcpconns.8443-local.tcp_connections.LISTEN" ]
+    expression: "ERROR if t1 < 1 else OK"
+  avi_cluster_has_leader:
+    name: "{{ moira_project }}-{{ moira_region }} Avi Controller Cluster Lost Leader"
+    targets: [ "movingAverage(sumSeries(transformNull({{ collectd_base_ns }}.avi-controller.*.avi_controller.node_role.CLUSTER_LEADER, 0)), '5min', 'max')" ]
+    expression: "ERROR if t1 == 0 else OK"
+  avi_cloud_connector_errors:
+    name: "{{ moira_project }}-{{ moira_region }} Avi Controller Cloud Connector Errors"
+    targets: [ "movingAverage(maxSeries(derivative(transformNull({{ collectd_base_ns }}.avi-controller.*.aggregation.tail-max.derive.errors, 0))), '6min', 'max')" ]
+    expression: "ERROR if t1 > 0 else OK"
+  avi_controller_serviceengine_health:
+    name: "{{ moira_project }}-{{ moira_region }} Avi Controller Service Engine Health"
+    targets: [ "movingAverage(groupByNode(collectd.{{ project }}.{{ region }}.avi-controller.*.avi_serviceengine.*.health, 6, 'maxSeries'), '5min', 'max')" ]
+    expression: "WARN if t1 == 0 else OK"
+  avi_controller_virtualservice_health:
+    name: "{{ moira_project }}-{{ moira_region }} Avi Controller Virtual Service Health"
+    targets: [ "movingAverage(groupByNode(collectd.{{ project }}.{{ region }}.avi-controller.*.avi_virtualservice.*.health, 6, 'maxSeries'), '5min', 'max')" ]
+    expression: "WARN if t1 == 0 else OK"
+
+avi_controller_systemconfiguration:
+  dns_configuration:
+    search_domain: ''
+    server_list:
+      - addr: 8.8.8.8
+        type: V4
+
+avi_controller_cloudconnectoruser:
+  name: cloud-user
+  private_key: "{{ lookup('vault', '{{ admin_project }}.rsa', 'contents') }}"
+
+avi_controller_servicegroup:
+  ha_mode: HA_MODE_SHARED_PAIR
+  min_scaleout_per_vs: 2
+
+avi_controller_cloud:
+  vtype: CLOUD_MESOS
+  license_type: LIC_HOSTS
+  prefer_static_routes: false
+  apic_mode: false
+  dhcp_enabled: true
+  enable_vip_static_routes: false
+  mesos_configuration:
+    se_deployment_method: MESOS_SE_CREATE_SSH
+    feproxy_bridge_name: cbr1
+    use_bridge_ip_as_vip: true
+    feproxy_container_port_as_service: false
+    marathon_configurations:
+      - marathon_url: http://{{ hostvars[groups['mesos-master'][0]]['openstack']['private_v4'] }}:8080
+        vs_name_tag_framework: false
+    docker_registry_se:
+      registry: avinetworks/se
+      se_repository_push: false
+      private: false
+    coredump_directory: /var/lib/systemd/coredump
+    feproxy_vips_enable_proxy_arp: true
+    se_volume: /opt/avi
+    disable_auto_frontend_service_sync: false
+    enable_event_subscription: true
+    disable_auto_se_creation: false
+    container_port_match_http_service: true
+    disable_auto_backend_service_sync: false
+    use_container_ip_port: false
+    all_vses_are_feproxy: false
+# soon
+#    openstack_config:
+#      keystone_host: "{{ os_auth_url }}"
+#      region: "{{ os_region_name }}"
+#      tenant: "{{ os_tenant_name }}"
+#      vip_network_name: "{{ default_server_network }}"
+#      username: "{{ os_username }}"
+#      password: "{{ os_password }}"
+    east_west_placement_subnet:
+      ip_addr:
+        addr: 172.17.42.1
+        type: V4
+      mask: 16
+    ssh_se_deployment:
+      ssh_user: cloud-user
+      host_os: COREOS
+    se_spawn_rate: 25
+    app_sync_frequency: 60
+    mesos_url: http://{{ hostvars[groups['mesos-master'][0]]['openstack']['private_v4'] }}:5050
+    services_accessible_all_interfaces: false
+
+avi_controller_authprofile:
+  name: TWC Corp LDAP
+  type: AUTH_PROFILE_LDAP
+  ldap:
+    security_mode: AUTH_LDAP_SECURE_NONE
+    settings:
+      group_member_is_full_dn: true
+      group_member_attribute: member
+      ignore_referrals: false
+      group_filter: (objectClass=*)
+      user_search_dn: OU=Users,OU=Mystro,OU=TWC Divisions,DC=corp,DC=bobby,DC=com
+      user_id_attribute: cn
+      group_search_dn: OU=TWC Divisions,DC=corp,DC=bobby,DC=com
+      group_search_scope: AUTH_LDAP_SCOPE_SUBTREE
+      admin_bind_dn: "{{ ldap_admin_bind_dn }}"
+      password: "{{ lookup('vault', 'ldapadmin', 'password') }}"
+      user_search_scope: AUTH_LDAP_SCOPE_ONE
+    base_dn: DC=corp,DC=bobby,DC=com
+    port: "{{ ldap_server.split(':')[1] }}"
+    bind_as_administrator: true
+    server:
+      - "{{ ldap_server.split(':')[0] }}"
+  tenant_ref: /api/tenant/admin
+  http:
+    group_member_is_full_dn: false
+    cache_expiration_time: 5
+
+avi_actiongroupconfigs:
+  - name: Collectd-Alerts
+
+avi_alertconfigs:
+  - name: Collectd-All-Events

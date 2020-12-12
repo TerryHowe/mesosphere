@@ -1,0 +1,11 @@
+carbon_alerts:
+  carbon_disk_space:
+    name: "Carbon Cache Disk Space"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.carbon-cache.*.df.var-lib-carbon.percent_bytes.used, 5), 100.0), 4)"
+    alert_params: 
+      - 90.0
+    alert_type: "gt"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 90.0

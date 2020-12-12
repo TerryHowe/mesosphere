@@ -1,0 +1,59 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Install kibana ssl cert
+      avi_sslkeyandcertificate:
+        name: kibana-{{ region }}-docker-app
+        key: "{{ lookup('vault', 'kibana-{{ region }}.{{ project }}.private', 'contents') }}"
+        certificate: "{{ lookup('vault', 'kibana-{{ region }}.{{ project }}.public', 'contents') }}"
+        controller_user: admin
+        controller_pass: "{{ avi_controller_admin_password }}"
+        controller_host: "avi-{{ region }}.{{ project }}.cloud.twc.net:9443"
+
+- hosts: localhost
+  roles:
+    - role: deploy/audit
+    - role: docker-app
+      app_spec:
+        app_name: kibana-{{ region }}
+        tenant_name: admin
+        access: internet
+        service_port: 443
+        container_port: 5601
+        marathon:
+          cpus: 1
+          mem: 2048
+          instances: 1
+          container:
+            docker:
+              image: "kibana:4.3.1"
+              forcePullImage: True
+          constraints:
+            - ['hostname', 'UNIQUE']
+          env:
+            ELASTICSEARCH_URL: http://elasticsearch-executor.elasticsearch.mesos:1025
+          args:
+            - "--zookeeperMesosUrl"
+            - "zk://leader.mesos:2181/mesos"
+          healthChecks:
+            - protocol: HTTP
+              path: /status
+              gracePeriodSeconds: 3
+              intervalSeconds: 10
+              portIndex: 0
+              timeoutSeconds: 10
+              maxConsecutiveFailures: 3
+        avi:
+          virtualservice:
+            application_profile_ref: /api/applicationprofile?name=System-Secure-HTTP
+            ssl_key_and_certificate_refs:
+              - /api/sslkeyandcertificate/?name=kibana-{{ region }}-docker-app
+            ssl_profile_ref: /api/sslprofile/?name=System-Standard
+            client_auth:
+              type: HTTP_BASIC_AUTH
+              auth_profile_ref: /api/authprofile/?name=TWC Corp LDAP
+              realm: Kibana Auth
+              request_uri_path:
+                match_str:
+                  - /
+                match_criteria: BEGINS_WITH

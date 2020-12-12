@@ -1,0 +1,22 @@
+[Unit]
+Description=Seyren
+
+[Service]
+ExecStart=/bin/java -jar /opt/seyren/seyren-{{ seyren_version }}.jar -httpPort={{ seyren_port }}
+ExecStop=/bin/kill $MAINPID
+Restart=always
+User=root
+Group=root
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=GRAPHITE_USERNAME={{ graphite_username }}
+Environment=GRAPHITE_PASSWORD={{ graphite_password }}
+Environment=SEYREN_LOG_FILE_LEVEL={{ seyren_log_level }}
+Environment=SEYREN_LOG_PATH={{ seyren_log_path }}
+Environment=GRAPHITE_URL={{ graphite_url }}
+WorkingDirectory=/opt/seyren
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=seyren
+
+[Install]
+WantedBy=multi-user.target

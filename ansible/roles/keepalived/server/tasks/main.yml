@@ -1,0 +1,32 @@
+---
+
+- name: Install keepalived
+  package: name=keepalived state=present
+
+- name: keepalived required dirs
+  file: path={{ item }} state=directory owner=root group=root mode=0755
+  with_items:
+    - /etc/keepalived/conf.d
+    - /etc/systemd/system/keepalived.service.d/
+
+- name: Add service unit hooks to cleanup state files
+  copy: src=override.conf dest=/etc/systemd/system/keepalived.service.d/override.conf
+  notify:
+    - reload systemd
+    - restart keepalived
+
+- name: Start and enable keepalived
+  service: name=keepalived enabled=yes state=started
+
+- name: keepalived config file
+  template: src={{ item }} dest=/etc/keepalived/conf.d/{{ item | regex_replace('j2', 'conf') }}
+            owner=root group=root mode=0600
+  with_items:
+    - 000_head.j2
+    - 999_tail.j2
+  notify:
+    - reconfig keepalived
+
+- include: monitoring.yml
+  tags:
+    - monitoring

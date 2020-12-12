@@ -1,0 +1,23 @@
+---
+- name: Create admin user
+  shell: echo "CREATE USER admin WITH PASSWORD '{{os_password}}' SUPERUSER;" | docker run -i cassandra:3.0.7 cqlsh -u cassandra -p cassandra --cqlversion="3.4.0" {{cassandra_vip}}
+  become: yes
+  no_log: True
+  register: create_admin
+  changed_when: create_admin.rc == 0 and 'admin already exists' not in create_admin.stderr
+  failed_when: "create_admin.rc != 0 and 'AuthenticationFailed' not in create_admin.stderr"
+
+- name: Alter cassandra user
+  shell: echo "ALTER USER cassandra WITH PASSWORD '{{new_password}}' NOSUPERUSER;" | docker run -i cassandra:3.0.7 cqlsh -u admin -p '{{os_password}}' --cqlversion="3.4.0" {{cassandra_vip}}
+  become: yes
+  no_log: True
+  register: disable_user
+  failed_when: disable_user.stderr != ""
+
+- name: Create {{customer_name}} user
+  shell: echo "CREATE USER {{customer_name}} WITH PASSWORD '{{customer.password}}' SUPERUSER;" | docker run -i cassandra:3.0.7 cqlsh -u admin -p {{os_password}} --cqlversion="3.4.0" {{cassandra_vip}}
+  become: yes
+  no_log: True
+  register: create_admin
+  changed_when: create_admin.rc == 0 and 'admin already exists' not in create_admin.stderr
+  failed_when: "create_admin.rc != 0 and 'AuthenticationFailed' not in create_admin.stderr"

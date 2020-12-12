@@ -1,0 +1,7 @@
+# to be used by ansible provisioning clients to target the writer on any node
+# goes through haproxy
+[client]
+user=root
+password='{{ mysql_root_password }}'
+port={{ mysql_proxy_writer_port }}
+host=127.0.0.1

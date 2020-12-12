@@ -1,0 +1,6 @@
+import hudson.model.UserProperty
+import hudson.model.User
+
+def user = hudson.model.User.current();
+def api = user.getProperty(jenkins.security.ApiTokenProperty)
+println api.getApiToken()

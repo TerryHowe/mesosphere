@@ -1,0 +1,13 @@
+---
+- hosts: graphite
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  vars:
+    - grafana_admin_password: "{{ os_password }}"
+  roles:
+  - graphite/graphite-web-ssl
+  - role: dns/record
+    domain_name: graphite-{{ region }}
+  - role: dns/record
+    domain_name: grafana-{{ region }}

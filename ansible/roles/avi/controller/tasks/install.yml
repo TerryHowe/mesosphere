@@ -1,0 +1,63 @@
+---
+- name: install python-pip
+  package: name=python-pip state=present
+
+- name: install avisdk
+  pip: name=avisdk version=16.4b1
+
+- name: check if docker images loaded
+  shell: docker images | grep "avinetworks/controller[ ]*{{ avi_controller_version }}"
+  register: images_loaded
+  changed_when: images_loaded.rc != 0
+  failed_when: false
+
+- block:
+    - name: check for archive
+      stat: path=/root/{{ avi_archive_name }}.tar
+      register: controller
+
+    - name: fetch archive
+      get_url: url={{ avi_controller_archive_url }} dest=/root/{{ avi_archive_name }}.tgz checksum=md5:{{ avi_controller_archive_md5 }}
+      when: not controller.stat.exists
+
+    - name: uncompress archive
+      command: gunzip /root/{{ avi_archive_name }}.tgz
+      when: not controller.stat.exists
+
+    - name: load docker images
+      command: docker load -i /root/{{ avi_archive_name }}.tar
+
+  when: images_loaded.rc != 0
+
+- name: create avi upgrade dir
+  file: path="{{ avi_controller_upgrade_dir }}" state=directory
+
+# remove after this has been run in all envs
+- name: remove old avi controller service unit file
+  file: path=/etc/systemd/system/avi-controller.service state=absent
+  register: avi_service_unit_remove
+
+# remove after this has been run in all envs
+- name: stop avi controller service
+  service: name=avi-controller state=stopped enabled=no
+  when: avi_service_unit_remove.changed
+
+- name: add avi controller service
+  template: src=avicontroller.service.j2 dest=/etc/systemd/system/avicontroller.service
+  register: avi_service_result
+
+- name: enable avi controller service
+  service: name=avicontroller enabled=yes
+
+- block:
+    # the following are not handlers since we need the restarts to apply immediately
+    # before moving onto configuration
+    - name: reload systemctl
+      command: systemctl daemon-reload
+
+    - name: restart avi controller
+      service: name=avicontroller state=restarted
+
+    - include: wait-for-service.yml
+
+  when: avi_service_result.changed

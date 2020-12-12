@@ -1,0 +1,7 @@
+---
+customer:
+  name: "Next Generation Clients"
+  shortname: "ngcl"
+  email: "jeffrey@bobby.com"
+  password: "{{ lookup('vault', 'customer/ngcl', 'password') }}"
+  org_email: "jeffrey@bobby.com"

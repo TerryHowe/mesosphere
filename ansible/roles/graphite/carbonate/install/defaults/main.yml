@@ -1,0 +1,9 @@
+---
+carbonate_new_carbon_cache_nodes: []
+carbonate_old_cluster_nodes: "{{ groups['carbon-cache'] | difference(carbonate_new_carbon_cache_nodes) }}"
+carbonate_updated_cluster_nodes: "{{ groups['carbon-cache'] }}"
+
+# required vars set by caller
+
+#carbonate_cluster_name: main
+#carbonate_replication_factor: 0

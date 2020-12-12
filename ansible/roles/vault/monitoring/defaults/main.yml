@@ -1,0 +1,42 @@
+vault_alerts:
+  vault_status_response_code:
+    name: "Vault Status Response Code"
+    alert_params:
+      - 200
+      - 200
+    alert_type: "outside_range"
+    reducer_type: "last"
+    target: "alias(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.worker.*.curl.vault_health.response_code, 5), -1.0), 'Vault Status Response Code')"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 200
+      upper:
+        op: "gt"
+        val: 200
+  vault_seal_status:
+    name: "Vault Seal Status"
+    alert_params:
+      - 0
+      - 0
+    alert_type: "outside_range"
+    reducer_type: "avg"
+    target: "alias(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.worker.*.curl_json.vault_sealed.gauge.progress, 5), -1.0), 'Vault Sealed Progress')"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 0
+      upper:
+        op: "gt"
+        val: 0
+  vault_port_listening:
+    name: "Vault Port Listening"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    reducer_type: "min"
+    target: "alias(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.worker.*.tcpconns.8200-local.tcp_connections.LISTEN, 5), 0), 'Vault Port Listening')"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1

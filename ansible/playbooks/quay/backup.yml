@@ -1,0 +1,9 @@
+---
+- hosts: mysql-common
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  run_once: true
+  roles:
+    - role: mysql/backup
+      database_name: 'quay'

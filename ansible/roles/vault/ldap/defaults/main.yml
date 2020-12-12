@@ -1,0 +1,2 @@
+---     
+token: "{{ lookup('file', '{{vault_token}}') }}"

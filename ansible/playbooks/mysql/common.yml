@@ -1,0 +1,24 @@
+---
+- hosts: mysql-common
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  vars:
+    mysql_db_port: 3307
+    mysql_root_password: "{{ mysql_common_root_password }}"
+  roles:
+  - role: deploy/audit
+  - role: filesystem
+
+  - role: mysql/server
+    mysql_enable_gtid: true
+    mysql_healthcheck_user: "{{ project }}-{{ region }}-haproxy"
+    mysql_healthcheck_password: "{{ mysql_common_healthcheck_password }}"
+
+  - role: mysql/proxy
+    mysql_proxy_upstream_hosts: "{{ groups['mysql-common'] | map('extract', hostvars, 'openstack') | list }}"
+    mysql_proxy_upstream_port: "{{ mysql_db_port }}"
+
+  - role: dns/record
+    domain_name: mysql-common-{{ region }}-internal
+    use_private_ips: true

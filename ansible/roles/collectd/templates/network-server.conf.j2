@@ -1,0 +1,8 @@
+LoadPlugin "network"
+
+<Plugin "network">
+  <Listen "{{ ansible_default_ipv4['address'] }}">
+    SecurityLevel "Sign"
+    AuthFile "{{ collectd_network_auth_file }}"
+  </Listen>
+</Plugin>

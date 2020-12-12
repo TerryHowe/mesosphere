@@ -1,0 +1,38 @@
+---
+- hosts: localhost
+  tasks:
+    - fail: msg='Rerun with{{ ":" }} -e "target_host=<hostname>"'
+      when: target_host is not defined
+
+    - set_fact:
+        neutron_port: "ansible-static-port:{{ target_host }}"
+      no_log: true
+
+    - name: get current admin port state
+      os_port:
+        name: "{{ neutron_port }}"
+      register: port_state
+
+    - set_fact:
+        target_state: "{{ port_state.port.admin_state_up | ternary(False, True) }}"
+      no_log: true
+
+    - debug: msg="Current admin up [{{ port_state.port.admin_state_up }}]. Target admin up [{{ target_state }}]"
+
+    - name: toggle admin port state
+      os_port:
+        name: "ansible-static-port:{{ target_host }}"
+        admin_state_up: "{{ target_state }}"
+
+    - name: create graphite event
+      uri:
+        url: https://graphite-{{ region }}.{{ admin_project }}.cloud.twc.net/events/
+        method: POST
+        validate_certs: no
+        body_format: json
+        body:
+          tags: mesos destructive test
+          what: Destructive Testing
+          data: "neutron port '{{ neutron_port }}' for host '{{ target_host }}' was brought {{ target_state | ternary('up', 'down') }}"
+
+

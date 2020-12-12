@@ -1,0 +1,16 @@
+<LoadPlugin python>
+    Globals true
+</LoadPlugin>
+
+TypesDB "{{ collectd_python_module_dir }}/iostat_types.db"
+
+<Plugin python>
+    ModulePath "{{ collectd_python_module_dir }}"
+    Import "collectd_iostat_python"
+    <Module collectd_iostat_python>
+        Path "/usr/bin/iostat"
+        Verbose false
+        NiceNames false
+        PluginName collectd_iostat_python
+    </Module>
+</Plugin>

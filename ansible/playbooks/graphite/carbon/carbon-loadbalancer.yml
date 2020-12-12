@@ -1,0 +1,31 @@
+---
+- hosts: localhost
+  roles:
+  - role: openstack/virtualip
+    openstack_virtualip_port_name: carbon-relay-lb
+    openstack_virtualip_hostgroup: admin-proxy
+    openstack_virtualip_internal_host_name: carbon-relay-internal-{{ region }}
+    openstack_virtualip_external_host_name: carbon-relay-{{ region }}
+
+- hosts: admin-proxy
+  become: yes
+  roles:
+  - role: keepalived/virtualip
+    keepalived_virtual_ip: "{{ hostvars['localhost']['virtualip_addr'] }}"
+  - role: haproxy/service
+    haproxy_service_name: carbon-relay
+    haproxy_service_hostgroup: carbon-relay
+    haproxy_service_port: 2003
+    haproxy_service_backend_params:
+      - mode tcp
+      - balance leastconn
+    haproxy_service_virtualip: "{{ hostvars['localhost']['virtualip_addr'] }}"
+    haproxy_service_server_params: check fall 3 rise 2
+  - role: haproxy/monitor
+    haproxy_triggers:
+      haproxy_uptime:
+        name: "{{ moira_project }}-{{ moira_region }} HAProxy Admin Proxy uptime"
+        targets: [ "movingAverage(derivative(transformNull({{ collectd_base_ns }}.admin-proxy.*.haproxy.derive.uptime_seconds, 0)), '3min', 'max')" ]
+        expression: "ERROR if t1 < 1 else OK"
+    tags:
+      - monitoring

@@ -1,0 +1,29 @@
+---
+- hashivault_audit_list:
+    url: "{{vault_url}}"
+    token: "{{root_token}}"
+  register: 'vault_audit_list'
+- hashivault_audit_enable:
+    url: "{{vault_url}}"
+    token: "{{root_token}}"
+    name: "syslog"
+    options: "{{vault_audit_options}}"
+  failed_when: False
+  when: "'syslog/' not in vault_audit_list.backends"
+
+- hashivault_auth_list:
+    url: "{{vault_url}}"
+    token: "{{root_token}}"
+  register: 'vault_auth_list'
+- hashivault_auth_enable:
+    url: "{{vault_url}}"
+    token: "{{root_token}}"
+    name: "userpass"
+  when: "'userpass/' not in vault_auth_list.backends"
+
+- hashivault_userpass_create:
+    url: "{{vault_url}}"
+    token: "{{root_token}}"
+    name: "{{os_username}}"
+    pass: "{{os_password}}"
+    policies: "root"

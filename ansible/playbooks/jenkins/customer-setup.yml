@@ -1,0 +1,47 @@
+---
+- hosts: localhost
+  vars:
+    application_name: "jenkins-{{customer_name}}"
+    persistent_store: "/mnt/jenkins/{{application_name}}"
+    jenkins_user_name: "{{customer_name}}"
+    jenkins_headers: "{{lookup('dcos_token_header')}}"
+  vars_files:
+        - "{{base_dir}}/playbooks/customer/vars/{{customer_name}}.yml"
+  roles:
+    - role: jenkins/customer/setup
+    - role: jenkins/wait
+      jenkins_subdomain: "mesos-{{region}}"
+      jenkins_path: "service/jenkins-{{customer.shortname}}"
+
+- hosts: mesos-agent
+  vars:
+    application_name: "jenkins-{{customer_name}}"
+    persistent_store: "/mnt/jenkins/{{application_name}}"
+    jenkins_user_name: "{{customer_name}}"
+    jenkins_user_password: "{{ lookup('vault', 'customer/{{customer_name}}', 'password') }}"
+    jenkins_cli_jar: "/usr/share/jenkins/war/WEB-INF/jenkins-cli.jar"
+  vars_files:
+        - "{{base_dir}}/playbooks/customer/vars/{{customer_name}}.yml"
+  become: yes
+  roles:
+    - role: jenkins/find
+    - role: jenkins/user
+    - role: jenkins/enablesecurity
+    - role: jenkins/environment
+      envvars:
+        - name: CUSTOMER_NAME
+          value: "{{customer.shortname}}"
+        - name: MESOS_DOMAIN
+          value: "{{mesos_domain}}"
+        - name: MESOS_NAME
+          value: "mesos-{{region}}.{{mesos_domain}}"
+        - name: VAULT_ADDR
+          value: "https://vault-{{region}}.{{mesos_domain}}:8200"
+        - name: DOCKER_REGISTRY
+          value: "{{docker_registry}}"
+        - name: REGION_LOWER
+          value: "{{region}}"
+        - name: OS_REGION_NAME
+          value: "{{os_region_name}}"
+    - role: quay/customer/getcreds
+    - role: jenkins/credentials

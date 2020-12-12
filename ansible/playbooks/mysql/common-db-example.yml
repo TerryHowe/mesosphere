@@ -1,0 +1,18 @@
+---
+- hosts: mysql-common
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  run_once: true
+  tasks:
+    - mysql_db: name=example_db 
+                state=present
+                login_host=127.0.0.1
+                config_file=~/.writer.my.cnf
+
+    - mysql_user: name=example_user
+                  password="CHANGEME-5Tr8kiTKg@fS"
+                  priv=example_db.*:ALL
+                  state=present
+                  login_host=127.0.0.1
+                  config_file=~/.writer.my.cnf

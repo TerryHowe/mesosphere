@@ -1,0 +1,61 @@
+mesos_agent_alerts:
+  mesos_agent_system_load:
+    name: "Mesos Agent Relative System Load"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-agent.*.load.load.relative.shortterm, 5), 1.0), 4)"
+    alert_params:
+      - 0.85
+    alert_type: "gt"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 0.85
+  mesos_agent_process_registered:
+    name: "Mesos Agent Process Registered"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-agent.*.mesos-slave.gauge.slave_registered, 5), 0), 4)"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1
+  mesos_agent_process_running:
+    name: "Mesos Agent Process Running"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-agent.*.processes.mesos-agent.ps_count.processes, 5), 0), 4)"
+    alert_params:
+      - 1
+    alert_type: "lt"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 1
+  mesos_agent_data_available:
+    name: "Mesos Agent /data available"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-agent.*.filecount.data.files, 5), -1), 4)"
+    alert_params:
+      - 0
+    alert_type: "lt"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 0
+  mesos_agent_data_disk_space:
+    name: "Mesos Agent /data Disk Space"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-agent.*.df.data.percent_bytes.used, 5), 100), 4)"
+    alert_params:
+      - 90.0
+    alert_type: "gt"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 90.0
+  mesos_agent_root_disk_space:
+    name: "Mesos Agent /root Disk Space"
+    target: "aliasByNode(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-agent.*.df.root.percent_bytes.used, 5), 100), 4)"
+    alert_params:
+      - 90.0
+    alert_type: "gt"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 90.0

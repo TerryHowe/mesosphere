@@ -1,0 +1,18 @@
+metronome_alerts:
+  metronome_job_status:
+    name: "Metronome Jobs Status"
+    target: "alias(transformNull(derivative(maxSeries(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-master.*.curl_json.Metronome.counter.*, 2))), 1.0), 'Job Failures')"
+    alert_params:
+      - 0.0
+    reducer_type: "last"
+    alert_type: "gt"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 0.0
+
+metronome_triggers:
+  job_failure_trigger:
+    name: "Metronome {{os_region_name}} Jobs Status"
+    targets: [ "derivative(maxSeries(collectd.{{ admin_project }}.{{ moira_region }}.mesos-master.*.curl_json.Metronome.counter.*))" ]
+    expression: "ERROR if t1 > 0 else OK"

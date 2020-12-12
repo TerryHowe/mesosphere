@@ -1,0 +1,17 @@
+---
+- file: path={{persistent_store}}/.ssh state=directory mode=0700 owner={{remote_user}} group={{remote_user}}
+
+- stat: path='{{persistent_store}}/.ssh/id_rsa'
+  register: idrsa
+
+- name: ssh-keygen -t rsa -f '{{persistent_store}}/.ssh/id_rsa' -q -N ''
+  command: ssh-keygen -t rsa -f '{{persistent_store}}/.ssh/id_rsa' -q -N ''
+  when: not idrsa.stat.exists
+- file: path={{persistent_store}}/.ssh/id_rsa mode=0600 owner={{remote_user}} group={{remote_user}}
+- file: path={{persistent_store}}/.ssh/id_rsa.pub mode=0644 owner={{remote_user}} group={{remote_user}}
+
+- name: Get the contents of the key
+  command: cat '{{persistent_store}}/.ssh/id_rsa.pub'
+  register: jenkins_vm_public_key
+  changed_when: False
+  no_log: True

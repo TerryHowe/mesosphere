@@ -1,0 +1,5 @@
+---
+#
+# How we report audits on the control node, actions like openstack module calls.
+#
+- debug: msg="TODO figure out where/how to report {{ deploy_entry }}"

@@ -1,0 +1,8 @@
+avi_controller_url: https://avi-{{ region }}.{{ project }}.cloud.twc.net:9443
+avi_customer_marathon_configuration:
+  - vs_name_tag_framework: false
+    marathon_url: "https://{{ hostvars[groups['mesos-master'][0]]['openstack']['private_v4'] }}/service/marathon-{{ customer.shortname }}"
+    marathon_username: "admin"
+    marathon_password: "{{ avi_controller_admin_password }}"
+    tenant: "{{ customer.shortname }}"
+    use_token_auth: true

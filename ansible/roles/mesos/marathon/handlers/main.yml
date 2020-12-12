@@ -1,0 +1,7 @@
+---
+
+- name: systemctl reload
+  command: systemctl daemon-reload
+
+- name: marathon restart
+  service: name=dcos-marathon state=restarted

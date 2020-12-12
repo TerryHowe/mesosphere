@@ -1,0 +1,35 @@
+---
+# This role contains the configuration for an NFS server
+#
+- name: Install NFS server packages
+  package: name=nfs-utils state=present
+
+- name: Enable required NFS services
+  service: name={{ item }} enabled=yes
+  with_items: 
+    - rpcbind
+    - nfs-server
+    - nfs-lock
+    - nfs-idmap
+  
+- name: Start required NFS services
+  service: name={{ item }} state=started
+  with_items: 
+    - rpcbind
+    - nfs-server
+    - nfs-lock
+    - nfs-idmap
+
+# Update /etc/exports
+- name: NFS export config file
+  template: src=nfs.exports.j2 dest=/etc/exports owner=root group=root mode=0644
+  when: nfs_server is defined 
+  notify:
+    - restart nfs
+
+# Add Port Lockdowns
+- name: NFS port lockdown file
+  template: src=nfs.lockdown.j2 dest=/etc/sysconfig/nfs owner=root group=root mode=0444
+  when: nfs_server is defined
+  notify:
+    - restart nfs

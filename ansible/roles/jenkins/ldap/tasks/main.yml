@@ -1,0 +1,5 @@
+---
+- name: template src=config.xml.j2 dest={{persistent_store}}/config.xml
+  template: src=config.xml.j2 dest={{persistent_store}}/config.xml
+  run_once: True
+  become: yes

@@ -1,0 +1,6 @@
+---
+- name: Dump the database
+  mysql_db: state=dump name={{database_name}} target={{dump_file}}
+
+- name: Fetch the database dump file {{dump_file}}
+  fetch: src={{dump_file}} dest={{dump_file}} flat=yes

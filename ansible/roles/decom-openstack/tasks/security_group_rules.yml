@@ -1,0 +1,20 @@
+- set_fact:
+    security_group: "{{ item.key }}"
+    security_group_rules: "{{ item.value }}"
+  tags:
+    - access
+
+- name: Delete OpenStack Security Group Rules for {{ security_group }}
+  os_security_group_rule:
+    state: absent
+    security_group: "{{ security_group }}"
+    protocol: "{{ item.0.protocol | default('tcp') }}"
+    direction: "{{ item.0.direction | default('ingress') }}"
+    port_range_min: "{{ item.0.port_min }}"
+    port_range_max: "{{ item.0.port_max | default(item.0.port_min) }}"
+    remote_ip_prefix: "{{ item.1 }}"
+  with_subelements:
+    - security_group_rules
+    - remote_ip_prefixes
+  tags:
+    - access

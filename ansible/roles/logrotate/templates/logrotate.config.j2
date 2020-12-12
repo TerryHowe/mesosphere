@@ -1,0 +1,5 @@
+{{ config.logfile_pattern }} {
+{% for setting in config.logrotate_settings %}
+  {{ setting }}
+{% endfor %}
+}

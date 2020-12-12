@@ -1,0 +1,91 @@
+---
+- set_fact:
+    mysql_mycnf_config: "{{ mysql_mycnf_defaults | combine(mysql_mycnf | default({})) }}"
+
+- name: configure /etc/my.cnf
+  lineinfile: dest=/etc/my.cnf
+              regexp="^{{ item.key }}(=.*)?$"
+              line="{{ item.key }}{% if item.value %}={{ item.value }}{% endif %}"
+  with_dict: "{{ mysql_mycnf_config }}"
+
+- name: enable mysqld
+  service: name=mysqld enabled=yes
+  register: mysql_enabled
+
+- name: start mysqld
+  service: name=mysqld state=started
+
+- name: test root password
+  shell: >
+    mysql -u root --password='{{ mysql_root_password }}'
+    -e 'SELECT USER(),CURRENT_USER();'
+  register: password_test
+  failed_when: false
+  changed_when: false
+  no_log: true
+
+- block:
+    - name: grab generated password
+      shell: grep 'temporary password' /var/log/mysqld.log  | tail -1 | sed -e 's/^.*localhost. //'
+      register: password_result
+      no_log: true
+
+    - name: update root password
+      shell: >
+        mysql -u root --password='{{ password_result.stdout }}'
+        --connect-expired-password
+        -e 'SET PASSWORD = PASSWORD("{{ mysql_root_password }}");'
+      no_log: true
+
+  when: "password_test.rc != 0"
+
+- name: root mysql config
+  template: src=local.my.cnf.j2 dest=/root/.local.my.cnf owner=root group=root mode=0400
+
+- name: alias for local mysql
+  lineinfile: dest=/root/.bashrc regexp="^alias my-local=" line="alias my-local='mysql --defaults-file=~/.local.my.cnf'"
+
+- name: alias for writer mysql
+  lineinfile: dest=/root/.bashrc regexp="^alias my-writer=" line="alias my-writer='mysql --defaults-file=~/.writer.my.cnf'"
+
+- name: create root accounts for each host
+  mysql_user: name=root
+              priv="*.*:ALL,GRANT"
+              host="{{ hostvars[item]['openstack']['private_v4'] }}"
+              password={{ mysql_root_password }}
+              config_file=~/.local.my.cnf
+  with_items: "{{ play_hosts }}"
+
+- include: healthcheck.yml
+
+- block:
+    # after this is applied transactions should be written to the master
+    # instance only
+    - name: enable gtid-mode
+      lineinfile: dest=/etc/my.cnf
+                  regexp="^{{ item.key }}(=.*)?$"
+                  line="{{ item.key }}{% if item.value %}={{ item.value }}{% endif %}"
+      with_dict:
+        gtid-mode: "ON"
+        enforce-gtid-consistency:
+      register: enable_gtid
+
+    - name: restart mysql to apply gtid settings
+      service: name=mysqld state=restarted
+      when: enable_gtid.changed
+
+  # should be supplied by playbooks wishing to enable GTIDs and initialize a
+  # replica set
+  when: "mysql_enable_gtid == True"
+
+- name: post install mycnf configuration
+  lineinfile: dest=/etc/my.cnf
+              regexp="^{{ item.key }}(=.*)?$"
+              line="{{ item.key }}{% if item.value %}={{ item.value }}{% endif %}"
+  with_dict: "{{ mysql_mycnf_postinstall | default({}) }}"
+  register: post_install
+
+- name: post install var configuration
+  command: mysql --defaults-file=~/.local.my.cnf -e 'SET GLOBAL {{ item.key }}={{ item.value }}'
+  with_dict: "{{ mysql_mycnf_postinstall | default({}) }}"
+  when: post_install.changed

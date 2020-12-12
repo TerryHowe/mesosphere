@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+
+import base64
+from ansible.module_utils.basic import *
+
+try:
+  from avi.sdk.avi_api import ApiSession
+  HAS_AVISDK = True
+except ImportError:
+  HAS_AVISDK = False
+
+
+if __name__ == '__main__':
+
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'license_text': { 'type': 'str' },
+            'controller_user': { 'required': True, 'type': 'str' },
+            'controller_pass': { 'required': True, 'type': 'str' },
+            'controller_host': { 'required': True, 'type': 'str' },
+        },
+        supports_check_mode=True
+    )
+
+    if not HAS_AVISDK:
+        module.fail_json(msg="avisdk package is required")
+
+    args = module.params
+    api = ApiSession.get_session(args['controller_host'], args['controller_user'],
+                                 args['controller_pass'], tenant='admin')
+
+    license_id = re.search('license_id: (\w+)', args['license_text']).groups()[0]
+    result = api.get('license').json()
+    for license in result['licenses']:
+        if license['license_id'] == license_id:
+            module.exit_json(changed=False, license=license)
+
+    response = {'changed': True}
+    if not module.check_mode:
+        resp = api.put('license', data={'license_text': args['license_text']})
+        response['response'] = resp.text
+
+    module.exit_json(**response)

@@ -1,0 +1,11 @@
+---
+#-- Playbook for building Seyren
+- hosts: graphite
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+  - mongodb
+  - seyren
+  - role: dns/record
+    domain_name: seyren-{{ region }}

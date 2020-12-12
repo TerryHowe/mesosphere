@@ -1,0 +1,9 @@
+---
+- name: Find dns record
+  shell: designate record-list {{project_domain}}. -f value -c id -c name | grep {{application_name}}.{{project_domain}}.  | cut -f1 -d' '
+  register: deleterecords
+
+- name: Delete dns name
+  shell: designate record-delete {{project_domain}}. {{item}}
+  register: deletedns
+  with_items: "{{deleterecords.stdout_lines}}"

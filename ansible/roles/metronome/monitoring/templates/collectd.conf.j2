@@ -1,0 +1,12 @@
+LoadPlugin curl_json
+<Plugin curl_json>
+  <URL "http://{{ openstack['private_v4'] }}:9090/v1/jobs?embed=historySummary">
+    Header "Authorization: token={{token.stdout}}"
+    Instance Metronome
+    VerifyPeer false
+    VerifyHost false
+    <Key "*/historySummary/failureCount">
+      Type "counter"
+    </Key>
+  </URL>
+</Plugin>

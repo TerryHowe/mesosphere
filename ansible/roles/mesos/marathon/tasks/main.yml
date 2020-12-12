@@ -1,0 +1,32 @@
+---
+
+# {{ mesos_marathon_service_opts }}
+- block:
+  - name: 1.8 Marathon Graphite Reporter
+    lineinfile: dest=/opt/mesosphere/etc/marathon-extras
+                line="MARATHON_EXTRA_ARGS=--reporter_graphite {{ mesos_marathon_service_opts }} --disable_metrics"
+                regexp="^MARATHON_EXTRA_ARGS="
+    notify:
+      - systemctl reload
+      - marathon restart
+  when: "'1.8.' in mesos_version"
+
+- block:
+  - name: configure dcos-marathon TWC_MARATHON_OPTS
+    lineinfile: dest=/etc/systemd/system/dcos-marathon.service
+                line="Environment='TWC_MARATHON_OPTS= --disable_metrics --reporter_graphite {{ mesos_marathon_service_opts }}'"
+                insertafter='^EnvironmentFile='
+                regexp="^Environment='TWC_MARATHON_OPTS="
+    notify:
+      - systemctl reload
+      - marathon restart
+
+  - name: apply dcos-marathon TWC_MARATHON_OPTS
+    lineinfile: dest=/etc/systemd/system/dcos-marathon.service
+                line='\1 $TWC_MARATHON_OPTS'
+                regexp='^(ExecStart=.*?)( \$TWC_MARATHON_OPTS)?$'
+                backrefs=yes
+    notify:
+      - systemctl reload
+      - marathon restart
+  when: "'1.7.' in mesos_version"

@@ -1,0 +1,11 @@
+---
+- set_fact:
+    worker_1_name: "worker-1-{{region}}"
+    worker_2_name: "worker-2-{{region}}"
+- set_fact:
+    worker_1_ip: "{{hostvars[worker_1_name]['openstack']['private_v4']}}"
+    worker_2_ip: "{{hostvars[worker_2_name]['openstack']['private_v4']}}"
+
+- name: join primary consul
+  shell: docker exec -i consul consul join --rpc-addr={{worker_2_ip}}:8400 {{worker_1_ip}}
+  when: "ansible_hostname == worker_2_name"

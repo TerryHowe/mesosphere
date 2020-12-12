@@ -1,0 +1,4 @@
+---
+
+- name: restart carbon-c-relay
+  service: name=carbon-c-relay state=restarted

@@ -1,0 +1,9 @@
+LoadPlugin "network"
+
+<Plugin "network">
+  <Server "{{ collectd_network_host }}">
+    SecurityLevel "Sign"
+    Username "{{ collectd_network_username }}"
+    Password "{{ collectd_network_password }}"
+  </Server>
+</Plugin>

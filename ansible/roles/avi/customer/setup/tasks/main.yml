@@ -1,0 +1,79 @@
+---
+- name: avi login
+  uri:
+    url: "{{ avi_controller_url }}/login"
+    method: POST
+    body: "username=admin&password={{ avi_controller_admin_password }}"
+    validate_certs: no
+    HEADER_Content-Type: application/x-www-form-urlencoded
+    status_code: "200"
+  register: login_result
+  no_log: true
+
+- set_fact:
+    cookies: "{{ login_result.set_cookie }}"
+    csrf_token: "{{ login_result.set_cookie | regex_replace('^.*csrftoken=(.*?);.*$', '\\1') }}"
+  no_log: true
+
+- name: get default-cloud config
+  uri:
+    url: "{{ avi_controller_url }}/api/cloud?name=Default-Cloud"
+    method: GET
+    status_code: 200
+    validate_certs: no
+    HEADER_Cookie: "{{ cookies }}"
+    HEADER_Referer: "{{ avi_controller_url }}"
+    HEADER_X-CSRFToken: "{{ csrf_token }}"
+  register: cloud_result
+  no_log: true
+
+# the cloud_result data structure is too complicated for ansible to modify in situ,
+# so this builds up the needed changes piece-by-piece. We need to add one item to
+# the marathon_configurations list that is part of the mesos_configuration.
+- set_fact:
+    temp_marathonconfigurations: "{{ cloud_result.json.results[0]['mesos_configuration']['marathon_configurations'] + avi_customer_marathon_configuration }}"
+    temp_mesos_configuration: "{{ cloud_result.json.results[0]['mesos_configuration'] | combine({'marathon_configurations': '{{temp_marathonconfigurations}}'}) }}"
+    target_cloudconfig: "{{ cloud_result.json.results[0] | combine({'mesos_configuration': '{{ temp_mesos_configuration }}'}) }}"
+  no_log: true
+
+- name: update default-cloud config with customer marathon
+  uri:
+    url: "{{ avi_controller_url }}/api/cloud/{{ cloud_result.json.results[0].uuid }}"
+    body: "{{ target_cloudconfig }}"
+    body_format: json
+    method: PUT
+    status_code: 200
+    validate_certs: no
+    HEADER_Cookie: "{{ cookies }}"
+    HEADER_Referer: "{{ avi_controller_url }}"
+    HEADER_X-CSRFToken: "{{ csrf_token }}"
+  register: create_cloud_result
+  changed_when: cloud_result.status == 200
+  when: "cloud_result.json.count == 1 and 'marathon-{{ customer.shortname }}' not in \"{{ cloud_result.json.results[0] }}\""
+  no_log: true
+
+- name: create customer tenant
+  uri:
+    url: "{{ avi_controller_url }}/api/tenant/"
+    body: "{ 'name': '{{ customer.shortname }}'}"
+    body_format: json
+    method: POST
+    status_code: 201,400
+    validate_certs: no
+    HEADER_Cookie: "{{ cookies }}"
+    HEADER_Referer: "{{ avi_controller_url }}"
+    HEADER_X-CSRFToken: "{{ csrf_token }}"
+  register: create_tenant
+  changed_when: create_tenant.status == 201
+  no_log: true
+
+- name: create admin user
+  avi_user:
+    username: "{{ customer.shortname }}-admin"
+    password: "{{ customer.password }}"
+    tenant: "{{ customer.shortname }}"
+    role: "Tenant-Admin"
+    controller_user: admin
+    controller_pass: "{{ avi_controller_admin_password }}"
+    controller_host: "{{ avi_controller_url }}"
+  no_log: true

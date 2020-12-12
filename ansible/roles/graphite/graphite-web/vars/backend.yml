@@ -1,0 +1,6 @@
+---
+# Used for graphite-web installs on the carbon-cache instances, will talk to
+# local carbon-cache process(es). Will be queried by the graphite-web frontend
+# instance(s).
+carbonlink_hosts: "{{ carbon_endpoints | map(attribute='query') | list }}"
+cluster_servers: []

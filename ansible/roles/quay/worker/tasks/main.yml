@@ -1,0 +1,15 @@
+---
+- name: pull quay registry
+  shell: docker pull quay.io/coreos/registry-build-worker:{{quay_worker_version}}
+
+- include: old.yml
+  with_items: "{{quay_worker_previous_versions}}"
+
+- name: check if worker exists
+  shell: docker ps --filter name=quay-worker -q
+  changed_when: False
+  register: runningquay
+
+- name: start quay worker
+  shell: docker run -d --name quay-worker --restart on-failure -e SERVER=wss://{{docker_registry}} -v /var/run/docker.sock:/var/run/docker.sock quay.io/coreos/registry-build-worker:{{quay_worker_version}}
+  when: not runningquay.stdout

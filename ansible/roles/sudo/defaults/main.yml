@@ -1,0 +1,5 @@
+sudo_users:
+  thowe:
+    defaults:
+      - "!requiretty"
+    nopasswd: yes

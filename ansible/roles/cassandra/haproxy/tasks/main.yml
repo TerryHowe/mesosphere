@@ -1,0 +1,24 @@
+---
+- name: See if cassandra-{{customer_name}}-haproxy intalled
+  shell: dcos marathon app list | grep cassandra-{{customer_name}}-haproxy
+  register: dcosinstalled
+  changed_when: dcosinstalled.rc == 1
+  failed_when: False
+
+- block:
+  - command: mktemp -t "{{customer_name}}.XXXXXXXXXX"
+    register: mktemp
+
+  - template: src=application.cfg.j2 dest={{mktemp.stdout}}
+  - set_fact: escaped_configuration="{{lookup('file', '{{mktemp.stdout}}').replace('\n', '\\n')}}"
+  - set_fact: escaped_pem="{{lookup('file', '{{haproxy_certificate_file}}').replace('\n', '\\n')}}\\n{{lookup('file', '{{haproxy_key_file}}').replace('\n', '\\n')}}"
+
+  - name: template src=options.json.j2 dest={{mktemp.stdout}}
+    template: src=options.json.j2 dest={{mktemp.stdout}}
+
+  - name: Install cassandra-{{customer_name}}
+    shell: dcos marathon app add {{mktemp.stdout}}
+
+  - file: name={{ mktemp.stdout }} state=absent
+
+  when: dcosinstalled.changed

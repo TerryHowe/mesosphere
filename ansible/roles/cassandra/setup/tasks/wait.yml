@@ -1,0 +1,8 @@
+---
+- name: wait for cassandra
+  shell: dcos cassandra node status --name cassandra-{{customer_name}}
+  register: cassandra_node_status
+  until: cassandra_node_status.rc == 0
+  changed_when: False
+  retries: 30
+  delay: 10

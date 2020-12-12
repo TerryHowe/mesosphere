@@ -1,0 +1,8 @@
+---
+- name: Ensure docker is enabled and started
+  service: name=docker enabled=yes state=started
+
+- include: docker.yml
+
+- name: install ipset
+  package: name=ipset state=installed

@@ -1,0 +1,23 @@
+---
+- name: Install collectd plugin for curl
+  package: name=collectd-curl state=present
+  notify:
+    - restart collectd
+
+- name: copy collectd vault port check
+  copy: src=vault-port-check.conf dest=/etc/collectd.d/vault-port-check.conf
+        mode=0600 owner=root group=root
+  notify:
+    - restart collectd
+
+- name: copy collectd vault health check
+  copy: src=vault-health-check.conf dest=/etc/collectd.d/vault-health-check.conf
+        mode=0600 owner=root group=root
+  notify:
+    - restart collectd
+
+- name: copy collectd vault sealed check
+  copy: src=vault-sealed-check.conf dest=/etc/collectd.d/vault-sealed-check.conf
+        mode=0600 owner=root group=root
+  notify:
+    - restart collectd

@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  roles:
+    - role: vault/mesos
+    - role: vault/wait
+    - role: vault/init
+    - role: vault/unseal
+    - role: vault/configure
+
+- hosts: mesos-agent
+  become: yes
+  roles:
+    - role: vault/collectd
+      tags:
+        - monitoring

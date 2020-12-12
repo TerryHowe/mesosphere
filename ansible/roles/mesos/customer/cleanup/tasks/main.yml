@@ -1,0 +1,16 @@
+---
+- name: uninstall user marathon
+  dcos_package:
+    package: marathon
+    app_id: "/{{ customer.shortname }}/marathon-{{ customer.shortname }}"
+    state: absent
+
+- name: remove admin user
+  dcos_user:
+    uid: "{{ customer.shortname }}-admin"
+    state: absent
+
+- name: remove administrator group
+  dcos_group:
+    gid: "{{ customer.shortname }}-admins"
+    state: absent

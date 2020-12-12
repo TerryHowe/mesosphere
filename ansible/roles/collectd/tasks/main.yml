@@ -1,0 +1,77 @@
+---
+- name: install collectd
+  package: name=collectd state=present
+  tags:
+    - monitoring
+
+- name: install packages
+  package: name={{ item }} state=present
+  with_list: "{{ collectd_packages }}"
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: configure collectd
+  template: src=collectd.conf.j2 dest=/etc/collectd.conf
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: configure plugins
+  copy: src=conf/ dest=/etc/collectd.d/
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: iostat plugin config
+  template: src=iostat.conf.j2 dest=/etc/collectd.d/iostat.conf
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+
+- name: configure graphite writer
+  template: src=graphite.conf.j2 dest=/etc/collectd.d/graphite.conf
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: create python modules directory
+  file: path={{ collectd_python_module_dir }} state=directory
+  tags:
+    - monitoring
+
+- name: add python plugins
+  copy: src=modules/ dest={{ collectd_python_module_dir }}
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: add types
+  copy: src=types/ dest={{ collectd_python_module_dir }}
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: Remove old chronos collectd configs
+  file: path=/etc/collectd.d/{{ item }} state=absent
+  with_items:
+    - chronos_jobs.conf
+    - chronos-monitor.conf
+
+- name: enable collectd service
+  service: name=collectd enabled=true
+  tags:
+    - monitoring
+
+- name: start collectd service
+  service: name=collectd state=started
+  tags:
+    - monitoring

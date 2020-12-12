@@ -1,0 +1,4 @@
+---
+vault_key_values: "{{lookup('file', '{{vault_keys}}')}}"
+vault_url: 'https://vault-{{region}}.{{project_domain}}:8200'
+vault_verify: True

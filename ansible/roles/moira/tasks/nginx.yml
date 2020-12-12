@@ -1,0 +1,27 @@
+---
+
+#-- COMMON CANDIDATE
+- name: Install python-passlib package
+  package: name=python-passlib state=present
+
+- set_fact:
+    public_url: "{{ moira_public_url }}"
+    ssl_cert_path: "/etc/nginx/conf.d/monitor-{{ region }}.{{ project }}.cloud.twc.net.crt"
+    ssl_key_path: "/etc/nginx/conf.d/monitor-{{ region }}.{{ project }}.cloud.twc.net.key"
+
+- name: Moira/monitor ssl cert
+  copy: content="{{lookup('vault', 'monitor-{{region}}.{{project}}.public', 'contents')}}" dest="{{ ssl_cert_path }}" owner=nginx group=nginx
+
+- name: Moira/monitor ssl key
+  copy: content="{{lookup('vault', 'monitor-{{region}}.{{project}}.private', 'contents') }}" dest="{{ ssl_key_path }}" owner=nginx group=nginx mode=0600
+
+- name: Moira htpasswd basic auth
+  htpasswd: path=/etc/nginx/.htpasswd name=paas-devops password="{{lookup('vault', 'moira', 'password')}}" owner=nginx group=nginx mode=0600  
+  notify:
+    - reload nginx
+
+- name: Moira nginx config
+  template: src=nginx.conf.j2 dest=/etc/nginx/conf.d/moira.conf owner=nginx group=nginx
+  notify:
+    - reload nginx
+

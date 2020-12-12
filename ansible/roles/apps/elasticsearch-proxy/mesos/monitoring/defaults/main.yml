@@ -1,0 +1,26 @@
+esproxy_alerts:
+  esproxy_response_code:
+    name: "ES Proxy Status"
+    target: "alias(maxSeries(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-agent.*.curl.elasticsearch_proxy.response_code, 5), -1.0)), 'ES Proxy Response Code')"
+    alert_params:
+      - 200
+      - 200
+    alert_type: "outside_range"
+    reducer_type: "last"
+    thresholds:
+      lower:
+        op: "lt"
+        val: 200
+      upper:
+        op: "gt"
+        val: 200
+  esproxy_response_time:
+    name: "ES Proxy Response Time"
+    target: "alias(maxSeries(transformNull(keepLastValue(collectd.{{ project }}.{{ region }}.mesos-agent.*.curl.elasticsearch_proxy.response_time, 5), 10)), 'ES Proxy Response Time')"
+    alert_params:
+      - 2.00
+    alert_type: "gt"
+    thresholds:
+      upper:
+        op: "gt"
+        val: 2.00

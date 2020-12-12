@@ -1,0 +1,15 @@
+---
+#-- Playbook for building mesos-agent instances
+- hosts: mesos-bootstrap, nfs-server
+  remote_user: "{{ remote_user }}"
+
+- hosts: mesos-agent
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+  - deploy/audit
+  - filesystem
+  - mesos/common
+  - mesos/agent
+  - nfs-client

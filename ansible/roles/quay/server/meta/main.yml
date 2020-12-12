@@ -1,0 +1,4 @@
+---
+dependencies:
+  - { role: collectd }
+  - { role: moira/trigger, moira_triggers: "{{ triggers }}" }

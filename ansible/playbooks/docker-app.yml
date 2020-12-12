@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  roles:
+    - role: deploy/audit
+    - role: apps/{{ app_name }}

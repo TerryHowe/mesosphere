@@ -1,0 +1,12 @@
+---
+- name: install haproxy
+  package: name=haproxy state=present
+
+- name: configure haproxy
+  template: src=haproxy.cfg.j2 dest=/etc/haproxy/haproxy.cfg
+            owner=root group=root mode=0400
+  notify:
+    - reload haproxy
+
+- name: writer mysql config
+  template: src=writer.my.cnf.j2 dest=/root/.writer.my.cnf owner=root group=root mode=0400

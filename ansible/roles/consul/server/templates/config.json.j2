@@ -1,0 +1,11 @@
+{
+  "datacenter": "{{vault_environment}}",
+  "data_dir": "/consul/data",
+  "log_level": "INFO",
+  "node_name": "{{ansible_hostname}}",
+  "server": true,
+  "leave_on_terminate": true,
+  "bind_addr": "{{hostvars[ansible_hostname]['openstack']['private_v4']}}",
+  "client_addr": "{{hostvars[ansible_hostname]['openstack']['private_v4']}}",
+  "bootstrap": {{("-1-" in ansible_hostname) | ternary('true', 'false')}}
+}

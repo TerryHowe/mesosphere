@@ -1,0 +1,7 @@
+---
+customer:
+  name: "Content Portals"
+  shortname: "cportals"
+  email: "Paul@bobby.com"
+  password: "{{ lookup('vault', 'customer/cportals', 'password') }}"
+  org_email: "lou@bobby.com"

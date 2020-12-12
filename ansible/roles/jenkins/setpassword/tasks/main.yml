@@ -1,0 +1,4 @@
+---
+- block:
+  - include: "setpassword.yml"
+  when: runningjenkins != ""

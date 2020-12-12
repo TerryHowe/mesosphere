@@ -1,0 +1,24 @@
+---
+- name: add collectd plugin for mesos master
+  copy: src=mesos-master.py dest={{ collectd_python_module_dir }}
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: configure collectd plugin
+  template: src=collectd.conf.j2 dest=/etc/collectd.d/mesos-master.conf
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: install collectd rpm plugins
+  package: name={{ item }} state=present
+  with_items:
+    - collectd-zookeeper
+    - collectd-ping
+  notify:
+    - restart collectd
+  tags:
+    - monitoring

@@ -1,0 +1,10 @@
+---
+
+- name: reload systemd
+  command: systemctl daemon-reload
+
+- name: reload grafana-ansible-webook socket
+  service: name=grafana-ansible-webhook.socket state=reloaded
+
+- name: reload grafana-ansible-webhook service
+  service: name=grafana-ansible-service@.service state=reloaded

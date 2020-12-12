@@ -1,0 +1,20 @@
+---
+- name: package list jenkins-{{customer_name}}
+  shell: dcos package list 2>/dev/null | grep jenkins-{{customer_name}} >/dev/null
+  register: dcosinstalled
+  changed_when: dcosinstalled.rc == 1
+  failed_when: False
+
+- block:
+  - command: mktemp -t "{{customer_name}}.XXXXXXXXXX"
+    register: mktemp
+
+  - name: template src=options.json.j2 dest={{mktemp.stdout}}
+    template: src=options.json.j2 dest={{mktemp.stdout}}
+
+  - name: install jenkins-{{customer_name}}
+    shell: dcos package install jenkins --app-id=/{{customer_name}}/jenkins-{{customer_name}} --options={{mktemp.stdout}} --yes
+    register: dcosinstall
+    changed_when: '"has been successfully installed" in dcosinstall.stdout'
+  - file: name={{ mktemp.stdout }} state=absent
+  when: dcosinstalled.changed

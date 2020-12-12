@@ -1,0 +1,9 @@
+---
+- set_fact:
+    golang_tarball: "go1.6.2.linux-amd64.tar.gz"
+
+- name: Download golang binary distro
+  get_url: url=https://storage.googleapis.com/golang/{{ golang_tarball }} dest=/tmp/{{ golang_tarball }} 
+
+- name: Extract golang
+  unarchive: src=/tmp/{{ golang_tarball }} dest=/usr/local copy=no creates=/usr/local/go/bin

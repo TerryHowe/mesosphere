@@ -1,0 +1,4 @@
+---
+docker_options: ""
+application_name: "jenkins-{{jenkins_user_name}}"
+persistent_store: "/mnt/jenkins/{{application_name}}"

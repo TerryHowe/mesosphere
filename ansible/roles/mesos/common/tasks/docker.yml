@@ -1,0 +1,12 @@
+---
+- name: archive docker auth
+  command: tar zcf {{ docker_client_credential_archive }} .docker
+  args:
+    chdir: /root
+  tags:
+    - docker
+
+- name: Ensure docker is enabled and started
+  service: name=docker enabled=yes state=started
+  tags:
+    - docker

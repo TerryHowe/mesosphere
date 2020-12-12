@@ -1,0 +1,31 @@
+{
+  "builders": [
+    {
+      "type": "openstack",
+      "ssh_username": "cloud-user",
+      "image_name": "paas-centos7-{{ timestamp }}",
+      "source_image": "0bedd701-be4a-4264-b1b3-016241470afc",
+      "flavor": "m3.1CPU.2GB",
+      "use_floating_ip": true,
+      "floating_ip": "71.74.178.168",
+      "security_groups": ["default"],
+      "communicator": "ssh",
+      "ssh_pty": true
+    }
+  ],
+
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": ["sudo yum install -y ansible-2.0.1.0 --enablerepo=epel-testing"]
+    },
+
+    {
+      "type": "ansible-local",
+      "inventory_groups": "image-build",
+      "playbook_dir": "../",
+      "playbook_file": "../paas-image-build.yml"
+    }
+  ]
+}
+

@@ -1,0 +1,38 @@
+---
+- name: Test data for hashivault write
+  hashivault_write:
+    secret: test
+    data:
+        data: 'Test successful'
+
+- include_vars: "common.yml"
+- hashivault_write:
+    secret: "{{item.key}}"
+    update: True
+    data: "{{item.value}}"
+  with_dict: "{{common_secrets}}"
+
+- include_vars: "customers.yml"
+- hashivault_write:
+    secret: "customer/{{item.key}}"
+    update: True
+    data: "{{item.value}}"
+  with_dict: "{{customer_secrets}}"
+
+- hashivault_write:
+    secret: "{{item | regex_replace('.*/', '')}}"
+    data:
+        contents: "{{ lookup('file', '{{item}}') }}"
+  with_fileglob: "dev-admin/*"
+
+- hashivault_write:
+    secret: "{{item | regex_replace('.*/', '')}}"
+    data:
+        contents: "{{ lookup('file', '{{item}}') }}"
+  with_fileglob: "prod-admin/*"
+
+- hashivault_write:
+    secret: "{{item | regex_replace('.*/', '')}}"
+    data:
+        contents: "{{ lookup('file', '{{item}}') }}"
+  with_fileglob: "staging-admin/*"

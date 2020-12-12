@@ -1,0 +1,6 @@
+---
+dependencies:
+  - role: grafana/notifications
+    grafana_notifications: "{{ marathon_grafana_notifications }}"
+  - role: grafana/alerts
+    grafana_alerts: "{{ marathon_grafana_alerts }}"

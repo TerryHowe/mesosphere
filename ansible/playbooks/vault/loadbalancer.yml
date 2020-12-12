@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  roles:
+  - role: openstack/virtualip
+    openstack_virtualip_port_name: vault-lb
+    openstack_virtualip_hostgroup: admin-proxy
+    openstack_virtualip_internal_host_name: vault-internal-{{ region }}
+    openstack_virtualip_external_host_name: vault-{{ region }}
+
+- hosts: admin-proxy
+  become: yes
+  vars:
+    haproxy_service_virtualip: "{{ hostvars['localhost']['virtualip_addr'] }}"
+  roles:
+  - role: keepalived/virtualip
+    keepalived_virtual_ip: "{{ haproxy_service_virtualip }}"
+  - role: vault/haproxy

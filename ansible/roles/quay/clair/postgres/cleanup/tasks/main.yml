@@ -1,0 +1,16 @@
+---
+- include_vars: ../../../clair/defaults/main.yml
+
+- name: check if clair postgres exists
+  shell: docker ps -a --filter name=clair-postgres -q
+  changed_when: False
+  register: runningpostgres
+
+- name: remove clair postgres database service
+  shell: docker rm -f clair-postgres
+  when: runningpostgres.stdout  
+  
+# cleanup storage directory
+- file: path="{{clair_directory}}/storage" state=absent
+  become: yes
+  

@@ -1,0 +1,21 @@
+---
+- set_fact: 
+    nfs_server: "{{ hostvars[groups['nfs-server'][0]]['ansible_default_ipv4']['address'] }}"
+
+# Base NFS client config requirements
+- name: Install nfs-utils
+  package: name=nfs-utils state=present
+
+- name: Enable NFS client service
+  service: name=rpcbind enabled=yes
+
+- name: Start NFS client service
+  service: name=rpcbind state=started
+
+- name: "Create {{ item.key }} NFS mount at {{ item.value.local_mount_dir }}"
+  file: path="{{ item.value.local_mount_dir }}" state=directory recurse=yes mode=0777
+  with_dict: '{{nfs_mounts | default({})}}'
+
+- name: Mount each NFS directory defined in the nfs_mounts dict
+  mount: name="{{ item.value.local_mount_dir }}" src="{{ nfs_server }}:{{ item.value.nfs_mount_source }}" fstype=nfs opts="{{ item.value.nfs_mount_opts | default("intr") }}" state=mounted
+  with_dict: '{{nfs_mounts | default({})}}'

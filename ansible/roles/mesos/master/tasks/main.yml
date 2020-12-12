@@ -1,0 +1,56 @@
+---
+# This configures a master node
+- set_fact:
+    bootstrap_host: "{{ hostvars[groups['mesos-bootstrap'][0]]['ansible_default_ipv4']['address'] }}:{{ bootstrap_host_port }}"
+
+- debug: var=bootstrap_host
+
+- name: Create tmp DCOS directory
+  file: path="/tmp/dcos/{{ mesos_version }}" state=directory mode=0755
+
+- name: Fetch dcos_install.sh
+  get_url: url=http://{{ bootstrap_host }}/dcos_install.sh dest="/tmp/dcos/{{ mesos_version }}/dcos_install.sh"
+
+- block:
+    - name: Uninstall pkgpanda during an upgrade
+      shell: sudo -i /opt/mesosphere/bin/pkgpanda uninstall
+
+    - name: Remove /opt/mesosphere during an upgrade
+      shell: rm -rf /opt/mesosphere
+
+    - name: Remove /etc/mesosphere during an upgrade
+      shell: rm -rf /etc/mesosphere
+
+    #-- Replace with a real check
+    - name: Sleep two minutes to allow services to die
+      pause: minutes=2
+
+  when: cluster_upgrade is defined and cluster_upgrade == true
+
+- name: Run the master install
+  command: bash dcos_install.sh master {{ mesos_master_additional_roles }}
+  args:
+    chdir: "/tmp/dcos/{{ mesos_version }}"
+    creates: /opt/mesosphere
+  register: mesos_master_install
+
+- name: Disable auth against HTTP Read-Only endpoints
+  lineinfile: dest=/opt/mesosphere/etc/mesos-master-extras
+              line="MESOS_AUTHENTICATE_HTTP_READONLY=false"
+              regexp="^MESOS_AUTHENTICATE_HTTP_READONLY="
+  notify:
+    - systemctl reload
+    - dcos-mesos-master restart
+
+- include: logstash.yml
+  tags: [logging]
+
+- include: admin-router_1.7.yml
+  when: "'1.7.' in mesos_version"
+  tags: [adminrouter]
+
+- include: admin-router_1.8.yml
+  when: "'1.8.' in mesos_version"
+  tags: [adminrouter]
+
+- include: collectd.yml

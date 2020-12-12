@@ -1,0 +1,18 @@
+[ req ]
+distinguished_name     = {{certificate_name}}.{{project_domain}}
+req_extensions         = v3_req
+prompt                 = no
+
+[{{certificate_name}}.{{project_domain}}]
+C                    = US
+ST                   = Colorado
+L                    = Denver
+O                    = bobby
+OU                   = Paas
+emailAddress         = donotmailme@{{certificate_name}}.{{project_domain}}
+commonName           = {{certificate_name}}.{{project_domain}}
+
+
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment

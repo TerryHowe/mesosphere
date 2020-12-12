@@ -1,0 +1,29 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Make sure we are running on the mesos project
+      assert:  { that: "'admin' not in '{{project}}'" }
+
+- name: "Setup customer in Quay and DCOS"
+  hosts: localhost
+  vars_files:
+    - vars/{{ customer_name }}.yml
+  roles:
+    - quay/customer/setup
+    - mesos/customer/setup
+    - avi/customer/setup
+    - vault/customer/setup
+
+- name: distribute quay credentials
+  hosts: mesos-master
+  vars_files:
+    - vars/{{ customer_name }}.yml
+  roles:
+    - quay/customer/setupcreds
+
+- name: Configure quay and vault
+  hosts: mesos-agent
+  vars_files:
+    - vars/{{ customer_name }}.yml
+  roles:
+    - quay/customer/setupcreds

@@ -1,0 +1,42 @@
+- name: check if vip has floating ip
+  shell: >
+    neutron floatingip-list -c id -c port_id |
+    sed 's/ //g' |
+    awk -F\| '$3 == "{{ neutron_port_result.id }}" {print $2}'
+  failed_when: false
+  register: check_floatingip_result
+  changed_when: not check_floatingip_result.stdout_lines
+
+- name: see if there is an available floating ip
+  shell: >
+    neutron floatingip-list -c id -c status -c fixed_ip_address -f value |
+    awk '$2 == "DOWN" && $3 == "" { print $1 }' | head -n 1
+  failed_when: False
+  register: available_floating_ip
+  when: check_floatingip_result.changed
+
+- name: allocate a floating ip if there is not one available
+  shell: neutron floatingip-create Ext-Net -c id -f value
+  failed_when: False
+  register: allocate_floating_ip
+  when: check_floatingip_result.changed and available_floating_ip.stdout == ""
+
+- set_fact:
+    floatingip_id: "{{ check_floatingip_result.get('stdout') or available_floating_ip.get('stdout') or allocate_floating_ip.stdout_lines[1] or '' }}"
+
+- name: associate floating ip to vip
+  shell: >
+    neutron floatingip-associate {{ floatingip_id }} {{ neutron_port_result.id }}
+  failed_when: "'Associated floating IP' not in assoc_floatingip_result.stdout"
+  register: assoc_floatingip_result
+  when: check_floatingip_result.changed and floatingip_id != ''
+
+- name: get IP from floating ip
+  command: >
+    neutron floatingip-show {{ floatingip_id }}
+    -c floating_ip_address --format value
+  register: floating_ip_address_result
+  changed_when: false
+
+- set_fact:
+    floatingip_addr: "{{ floating_ip_address_result.stdout }}"

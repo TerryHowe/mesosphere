@@ -1,0 +1,2 @@
+---
+vault_url: 'https://vault-{{region}}.{{project_domain}}:8200'

@@ -1,0 +1,18 @@
+---
+# This role contains the configuration of Security Groups for the OS Cloud Cluster
+#
+- name: Create Security Groups
+  os_security_group:
+    state: "{{ item.value.state | default('present') }}"
+    name: "{{ item.value.name }}"
+    description: "{{ item.value.description | default({}) }}"
+  with_dict: sec_groups | default({})
+
+- name: Add Security Rules
+  os_security_group_rule:
+    security_group: "{{ item.value.sec_group }}"
+    port_range_min: "{{ item.value.port_start }}"
+    port_range_max: "{{ item.value.port_end }}"
+    protocol: "{{ item.value.protocol }}"
+    remote_ip_prefix: "{{ item.value.ip | default(corporate_vpn_cidrs) }}"
+  with_dict: sec_group_rules | default({})

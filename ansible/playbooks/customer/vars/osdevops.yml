@@ -1,0 +1,7 @@
+---
+customer:
+  name: "OpenStack DevOps"
+  shortname: "osdevops"
+  email: "Clayton@bobby.com"
+  password: "{{ lookup('vault', 'customer/osdevops', 'password') }}"
+  org_email: "David@bobby.com"

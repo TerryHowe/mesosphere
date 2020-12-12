@@ -1,0 +1,38 @@
+---
+# Dynamically creates two host groups (which should not already be defined) that
+# can be used in dependent playbooks:
+#
+#   avi-controller-leader:
+#     The ansible hostname of the avi controller leader
+#
+#   avi-controller-follower:
+#     A list of ansible hostnames of the avi controller followers
+
+
+- hosts: avi-controller
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+    - avi/config
+    - avi/cluster-state
+  post_tasks:
+    - add_host:
+        name: "{{ item }}"
+        groups: "{{ hostvars[item]['is_cluster_leader'] | default(False) | ternary('avi-controller-leader', 'avi-controller-follower') }}"
+      with_items: "{{ groups['avi-controller'] }}"
+      no_log: true
+      changed_when: false
+
+- hosts: localhost
+  tasks:
+    - name: assert leader state
+      assert:
+        that: "groups['avi-controller-leader'] | length == 1"
+    - name: assert follower state
+      assert:
+        that: "groups['avi-controller-follower'] | length == groups['avi-controller'] | length - 1"
+      when: "groups['avi-controller'] | length > 1"
+    - debug: msg="Avi Leader - {{ groups['avi-controller-leader'] }}"
+    - debug: msg="Avi Followers - {{ groups['avi-controller-follower'] | default([]) }}"
+      when: "groups['avi-controller'] | length > 1"

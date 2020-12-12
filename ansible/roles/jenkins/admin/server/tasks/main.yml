@@ -1,0 +1,64 @@
+---
+- file: path=/root/containers state=directory mode=0755 owner={{remote_user}}
+- file: path={{jenkins_dir}} state=directory mode=0755 owner={{remote_user}}
+- copy: content="{{lookup('vault', 'jenkins-{{ region }}.{{project}}.public', 'contents') }}" dest="{{jenkins_dir}}/jenkins.crt" owner={{remote_user}} mode=0644
+- copy: content="{{lookup('vault', 'jenkins-{{ region }}.{{project}}.private', 'contents') }}" dest="{{jenkins_dir}}/jenkins.key" owner={{remote_user}} mode=0600
+
+- name: create /root/.bash_profile
+  template: src=bash_profile.j2 dest=/root/.bash_profile
+
+- name: create /etc/systemd/system/docker.service.d/exec.conf
+  template: src=exec.conf.j2 dest=/etc/systemd/system/docker.service.d/exec.conf
+  register: execconf
+
+- name: reload systemctrl
+  shell: systemctl daemon-reload
+  when: execconf.changed
+
+- name: restart docker server
+  service: name=docker state=restarted
+  when: execconf.changed
+
+- name: Install Git
+  package: name=git state=present
+
+- name: check for running jenkins
+  shell: docker -H tcp://127.0.0.1:4243 ps --filter name=jenkins -q
+  changed_when: False
+  register: runningjenkins
+
+- name: git clone jenkins container
+  git:
+    repo: https://github.webapps.rr.com/Docker/jenkins.git
+    dest: /root/containers/jenkins
+    force: yes
+  register: clonejenkins
+
+- block:
+
+  - name: stop jenkins
+    shell: docker -H tcp://127.0.0.1:4243 stop jenkins
+
+  when: runningjenkins.stdout != "" and clonejenkins.changed
+
+- block:
+  - name: docker rm jenkins
+    shell: docker -H tcp://127.0.0.1:4243 rm jenkins
+    failed_when: False
+
+  - name: docker rmi jenkins
+    shell: docker -H tcp://127.0.0.1:4243 rmi jenkins
+    failed_when: False
+
+  - name: docker build jenkins
+    shell: docker -H tcp://127.0.0.1:4243 build -t "jenkins:{{jenkins_version}}" --build-arg JENKINS_VERSION={{jenkins_version}} --build-arg JENKINS_SHA={{jenkins_sha}} . > /var/log/jenkins-docker-build.log
+    args:
+      chdir: /root/containers/jenkins
+
+  - name: docker tag container latest
+    shell: docker -H tcp://127.0.0.1:4243 tag "jenkins:{{jenkins_version}}" jenkins:latest
+
+  - name: start jenkins
+    shell: docker -H tcp://127.0.0.1:4243 run -d -p 443:8443 -p 50000:50000 --restart always --hostname jenkins --name jenkins --volume {{jenkins_dir}}:/var/jenkins_home jenkins --httpPort=-1 --httpsPort=8443 --httpsCertificate=/var/jenkins_home/jenkins.crt --httpsPrivateKey=/var/jenkins_home/jenkins.key
+
+  when: runningjenkins.stdout == "" or clonejenkins.changed

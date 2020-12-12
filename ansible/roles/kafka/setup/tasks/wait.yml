@@ -1,0 +1,8 @@
+---
+- name: wait for kafka
+  shell: dcos kafka connection --name kafka-{{customer_name}}
+  register: kafka_status
+  until: kafka_status.rc == 0
+  changed_when: False
+  retries: 30
+  delay: 10

@@ -1,0 +1,30 @@
+---
+#-- NOT AVAILABLE UNTIL 2.1, currently in testing
+#-- Using the copy statement below this block for now
+#- name: Ensure docker repo is available for CentOS
+  #yumrepo:
+    #name: dockerrepo
+    #description: Official Docker Repository
+    #baseurl: "https://yum.dockerproject.org/repo/main/centos/$releasever/"
+    #enabled: yes
+    #gpgcheck: yes
+    #gpgkey: "https://yum.dockerproject.org/gpg"
+
+- name: Copy the docker yum repo into place on CentOS
+  copy: src=docker.repo dest=/etc/yum.repos.d/docker.repo owner=root group=root mode=0644
+  when: ansible_os_family == "RedHat"
+
+- name: Install Docker
+  package: name=docker-engine state=latest
+
+- name: Create /etc/sysconfig/docker
+  template: src=docker.sysconfig.j2 dest=/etc/sysconfig/docker owner=root group=root mode=0644
+
+- name: Create drop-in config dir with common overrides
+  copy: src=docker.service.d dest=/etc/systemd/system/
+  notify:
+    - reload systemctl
+    - restart start docker
+
+- name: Start Docker
+  service: name=docker enabled=yes state=started

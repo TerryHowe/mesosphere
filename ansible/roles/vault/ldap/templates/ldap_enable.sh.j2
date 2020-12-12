@@ -1,0 +1,24 @@
+export VAULT_TOKEN='{{token}}'
+export VAULT_SKIP_VERIFY=true
+if ! vault auth -methods | grep ldap >/dev/null
+then
+  echo 'Enabling LDAP...'
+  vault auth-enable ldap
+fi
+echo 'Writing LDAP configuration...'
+vault write auth/ldap/config \
+  url='ldap://{{ldap_server}}' \
+  upndomain='{{ldap_domain}}' \
+  userattr='{{ldap_user_attr}}' \
+  binddn='{{ldap_admin_bind_dn}}' \
+  bindpass='{{ldap_admin_bind_password}}' \
+  userdn='{{ldap_user_dn}}' \
+  insecure_tls=true \
+  starttls=true
+
+#  groupdn='{{ldap_paas_group_dn}}'
+
+vault write "auth/ldap/groups/{{ldap_root_group}}" policies=root
+echo 'LDAP configuration done.'
+echo "Removing script ${0}"
+rm -f ${0}

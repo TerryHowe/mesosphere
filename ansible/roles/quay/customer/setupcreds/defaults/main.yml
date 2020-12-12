@@ -1,0 +1,13 @@
+---
+quay_registry_host: "https://{{docker_registry}}"
+quay_oauth_token: "{{lookup('vault', '{{vault_environment}}', 'quay_api_oauth_token')}}"
+cred_dir: "/etc/dockercreds"
+cred_temp_dir: "/tmp/{{ customer.shortname }}-dockercreds"
+robot_cred_dir: "{{ customer.shortname }}+robotti"
+quay:
+  user: "{{customer.shortname}}_admin"
+  user_password: "{{customer.password}}"
+  org: "{{customer.shortname}}"
+  org_email: "{{customer.org_email}}"
+  team: "{{customer.shortname}}"
+  team_desc: "{{customer.name}} development team"

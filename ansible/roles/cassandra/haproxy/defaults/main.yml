@@ -1,0 +1,3 @@
+---
+haproxy_certificate_file: '{{base_dir}}/roles/vault/populate/files/{{os_tenant_name}}/cassandra-{{customer_name}}-cert.pem'
+haproxy_key_file: '{{base_dir}}/roles/vault/populate/files/{{os_tenant_name}}/cassandra-{{customer_name}}-key.pem'

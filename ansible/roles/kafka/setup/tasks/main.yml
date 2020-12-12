@@ -1,0 +1,24 @@
+---
+- name: See if kafka-{{customer_name}} intalled
+  shell: dcos package list kafka | grep kafka-{{customer_name}}
+  register: dcosinstalled
+  changed_when: dcosinstalled.rc == 1
+  failed_when: False
+
+- block:
+  - command: mktemp -t "{{customer_name}}.XXXXXXXXXX"
+    register: mktemp
+
+  - name: template src=options.json.j2 dest={{mktemp.stdout}}
+    template: src=options.json.j2 dest={{mktemp.stdout}}
+
+  - name: Install kafka-{{customer_name}}
+    shell: dcos package install kafka --yes --options={{mktemp.stdout}}
+    register: dcosinstall
+    changed_when: '"has been successfully installed" in dcosinstall.stdout'
+
+  - file: name={{ mktemp.stdout }} state=absent
+
+  - include: wait.yml
+
+  when: dcosinstalled.changed

@@ -1,0 +1,30 @@
+---
+- name: static collectd configs
+  copy: src={{ item }}.conf dest=/etc/collectd.d/{{ item }}.conf
+        mode=0600 owner=root group=root
+  with_items:
+    - avi-port-check
+    - avi-cloud-connector
+  notify:
+    - restart collectd
+
+- name: avi controller collectd plugin
+  copy: src=avicontrollerplugin.py dest={{ collectd_python_module_dir }}/avicontrollerplugin.py
+        mode=0700 owner=root group=root
+  notify:
+    - restart collectd
+
+- name: avi controller collectd plugin types
+  copy: src=avicontrollerplugin.db dest={{ collectd_python_module_dir }}/avicontrollerplugin.db
+        mode=0600 owner=root group=root
+  notify:
+    - restart collectd
+
+- name: templated collectd configs
+  template: src={{ item }} dest=/etc/collectd.d/{{ item | regex_replace('.j2$', '') }}
+            mode=0600 owner=root group=root
+  with_items:
+    - avicontrollerplugin.conf.j2
+    - avi-hb.conf.j2
+  notify:
+    - restart collectd

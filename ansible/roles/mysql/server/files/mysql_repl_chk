@@ -1,0 +1,48 @@
+#!/bin/bash
+
+SLAVE_BEHIND_THRESHOLD=${1-30}
+
+function emit_header {
+  echo -e "HTTP/1.1 $@\r"
+  echo -e "Content-Type: text/plain\r"
+  echo -e "\r"
+}
+
+MYSQL="mysql --defaults-file=/root/.healthcheck.my.cnf"
+
+SLAVE_STATUS=$($MYSQL -e 'SHOW SLAVE STATUS' --vertical | egrep "Slave_(IO|SQL)_Running:")
+SLAVE_BEHIND=$($MYSQL -e 'SHOW SLAVE STATUS' --vertical | egrep "Seconds_Behind_Master" | awk '{print $2}')
+SLAVE_HOSTS=$($MYSQL -e 'SHOW SLAVE HOSTS' --vertical | grep "Server_id" | wc -l)
+READ_ONLY=$($MYSQL -e 'SHOW GLOBAL VARIABLES LIKE "read_only"' --vertical | tail -1 | awk '{print $2}')
+
+if [ $(echo "$SLAVE_STATUS" | grep "Yes$" | wc -l) -eq 2 ]
+then
+  if [[ $SLAVE_BEHIND -lt $SLAVE_BEHIND_THRESHOLD ]]
+  then
+    emit_header 200 OK
+    echo "Role: slave"
+    echo "Read Only: $READ_ONLY"
+    exit 0
+  fi
+else
+  if [[ $SLAVE_HOSTS -gt 0 ]]
+  then
+    if [[ $READ_ONLY == "OFF" ]]
+    then
+      emit_header 200 OK
+      echo "Role: master"
+      echo "Slaves: $SLAVE_HOSTS"
+      echo "Read Only: $READ_ONLY"
+      exit 0
+    fi
+  fi
+fi
+
+emit_header 503 Service Unavailable
+echo "Slave Status:"
+echo "$SLAVE_STATUS"
+echo "Slave Hosts: $SLAVE_HOSTS"
+echo "Slave Running: $SLAVE_RUNNING"
+echo "Slave behind: $SLAVE_BEHIND"
+echo "Read Only: $READ_ONLY"
+exit 2

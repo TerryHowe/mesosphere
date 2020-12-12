@@ -1,0 +1,25 @@
+---
+dependencies:
+  - role: docker-app
+    app_spec:
+      app_name: vault-{{region}}
+      tenant_name: admin
+      service_port: 8200
+      container_port: 8200
+      access: 'internet'
+      marathon:
+        cpus: 1
+        mem: 1024
+        instances: 1
+        container:
+          docker:
+            image: "{{ docker_registry }}/paas/vault-dcos"
+            forcePullImage: True
+          constraints:
+            - ['hostname', 'UNIQUE']
+        env:
+          VAULT_TLS_KEY: "{{ lookup('vault', 'vault-{{ region }}.{{ project }}.private', 'contents') }}"
+          VAULT_TLS_CERT: "{{ lookup('vault', 'vault-{{ region }}.{{ project }}.public', 'contents') }}"
+      avi:
+        virtualservice:
+          application_profile_ref: /api/applicationprofile?name=System-L4-Application

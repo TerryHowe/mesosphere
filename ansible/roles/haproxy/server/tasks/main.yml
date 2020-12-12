@@ -1,0 +1,28 @@
+---
+- name: allow haproxy to bind to non-local ips
+  sysctl:
+    name: net.ipv4.ip_nonlocal_bind
+    value: 1
+
+- name: install haproxy
+  package: name=haproxy
+
+- name: conf.d directory
+  file: path=/etc/haproxy/conf.d state=directory mode=0750
+
+- name: configure haproxy
+  template: src=haproxy.cfg.j2 dest=/etc/haproxy/conf.d/000_haproxy.cfg
+  notify:
+    - reconfig haproxy
+
+- name: systemd override dir
+  file: path=/etc/systemd/system/haproxy.service.d state=directory
+
+- name: systemd override conf
+  copy: src=override.conf dest=/etc/systemd/system/haproxy.service.d/override.conf
+  notify:
+    - reload systemd
+    - restart haproxy
+
+- name: enable haproxy
+  service: name=haproxy enabled=true state=started

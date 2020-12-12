@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  roles:
+    - mesos/master/monitoring
+
+- hosts: localhost
+  roles:
+    - mesos/agent/monitoring

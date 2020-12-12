@@ -1,0 +1,16 @@
+---
+#-- Playbook for building mesos-bootstrap instance
+#--
+#-- Include the master hosts so we have access to facts from the master nodes
+- hosts: mesos-master
+  remote_user: "{{ remote_user }}"
+
+#-- Now that master facts are available, configure the bootstrap node
+- hosts: mesos-bootstrap
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+  - deploy/audit
+  - mesos/common
+  - mesos/bootstrap

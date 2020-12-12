@@ -1,0 +1,13 @@
+---
+- name: "Setting up Cassandra for {{customer_name}}"
+  hosts: localhost
+  roles:
+    - role: cassandra/setup
+
+- hosts: mesos-agent
+  run_once: True
+  vars_files:
+    - customer/vars/{{ customer_name }}.yml
+  roles:
+    - role: cassandra/connection
+    - role: cassandra/root

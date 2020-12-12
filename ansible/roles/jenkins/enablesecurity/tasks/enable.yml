@@ -1,0 +1,14 @@
+---
+- command: mktemp -t "{{application_name}}.XXXXXXXXXX"
+  register: mktemp
+
+- name: create enable groovy file
+  template: src=enable.groovy.j2 dest={{mktemp.stdout}}
+
+- name: run enable
+  shell: cat {{mktemp.stdout}} | docker {{docker_options}} exec -i {{runningjenkins}} sh -c '{{jenkins_cli_groovy}}'
+  register: enablesecurity
+  failed_when: False
+  until: "'anonymous is missing the' in '{{enablesecurity.stderr}}'"
+
+- file: path={{mktemp.stdout}} state=absent

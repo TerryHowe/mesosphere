@@ -1,0 +1,1618 @@
+-- MySQL dump 10.13  Distrib 5.7.12, for Linux (x86_64)
+--
+-- Host: localhost    Database: quay
+-- ------------------------------------------------------
+-- Server version	5.7.12-log
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `accesstoken`
+--
+
+DROP TABLE IF EXISTS `accesstoken`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `accesstoken` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `friendly_name` varchar(255) DEFAULT NULL,
+  `code` varchar(255) NOT NULL,
+  `repository_id` int(11) NOT NULL,
+  `created` datetime NOT NULL,
+  `role_id` int(11) NOT NULL,
+  `temporary` tinyint(1) NOT NULL,
+  `kind_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `accesstoken_code` (`code`),
+  KEY `accesstoken_repository_id` (`repository_id`),
+  KEY `accesstoken_role_id` (`role_id`),
+  KEY `accesstoken_kind_id` (`kind_id`),
+  CONSTRAINT `fk_accesstoken_kind_id_accesstokenkind` FOREIGN KEY (`kind_id`) REFERENCES `accesstokenkind` (`id`),
+  CONSTRAINT `fk_accesstoken_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`),
+  CONSTRAINT `fk_accesstoken_role_id_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `accesstoken`
+--
+
+LOCK TABLES `accesstoken` WRITE;
+/*!40000 ALTER TABLE `accesstoken` DISABLE KEYS */;
+/*!40000 ALTER TABLE `accesstoken` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `accesstokenkind`
+--
+
+DROP TABLE IF EXISTS `accesstokenkind`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `accesstokenkind` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `accesstokenkind_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `accesstokenkind`
+--
+
+LOCK TABLES `accesstokenkind` WRITE;
+/*!40000 ALTER TABLE `accesstokenkind` DISABLE KEYS */;
+INSERT INTO `accesstokenkind` VALUES (1,'build-worker'),(2,'pushpull-token');
+/*!40000 ALTER TABLE `accesstokenkind` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `alembic_version`
+--
+
+DROP TABLE IF EXISTS `alembic_version`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `alembic_version` (
+  `version_num` varchar(32) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `alembic_version`
+--
+
+LOCK TABLES `alembic_version` WRITE;
+/*!40000 ALTER TABLE `alembic_version` DISABLE KEYS */;
+INSERT INTO `alembic_version` VALUES ('0f17d94d11eb');
+/*!40000 ALTER TABLE `alembic_version` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `blobupload`
+--
+
+DROP TABLE IF EXISTS `blobupload`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `blobupload` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `repository_id` int(11) NOT NULL,
+  `uuid` varchar(255) NOT NULL,
+  `byte_count` int(11) NOT NULL,
+  `sha_state` text,
+  `location_id` int(11) NOT NULL,
+  `storage_metadata` text,
+  `chunk_count` int(11) NOT NULL DEFAULT '0',
+  `uncompressed_byte_count` int(11) DEFAULT NULL,
+  `created` datetime NOT NULL DEFAULT '2016-06-23 10:54:28',
+  `piece_hashes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `piece_sha_state` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `blobupload_repository_id_uuid` (`repository_id`,`uuid`),
+  UNIQUE KEY `blobupload_uuid` (`uuid`),
+  KEY `blobupload_location_id` (`location_id`),
+  KEY `blobupload_repository_id` (`repository_id`),
+  KEY `blobupload_created` (`created`),
+  CONSTRAINT `fk_blobupload_location_id_imagestoragelocation` FOREIGN KEY (`location_id`) REFERENCES `imagestoragelocation` (`id`),
+  CONSTRAINT `fk_blobupload_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `blobupload`
+--
+
+LOCK TABLES `blobupload` WRITE;
+/*!40000 ALTER TABLE `blobupload` DISABLE KEYS */;
+/*!40000 ALTER TABLE `blobupload` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `buildtriggerservice`
+--
+
+DROP TABLE IF EXISTS `buildtriggerservice`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `buildtriggerservice` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `buildtriggerservice_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `buildtriggerservice`
+--
+
+LOCK TABLES `buildtriggerservice` WRITE;
+/*!40000 ALTER TABLE `buildtriggerservice` DISABLE KEYS */;
+INSERT INTO `buildtriggerservice` VALUES (3,'bitbucket'),(2,'custom-git'),(1,'github'),(4,'gitlab');
+/*!40000 ALTER TABLE `buildtriggerservice` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `derivedstorageforimage`
+--
+
+DROP TABLE IF EXISTS `derivedstorageforimage`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `derivedstorageforimage` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `source_image_id` int(11) NOT NULL,
+  `derivative_id` int(11) NOT NULL,
+  `transformation_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `derivedstorageforimage_source_image_id_transformation_id` (`source_image_id`,`transformation_id`),
+  KEY `derivedstorageforimage_derivative_id` (`derivative_id`),
+  KEY `derivedstorageforimage_source_image_id` (`source_image_id`),
+  KEY `derivedstorageforimage_transformation_id` (`transformation_id`),
+  CONSTRAINT `fk_derivedstorageforimage_derivative_id_imagestorage` FOREIGN KEY (`derivative_id`) REFERENCES `imagestorage` (`id`),
+  CONSTRAINT `fk_derivedstorageforimage_source_image_id_image` FOREIGN KEY (`source_image_id`) REFERENCES `image` (`id`),
+  CONSTRAINT `fk_derivedstorageforimage_transformation_constraint` FOREIGN KEY (`transformation_id`) REFERENCES `imagestoragetransformation` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `derivedstorageforimage`
+--
+
+LOCK TABLES `derivedstorageforimage` WRITE;
+/*!40000 ALTER TABLE `derivedstorageforimage` DISABLE KEYS */;
+/*!40000 ALTER TABLE `derivedstorageforimage` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `emailconfirmation`
+--
+
+DROP TABLE IF EXISTS `emailconfirmation`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `emailconfirmation` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(255) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `pw_reset` tinyint(1) NOT NULL,
+  `new_email` varchar(255) DEFAULT NULL,
+  `email_confirm` tinyint(1) NOT NULL,
+  `created` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `emailconfirmation_code` (`code`),
+  KEY `emailconfirmation_user_id` (`user_id`),
+  CONSTRAINT `fk_emailconfirmation_user_id_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `emailconfirmation`
+--
+
+LOCK TABLES `emailconfirmation` WRITE;
+/*!40000 ALTER TABLE `emailconfirmation` DISABLE KEYS */;
+/*!40000 ALTER TABLE `emailconfirmation` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `externalnotificationevent`
+--
+
+DROP TABLE IF EXISTS `externalnotificationevent`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `externalnotificationevent` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `externalnotificationevent_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `externalnotificationevent`
+--
+
+LOCK TABLES `externalnotificationevent` WRITE;
+/*!40000 ALTER TABLE `externalnotificationevent` DISABLE KEYS */;
+INSERT INTO `externalnotificationevent` VALUES (5,'build_failure'),(2,'build_queued'),(3,'build_start'),(4,'build_success'),(1,'repo_push'),(6,'vulnerability_found');
+/*!40000 ALTER TABLE `externalnotificationevent` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `externalnotificationmethod`
+--
+
+DROP TABLE IF EXISTS `externalnotificationmethod`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `externalnotificationmethod` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `externalnotificationmethod_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `externalnotificationmethod`
+--
+
+LOCK TABLES `externalnotificationmethod` WRITE;
+/*!40000 ALTER TABLE `externalnotificationmethod` DISABLE KEYS */;
+INSERT INTO `externalnotificationmethod` VALUES (2,'email'),(4,'flowdock'),(5,'hipchat'),(1,'quay_notification'),(6,'slack'),(3,'webhook');
+/*!40000 ALTER TABLE `externalnotificationmethod` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `federatedlogin`
+--
+
+DROP TABLE IF EXISTS `federatedlogin`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `federatedlogin` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `service_id` int(11) NOT NULL,
+  `service_ident` varchar(255) NOT NULL,
+  `metadata_json` text NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `federatedlogin_service_id_service_ident` (`service_id`,`service_ident`),
+  UNIQUE KEY `federatedlogin_service_id_user_id` (`service_id`,`user_id`),
+  KEY `federatedlogin_service_id` (`service_id`),
+  KEY `federatedlogin_user_id` (`user_id`),
+  CONSTRAINT `fk_federatedlogin_service_id_loginservice` FOREIGN KEY (`service_id`) REFERENCES `loginservice` (`id`),
+  CONSTRAINT `fk_federatedlogin_user_id_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `federatedlogin`
+--
+
+LOCK TABLES `federatedlogin` WRITE;
+/*!40000 ALTER TABLE `federatedlogin` DISABLE KEYS */;
+INSERT INTO `federatedlogin` VALUES (1,3,2,'{{quay_build_robot_token}}','{}');
+/*!40000 ALTER TABLE `federatedlogin` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `image`
+--
+
+DROP TABLE IF EXISTS `image`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `image` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `docker_image_id` varchar(255) NOT NULL,
+  `repository_id` int(11) NOT NULL,
+  `ancestors` varchar(60535) DEFAULT NULL,
+  `storage_id` int(11) DEFAULT NULL,
+  `aggregate_size` bigint(20) DEFAULT NULL,
+  `command` text,
+  `comment` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `created` datetime DEFAULT NULL,
+  `v1_json_metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `parent_id` int(11) DEFAULT NULL,
+  `security_indexed` tinyint(1) NOT NULL DEFAULT '0',
+  `security_indexed_engine` int(11) NOT NULL DEFAULT '-1',
+  `v1_checksum` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `image_repository_id_docker_image_id` (`repository_id`,`docker_image_id`),
+  KEY `image_repository_id` (`repository_id`),
+  KEY `image_storage_id` (`storage_id`),
+  KEY `image_docker_image_id` (`docker_image_id`),
+  KEY `image_ancestors` (`ancestors`(767)),
+  KEY `image_parent_id` (`parent_id`),
+  KEY `image_security_indexed_engine_security_indexed` (`security_indexed_engine`,`security_indexed`),
+  KEY `image_security_indexed` (`security_indexed`),
+  KEY `image_security_indexed_engine` (`security_indexed_engine`),
+  CONSTRAINT `fk_image_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`),
+  CONSTRAINT `fk_image_storage_id_imagestorage` FOREIGN KEY (`storage_id`) REFERENCES `imagestorage` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `image`
+--
+
+LOCK TABLES `image` WRITE;
+/*!40000 ALTER TABLE `image` DISABLE KEYS */;
+/*!40000 ALTER TABLE `image` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `imagestorage`
+--
+
+DROP TABLE IF EXISTS `imagestorage`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `imagestorage` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(255) NOT NULL,
+  `checksum` varchar(255) DEFAULT NULL,
+  `image_size` bigint(20) DEFAULT NULL,
+  `uploading` tinyint(1) DEFAULT NULL,
+  `uncompressed_size` bigint(20) DEFAULT NULL,
+  `cas_path` tinyint(1) NOT NULL DEFAULT '0',
+  `content_checksum` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `imagestorage_uuid` (`uuid`),
+  KEY `imagestorage_content_checksum` (`content_checksum`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `imagestorage`
+--
+
+LOCK TABLES `imagestorage` WRITE;
+/*!40000 ALTER TABLE `imagestorage` DISABLE KEYS */;
+/*!40000 ALTER TABLE `imagestorage` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `imagestoragelocation`
+--
+
+DROP TABLE IF EXISTS `imagestoragelocation`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `imagestoragelocation` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `imagestoragelocation_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `imagestoragelocation`
+--
+
+LOCK TABLES `imagestoragelocation` WRITE;
+/*!40000 ALTER TABLE `imagestoragelocation` DISABLE KEYS */;
+INSERT INTO `imagestoragelocation` VALUES (10,'default'),(7,'local'),(5,'s3_ap_northeast_1'),(3,'s3_ap_southeast_1'),(4,'s3_ap_southeast_2'),(2,'s3_eu_west_1'),(6,'s3_sa_east_1'),(1,'s3_us_east_1'),(8,'s3_us_west_1');
+/*!40000 ALTER TABLE `imagestoragelocation` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `imagestorageplacement`
+--
+
+DROP TABLE IF EXISTS `imagestorageplacement`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `imagestorageplacement` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `storage_id` int(11) NOT NULL,
+  `location_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `imagestorageplacement_storage_id_location_id` (`storage_id`,`location_id`),
+  KEY `imagestorageplacement_location_id` (`location_id`),
+  KEY `imagestorageplacement_storage_id` (`storage_id`),
+  CONSTRAINT `fk_imagestorageplacement_location_id_imagestoragelocation` FOREIGN KEY (`location_id`) REFERENCES `imagestoragelocation` (`id`),
+  CONSTRAINT `fk_imagestorageplacement_storage_id_imagestorage` FOREIGN KEY (`storage_id`) REFERENCES `imagestorage` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `imagestorageplacement`
+--
+
+LOCK TABLES `imagestorageplacement` WRITE;
+/*!40000 ALTER TABLE `imagestorageplacement` DISABLE KEYS */;
+/*!40000 ALTER TABLE `imagestorageplacement` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `imagestoragesignature`
+--
+
+DROP TABLE IF EXISTS `imagestoragesignature`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `imagestoragesignature` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `storage_id` int(11) NOT NULL,
+  `kind_id` int(11) NOT NULL,
+  `signature` text,
+  `uploading` tinyint(1) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `imagestoragesignature_kind_id_storage_id` (`kind_id`,`storage_id`),
+  KEY `imagestoragesignature_kind_id` (`kind_id`),
+  KEY `imagestoragesignature_storage_id` (`storage_id`),
+  CONSTRAINT `fk_imagestoragesignature_kind_id_imagestoragesignaturekind` FOREIGN KEY (`kind_id`) REFERENCES `imagestoragesignaturekind` (`id`),
+  CONSTRAINT `fk_imagestoragesignature_storage_id_imagestorage` FOREIGN KEY (`storage_id`) REFERENCES `imagestorage` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `imagestoragesignature`
+--
+
+LOCK TABLES `imagestoragesignature` WRITE;
+/*!40000 ALTER TABLE `imagestoragesignature` DISABLE KEYS */;
+/*!40000 ALTER TABLE `imagestoragesignature` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `imagestoragesignaturekind`
+--
+
+DROP TABLE IF EXISTS `imagestoragesignaturekind`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `imagestoragesignaturekind` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `imagestoragesignaturekind_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `imagestoragesignaturekind`
+--
+
+LOCK TABLES `imagestoragesignaturekind` WRITE;
+/*!40000 ALTER TABLE `imagestoragesignaturekind` DISABLE KEYS */;
+INSERT INTO `imagestoragesignaturekind` VALUES (1,'gpg2');
+/*!40000 ALTER TABLE `imagestoragesignaturekind` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `imagestoragetransformation`
+--
+
+DROP TABLE IF EXISTS `imagestoragetransformation`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `imagestoragetransformation` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `imagestoragetransformation_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `imagestoragetransformation`
+--
+
+LOCK TABLES `imagestoragetransformation` WRITE;
+/*!40000 ALTER TABLE `imagestoragetransformation` DISABLE KEYS */;
+INSERT INTO `imagestoragetransformation` VALUES (2,'aci'),(1,'squash');
+/*!40000 ALTER TABLE `imagestoragetransformation` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `logentry`
+--
+
+DROP TABLE IF EXISTS `logentry`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `logentry` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `kind_id` int(11) NOT NULL,
+  `account_id` int(11) NOT NULL,
+  `performer_id` int(11) DEFAULT NULL,
+  `repository_id` int(11) DEFAULT NULL,
+  `datetime` datetime NOT NULL,
+  `ip` varchar(255) DEFAULT NULL,
+  `metadata_json` text NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `logentry_account_id` (`account_id`),
+  KEY `logentry_datetime` (`datetime`),
+  KEY `logentry_kind_id` (`kind_id`),
+  KEY `logentry_performer_id` (`performer_id`),
+  KEY `logentry_repository_id` (`repository_id`),
+  KEY `logentry_repository_id_datetime` (`repository_id`,`datetime`),
+  KEY `logentry_repository_id_datetime_kind_id` (`repository_id`,`datetime`,`kind_id`),
+  CONSTRAINT `fk_logentry_account_id_user` FOREIGN KEY (`account_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_logentry_kind_id_logentrykind` FOREIGN KEY (`kind_id`) REFERENCES `logentrykind` (`id`),
+  CONSTRAINT `fk_logentry_performer_id_user` FOREIGN KEY (`performer_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_logentry_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `logentry`
+--
+
+LOCK TABLES `logentry` WRITE;
+/*!40000 ALTER TABLE `logentry` DISABLE KEYS */;
+INSERT INTO `logentry` VALUES (1,49,1,NULL,NULL,'2016-06-23 11:14:41',NULL,'{\"preshared\": true, \"name\": \"http://{{docker_registry}}:80\", \"service\": \"quay\", \"expiration_date\": 1466687680, \"auto_approved\": true, \"kid\": \"95a351178236ec1b7cb09df4fc83e7f397cb434502dcf7aa2e90d02c4b37005d\"}'),(2,50,1,NULL,NULL,'2016-06-23 11:14:41',NULL,'{\"preshared\": true, \"name\": \"http://{{docker_registry}}:80\", \"service\": \"quay\", \"expiration_date\": 1466687680, \"auto_approved\": true, \"kid\": \"95a351178236ec1b7cb09df4fc83e7f397cb434502dcf7aa2e90d02c4b37005d\"}'),(3,5,2,1,NULL,'2016-06-23 11:15:44','24.93.67.154','{\"robot\": \"robotti\"}'),(4,30,2,1,NULL,'2016-06-23 11:16:07','24.93.67.154','{\"username\": \"admin\", \"delegate_user\": \"paas+robotti\", \"prototypeid\": \"f1d0e61d-fd2c-48aa-b40e-52e6ef65cfb3\", \"role\": \"admin\", \"activating_username\": null}');
+/*!40000 ALTER TABLE `logentry` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `logentrykind`
+--
+
+DROP TABLE IF EXISTS `logentrykind`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `logentrykind` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `logentrykind_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `logentrykind`
+--
+
+LOCK TABLES `logentrykind` WRITE;
+/*!40000 ALTER TABLE `logentrykind` DISABLE KEYS */;
+INSERT INTO `logentrykind` VALUES (2,'account_change_cc'),(3,'account_change_password'),(1,'account_change_plan'),(4,'account_convert'),(18,'add_repo_accesstoken'),(39,'add_repo_notification'),(14,'add_repo_permission'),(20,'add_repo_webhook'),(23,'build_dockerfile'),(15,'change_repo_permission'),(17,'change_repo_visibility'),(35,'create_application'),(30,'create_prototype_permission'),(7,'create_repo'),(5,'create_robot'),(11,'create_tag'),(37,'delete_application'),(32,'delete_prototype_permission'),(10,'delete_repo'),(19,'delete_repo_accesstoken'),(40,'delete_repo_notification'),(16,'delete_repo_permission'),(34,'delete_repo_trigger'),(21,'delete_repo_webhook'),(6,'delete_robot'),(13,'delete_tag'),(31,'modify_prototype_permission'),(12,'move_tag'),(26,'org_add_team_member'),(24,'org_create_team'),(25,'org_delete_team'),(45,'org_delete_team_member_invite'),(42,'org_invite_team_member'),(27,'org_remove_team_member'),(28,'org_set_team_description'),(29,'org_set_team_role'),(43,'org_team_member_invite_accepted'),(44,'org_team_member_invite_declined'),(9,'pull_repo'),(8,'push_repo'),(41,'regenerate_robot_token'),(46,'repo_verb'),(38,'reset_application_client_secret'),(47,'revert_tag'),(50,'service_key_approve'),(49,'service_key_create'),(51,'service_key_delete'),(53,'service_key_extend'),(52,'service_key_modify'),(54,'service_key_rotate'),(33,'setup_repo_trigger'),(22,'set_repo_description'),(55,'take_ownership'),(36,'update_application');
+/*!40000 ALTER TABLE `logentrykind` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `loginservice`
+--
+
+DROP TABLE IF EXISTS `loginservice`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `loginservice` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `loginservice_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `loginservice`
+--
+
+LOCK TABLES `loginservice` WRITE;
+/*!40000 ALTER TABLE `loginservice` DISABLE KEYS */;
+INSERT INTO `loginservice` VALUES (7,'dex'),(1,'github'),(4,'google'),(5,'jwtauthn'),(6,'keystone'),(3,'ldap'),(2,'quayrobot');
+/*!40000 ALTER TABLE `loginservice` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `notification`
+--
+
+DROP TABLE IF EXISTS `notification`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `notification` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(255) NOT NULL,
+  `kind_id` int(11) NOT NULL,
+  `target_id` int(11) NOT NULL,
+  `metadata_json` text NOT NULL,
+  `created` datetime NOT NULL,
+  `dismissed` tinyint(1) NOT NULL,
+  `lookup_path` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `notification_created` (`created`),
+  KEY `notification_kind_id` (`kind_id`),
+  KEY `notification_target_id` (`target_id`),
+  KEY `notification_uuid` (`uuid`),
+  KEY `notification_lookup_path` (`lookup_path`),
+  CONSTRAINT `fk_notification_kind_id_notificationkind` FOREIGN KEY (`kind_id`) REFERENCES `notificationkind` (`id`),
+  CONSTRAINT `fk_notification_target_id_user` FOREIGN KEY (`target_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `notification`
+--
+
+LOCK TABLES `notification` WRITE;
+/*!40000 ALTER TABLE `notification` DISABLE KEYS */;
+/*!40000 ALTER TABLE `notification` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `notificationkind`
+--
+
+DROP TABLE IF EXISTS `notificationkind`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `notificationkind` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `notificationkind_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `notificationkind`
+--
+
+LOCK TABLES `notificationkind` WRITE;
+/*!40000 ALTER TABLE `notificationkind` DISABLE KEYS */;
+INSERT INTO `notificationkind` VALUES (9,'build_failure'),(6,'build_queued'),(7,'build_start'),(8,'build_success'),(3,'expiring_license'),(4,'maintenance'),(10,'org_team_invite'),(2,'over_private_usage'),(1,'password_required'),(5,'repo_push'),(13,'service_key_submitted'),(11,'vulnerability_found');
+/*!40000 ALTER TABLE `notificationkind` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `oauthaccesstoken`
+--
+
+DROP TABLE IF EXISTS `oauthaccesstoken`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `oauthaccesstoken` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(255) NOT NULL,
+  `application_id` int(11) NOT NULL,
+  `authorized_user_id` int(11) NOT NULL,
+  `scope` varchar(255) NOT NULL,
+  `access_token` varchar(255) NOT NULL,
+  `token_type` varchar(255) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `refresh_token` varchar(255) DEFAULT NULL,
+  `data` text NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `oauthaccesstoken_access_token` (`access_token`),
+  KEY `oauthaccesstoken_application_id` (`application_id`),
+  KEY `oauthaccesstoken_authorized_user_id` (`authorized_user_id`),
+  KEY `oauthaccesstoken_refresh_token` (`refresh_token`),
+  KEY `oauthaccesstoken_uuid` (`uuid`),
+  CONSTRAINT `fk_oauthaccesstoken_application_id_oauthapplication` FOREIGN KEY (`application_id`) REFERENCES `oauthapplication` (`id`),
+  CONSTRAINT `fk_oauthaccesstoken_authorized_user_id_user` FOREIGN KEY (`authorized_user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `oauthaccesstoken`
+--
+
+LOCK TABLES `oauthaccesstoken` WRITE;
+/*!40000 ALTER TABLE `oauthaccesstoken` DISABLE KEYS */;
+/*!40000 ALTER TABLE `oauthaccesstoken` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `oauthapplication`
+--
+
+DROP TABLE IF EXISTS `oauthapplication`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `oauthapplication` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `client_id` varchar(255) NOT NULL,
+  `client_secret` varchar(255) NOT NULL,
+  `redirect_uri` varchar(255) NOT NULL,
+  `application_uri` varchar(255) NOT NULL,
+  `organization_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `gravatar_email` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `oauthapplication_client_id` (`client_id`),
+  KEY `oauthapplication_organization_id` (`organization_id`),
+  CONSTRAINT `fk_oauthapplication_organization_id_user` FOREIGN KEY (`organization_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `oauthapplication`
+--
+
+LOCK TABLES `oauthapplication` WRITE;
+/*!40000 ALTER TABLE `oauthapplication` DISABLE KEYS */;
+/*!40000 ALTER TABLE `oauthapplication` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `oauthauthorizationcode`
+--
+
+DROP TABLE IF EXISTS `oauthauthorizationcode`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `oauthauthorizationcode` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `application_id` int(11) NOT NULL,
+  `code` varchar(255) NOT NULL,
+  `scope` varchar(255) NOT NULL,
+  `data` text NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `oauthauthorizationcode_application_id` (`application_id`),
+  KEY `oauthauthorizationcode_code` (`code`),
+  CONSTRAINT `fk_oauthauthorizationcode_application_id_oauthapplication` FOREIGN KEY (`application_id`) REFERENCES `oauthapplication` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `oauthauthorizationcode`
+--
+
+LOCK TABLES `oauthauthorizationcode` WRITE;
+/*!40000 ALTER TABLE `oauthauthorizationcode` DISABLE KEYS */;
+/*!40000 ALTER TABLE `oauthauthorizationcode` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `permissionprototype`
+--
+
+DROP TABLE IF EXISTS `permissionprototype`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `permissionprototype` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `org_id` int(11) NOT NULL,
+  `uuid` varchar(255) NOT NULL,
+  `activating_user_id` int(11) DEFAULT NULL,
+  `delegate_user_id` int(11) DEFAULT NULL,
+  `delegate_team_id` int(11) DEFAULT NULL,
+  `role_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `permissionprototype_activating_user_id` (`activating_user_id`),
+  KEY `permissionprototype_delegate_team_id` (`delegate_team_id`),
+  KEY `permissionprototype_delegate_user_id` (`delegate_user_id`),
+  KEY `permissionprototype_org_id` (`org_id`),
+  KEY `permissionprototype_org_id_activating_user_id` (`org_id`,`activating_user_id`),
+  KEY `permissionprototype_role_id` (`role_id`),
+  CONSTRAINT `fk_permissionprototype_activating_user_id_user` FOREIGN KEY (`activating_user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_permissionprototype_delegate_team_id_team` FOREIGN KEY (`delegate_team_id`) REFERENCES `team` (`id`),
+  CONSTRAINT `fk_permissionprototype_delegate_user_id_user` FOREIGN KEY (`delegate_user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_permissionprototype_org_id_user` FOREIGN KEY (`org_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_permissionprototype_role_id_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `permissionprototype`
+--
+
+LOCK TABLES `permissionprototype` WRITE;
+/*!40000 ALTER TABLE `permissionprototype` DISABLE KEYS */;
+INSERT INTO `permissionprototype` VALUES (1,2,'f1d0e61d-fd2c-48aa-b40e-52e6ef65cfb3',NULL,3,NULL,3);
+/*!40000 ALTER TABLE `permissionprototype` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `quayregion`
+--
+
+DROP TABLE IF EXISTS `quayregion`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `quayregion` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `quayregion_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `quayregion`
+--
+
+LOCK TABLES `quayregion` WRITE;
+/*!40000 ALTER TABLE `quayregion` DISABLE KEYS */;
+/*!40000 ALTER TABLE `quayregion` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `quayrelease`
+--
+
+DROP TABLE IF EXISTS `quayrelease`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `quayrelease` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `service_id` int(11) NOT NULL,
+  `version` varchar(255) NOT NULL,
+  `region_id` int(11) NOT NULL,
+  `reverted` tinyint(1) NOT NULL,
+  `created` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `quayrelease_service_id_version_region_id` (`service_id`,`version`,`region_id`),
+  KEY `quayrelease_created` (`created`),
+  KEY `quayrelease_region_id` (`region_id`),
+  KEY `quayrelease_service_id` (`service_id`),
+  KEY `quayrelease_service_id_region_id_created` (`service_id`,`region_id`,`created`),
+  CONSTRAINT `fk_quayrelease_region_id_quayregion` FOREIGN KEY (`region_id`) REFERENCES `quayregion` (`id`),
+  CONSTRAINT `fk_quayrelease_service_id_quayservice` FOREIGN KEY (`service_id`) REFERENCES `quayservice` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `quayrelease`
+--
+
+LOCK TABLES `quayrelease` WRITE;
+/*!40000 ALTER TABLE `quayrelease` DISABLE KEYS */;
+/*!40000 ALTER TABLE `quayrelease` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `quayservice`
+--
+
+DROP TABLE IF EXISTS `quayservice`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `quayservice` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `quayservice_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `quayservice`
+--
+
+LOCK TABLES `quayservice` WRITE;
+/*!40000 ALTER TABLE `quayservice` DISABLE KEYS */;
+/*!40000 ALTER TABLE `quayservice` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `queueitem`
+--
+
+DROP TABLE IF EXISTS `queueitem`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `queueitem` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `queue_name` varchar(1024) NOT NULL,
+  `body` text NOT NULL,
+  `available_after` datetime NOT NULL,
+  `available` tinyint(1) NOT NULL,
+  `processing_expires` datetime DEFAULT NULL,
+  `retries_remaining` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `queueitem_available` (`available`),
+  KEY `queueitem_available_after` (`available_after`),
+  KEY `queueitem_processing_expires` (`processing_expires`),
+  KEY `queueitem_queue_name` (`queue_name`(767)),
+  KEY `queueitem_retries_remaining` (`retries_remaining`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `queueitem`
+--
+
+LOCK TABLES `queueitem` WRITE;
+/*!40000 ALTER TABLE `queueitem` DISABLE KEYS */;
+/*!40000 ALTER TABLE `queueitem` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `repository`
+--
+
+DROP TABLE IF EXISTS `repository`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `repository` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `visibility_id` int(11) NOT NULL,
+  `description` text,
+  `badge_token` varchar(255) NOT NULL,
+  `namespace_user_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `repository_namespace_user_id_name` (`namespace_user_id`,`name`),
+  KEY `repository_visibility_id` (`visibility_id`),
+  KEY `repository_namespace_user_id` (`namespace_user_id`),
+  CONSTRAINT `fk_repository_namespace_user_id_user` FOREIGN KEY (`namespace_user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_repository_visibility_id_visibility` FOREIGN KEY (`visibility_id`) REFERENCES `visibility` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `repository`
+--
+
+LOCK TABLES `repository` WRITE;
+/*!40000 ALTER TABLE `repository` DISABLE KEYS */;
+/*!40000 ALTER TABLE `repository` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `repositoryactioncount`
+--
+
+DROP TABLE IF EXISTS `repositoryactioncount`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `repositoryactioncount` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `repository_id` int(11) NOT NULL,
+  `count` int(11) NOT NULL,
+  `date` date NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `repositoryactioncount_repository_id_date` (`repository_id`,`date`),
+  KEY `repositoryactioncount_date` (`date`),
+  KEY `repositoryactioncount_repository_id` (`repository_id`),
+  CONSTRAINT `fk_repositoryactioncount_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `repositoryactioncount`
+--
+
+LOCK TABLES `repositoryactioncount` WRITE;
+/*!40000 ALTER TABLE `repositoryactioncount` DISABLE KEYS */;
+/*!40000 ALTER TABLE `repositoryactioncount` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `repositoryauthorizedemail`
+--
+
+DROP TABLE IF EXISTS `repositoryauthorizedemail`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `repositoryauthorizedemail` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `repository_id` int(11) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `code` varchar(255) NOT NULL,
+  `confirmed` tinyint(1) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `repositoryauthorizedemail_code` (`code`),
+  UNIQUE KEY `repositoryauthorizedemail_email_repository_id` (`email`,`repository_id`),
+  KEY `repositoryauthorizedemail_repository_id` (`repository_id`),
+  CONSTRAINT `fk_repositoryauthorizedemail_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `repositoryauthorizedemail`
+--
+
+LOCK TABLES `repositoryauthorizedemail` WRITE;
+/*!40000 ALTER TABLE `repositoryauthorizedemail` DISABLE KEYS */;
+/*!40000 ALTER TABLE `repositoryauthorizedemail` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `repositorybuild`
+--
+
+DROP TABLE IF EXISTS `repositorybuild`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `repositorybuild` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(255) NOT NULL,
+  `repository_id` int(11) NOT NULL,
+  `access_token_id` int(11) NOT NULL,
+  `resource_key` varchar(255) DEFAULT NULL,
+  `job_config` text NOT NULL,
+  `phase` varchar(255) NOT NULL,
+  `started` datetime NOT NULL,
+  `display_name` varchar(255) NOT NULL,
+  `trigger_id` int(11) DEFAULT NULL,
+  `pull_robot_id` int(11) DEFAULT NULL,
+  `logs_archived` tinyint(1) NOT NULL DEFAULT '0',
+  `queue_id` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `repositorybuild_access_token_id` (`access_token_id`),
+  KEY `repositorybuild_pull_robot_id` (`pull_robot_id`),
+  KEY `repositorybuild_repository_id` (`repository_id`),
+  KEY `repositorybuild_resource_key` (`resource_key`),
+  KEY `repositorybuild_trigger_id` (`trigger_id`),
+  KEY `repositorybuild_uuid` (`uuid`),
+  KEY `repositorybuild_queue_id` (`queue_id`),
+  CONSTRAINT `fk_repositorybuild_access_token_id_accesstoken` FOREIGN KEY (`access_token_id`) REFERENCES `accesstoken` (`id`),
+  CONSTRAINT `fk_repositorybuild_pull_robot_id_user` FOREIGN KEY (`pull_robot_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_repositorybuild_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`),
+  CONSTRAINT `fk_repositorybuild_trigger_id_repositorybuildtrigger` FOREIGN KEY (`trigger_id`) REFERENCES `repositorybuildtrigger` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `repositorybuild`
+--
+
+LOCK TABLES `repositorybuild` WRITE;
+/*!40000 ALTER TABLE `repositorybuild` DISABLE KEYS */;
+/*!40000 ALTER TABLE `repositorybuild` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `repositorybuildtrigger`
+--
+
+DROP TABLE IF EXISTS `repositorybuildtrigger`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `repositorybuildtrigger` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(255) NOT NULL,
+  `service_id` int(11) NOT NULL,
+  `repository_id` int(11) NOT NULL,
+  `connected_user_id` int(11) NOT NULL,
+  `auth_token` varchar(255) DEFAULT NULL,
+  `config` text NOT NULL,
+  `write_token_id` int(11) DEFAULT NULL,
+  `pull_robot_id` int(11) DEFAULT NULL,
+  `private_key` text,
+  PRIMARY KEY (`id`),
+  KEY `repositorybuildtrigger_connected_user_id` (`connected_user_id`),
+  KEY `repositorybuildtrigger_pull_robot_id` (`pull_robot_id`),
+  KEY `repositorybuildtrigger_repository_id` (`repository_id`),
+  KEY `repositorybuildtrigger_service_id` (`service_id`),
+  KEY `repositorybuildtrigger_write_token_id` (`write_token_id`),
+  CONSTRAINT `fk_repositorybuildtrigger_connected_user_id_user` FOREIGN KEY (`connected_user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_repositorybuildtrigger_pull_robot_id_user` FOREIGN KEY (`pull_robot_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_repositorybuildtrigger_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`),
+  CONSTRAINT `fk_repositorybuildtrigger_service_id_buildtriggerservice` FOREIGN KEY (`service_id`) REFERENCES `buildtriggerservice` (`id`),
+  CONSTRAINT `fk_repositorybuildtrigger_write_token_id_accesstoken` FOREIGN KEY (`write_token_id`) REFERENCES `accesstoken` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `repositorybuildtrigger`
+--
+
+LOCK TABLES `repositorybuildtrigger` WRITE;
+/*!40000 ALTER TABLE `repositorybuildtrigger` DISABLE KEYS */;
+/*!40000 ALTER TABLE `repositorybuildtrigger` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `repositorynotification`
+--
+
+DROP TABLE IF EXISTS `repositorynotification`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `repositorynotification` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(255) NOT NULL,
+  `repository_id` int(11) NOT NULL,
+  `event_id` int(11) NOT NULL,
+  `method_id` int(11) NOT NULL,
+  `config_json` text NOT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `event_config_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `repositorynotification_event_id` (`event_id`),
+  KEY `repositorynotification_method_id` (`method_id`),
+  KEY `repositorynotification_repository_id` (`repository_id`),
+  KEY `repositorynotification_uuid` (`uuid`),
+  CONSTRAINT `fk_repositorynotification_event_id_externalnotificationevent` FOREIGN KEY (`event_id`) REFERENCES `externalnotificationevent` (`id`),
+  CONSTRAINT `fk_repositorynotification_method_id_externalnotificationmethod` FOREIGN KEY (`method_id`) REFERENCES `externalnotificationmethod` (`id`),
+  CONSTRAINT `fk_repositorynotification_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `repositorynotification`
+--
+
+LOCK TABLES `repositorynotification` WRITE;
+/*!40000 ALTER TABLE `repositorynotification` DISABLE KEYS */;
+/*!40000 ALTER TABLE `repositorynotification` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `repositorypermission`
+--
+
+DROP TABLE IF EXISTS `repositorypermission`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `repositorypermission` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `team_id` int(11) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `repository_id` int(11) NOT NULL,
+  `role_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `repositorypermission_team_id_repository_id` (`team_id`,`repository_id`),
+  UNIQUE KEY `repositorypermission_user_id_repository_id` (`user_id`,`repository_id`),
+  KEY `repositorypermission_repository_id` (`repository_id`),
+  KEY `repositorypermission_role_id` (`role_id`),
+  KEY `repositorypermission_team_id` (`team_id`),
+  KEY `repositorypermission_user_id` (`user_id`),
+  CONSTRAINT `fk_repositorypermission_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`),
+  CONSTRAINT `fk_repositorypermission_role_id_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`),
+  CONSTRAINT `fk_repositorypermission_team_id_team` FOREIGN KEY (`team_id`) REFERENCES `team` (`id`),
+  CONSTRAINT `fk_repositorypermission_user_id_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `repositorypermission`
+--
+
+LOCK TABLES `repositorypermission` WRITE;
+/*!40000 ALTER TABLE `repositorypermission` DISABLE KEYS */;
+/*!40000 ALTER TABLE `repositorypermission` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `repositorytag`
+--
+
+DROP TABLE IF EXISTS `repositorytag`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `repositorytag` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `image_id` int(11) NOT NULL,
+  `repository_id` int(11) NOT NULL,
+  `lifetime_end_ts` int(11) DEFAULT NULL,
+  `lifetime_start_ts` int(11) NOT NULL DEFAULT '0',
+  `hidden` tinyint(1) NOT NULL DEFAULT '0',
+  `reversion` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `repositorytag_repository_id_name_lifetime_end_ts` (`repository_id`,`name`,`lifetime_end_ts`),
+  KEY `repositorytag_image_id` (`image_id`),
+  KEY `repositorytag_repository_id` (`repository_id`),
+  KEY `repositorytag_lifetime_end_ts` (`lifetime_end_ts`),
+  KEY `repositorytag_repository_id_name` (`repository_id`,`name`),
+  CONSTRAINT `fk_repositorytag_image_id_image` FOREIGN KEY (`image_id`) REFERENCES `image` (`id`),
+  CONSTRAINT `fk_repositorytag_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `repositorytag`
+--
+
+LOCK TABLES `repositorytag` WRITE;
+/*!40000 ALTER TABLE `repositorytag` DISABLE KEYS */;
+/*!40000 ALTER TABLE `repositorytag` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `role`
+--
+
+DROP TABLE IF EXISTS `role`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `role` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `role_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `role`
+--
+
+LOCK TABLES `role` WRITE;
+/*!40000 ALTER TABLE `role` DISABLE KEYS */;
+INSERT INTO `role` VALUES (1,'admin'),(3,'read'),(2,'write');
+/*!40000 ALTER TABLE `role` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `servicekey`
+--
+
+DROP TABLE IF EXISTS `servicekey`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `servicekey` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `kid` varchar(255) NOT NULL,
+  `service` varchar(255) NOT NULL,
+  `jwk` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_date` datetime NOT NULL,
+  `expiration_date` datetime DEFAULT NULL,
+  `rotation_duration` int(11) DEFAULT NULL,
+  `approval_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `servicekey_kid` (`kid`),
+  KEY `servicekey_approval_id` (`approval_id`),
+  KEY `servicekey_service` (`service`),
+  CONSTRAINT `fk_servicekey_approval_id_servicekeyapproval` FOREIGN KEY (`approval_id`) REFERENCES `servicekeyapproval` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `servicekey`
+--
+
+LOCK TABLES `servicekey` WRITE;
+/*!40000 ALTER TABLE `servicekey` DISABLE KEYS */;
+INSERT INTO `servicekey` VALUES (1,'http://{{docker_registry}}:80','95a351178236ec1b7cb09df4fc83e7f397cb434502dcf7aa2e90d02c4b37005d','quay','{\"e\": \"AQAB\", \"kty\": \"RSA\", \"n\": \"y1L3IXeWog4aYamnBFfZf1qA4NvAIiF3l0wyMo7-ZPHlSwcI4AILR170rXxAczK4e6EvTCOW-W6biaCMpx9DDPFmYRjxrbisXvJoBgTqIz1tRATcFpal3E9SC3WjGnP9feHBJ5jDqaHlFNHs0q3Kj_HmFhBkME_s9ON_a0Ura65An1WhdIihZ5y1s-YgFg2G3_qxjXFOjxDnEIbkmJKfFIlEuii213lgLPokwESDROkBhyWAkR1kHYpTZYvIrdYEA_JscuEF8xMdHEiEJZUgBynt1hkh8MpeHhwziVjT9Tsz5T_NIZIt9h-fzY2IanIsTtS1jCxKA5Vt8nrZObiuew\"}','{\"created_by\": \"CLI tool\"}','2016-06-23 11:14:40','2016-06-23 13:14:40',NULL,1);
+/*!40000 ALTER TABLE `servicekey` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `servicekeyapproval`
+--
+
+DROP TABLE IF EXISTS `servicekeyapproval`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `servicekeyapproval` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `approver_id` int(11) DEFAULT NULL,
+  `approval_type` varchar(255) NOT NULL,
+  `approved_date` datetime NOT NULL,
+  `notes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `servicekeyapproval_approval_type` (`approval_type`),
+  KEY `servicekeyapproval_approver_id` (`approver_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `servicekeyapproval`
+--
+
+LOCK TABLES `servicekeyapproval` WRITE;
+/*!40000 ALTER TABLE `servicekeyapproval` DISABLE KEYS */;
+INSERT INTO `servicekeyapproval` VALUES (1,NULL,'ServiceKeyApprovalType.AUTOMATIC','2016-06-23 11:14:41','');
+/*!40000 ALTER TABLE `servicekeyapproval` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `star`
+--
+
+DROP TABLE IF EXISTS `star`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `star` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `repository_id` int(11) NOT NULL,
+  `created` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `star_user_id_repository_id` (`user_id`,`repository_id`),
+  KEY `star_repository_id` (`repository_id`),
+  KEY `star_user_id` (`user_id`),
+  CONSTRAINT `fk_star_repository_id_repository` FOREIGN KEY (`repository_id`) REFERENCES `repository` (`id`),
+  CONSTRAINT `fk_star_user_id_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `star`
+--
+
+LOCK TABLES `star` WRITE;
+/*!40000 ALTER TABLE `star` DISABLE KEYS */;
+/*!40000 ALTER TABLE `star` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tagmanifest`
+--
+
+DROP TABLE IF EXISTS `tagmanifest`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tagmanifest` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tag_id` int(11) NOT NULL,
+  `digest` varchar(255) NOT NULL,
+  `json_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `tagmanifest_tag_id` (`tag_id`),
+  KEY `tagmanifest_digest` (`digest`),
+  CONSTRAINT `fk_tagmanifest_tag_id_repositorytag` FOREIGN KEY (`tag_id`) REFERENCES `repositorytag` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tagmanifest`
+--
+
+LOCK TABLES `tagmanifest` WRITE;
+/*!40000 ALTER TABLE `tagmanifest` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tagmanifest` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `team`
+--
+
+DROP TABLE IF EXISTS `team`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `team` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `organization_id` int(11) NOT NULL,
+  `role_id` int(11) NOT NULL,
+  `description` text NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `team_name_organization_id` (`name`,`organization_id`),
+  KEY `team_name` (`name`),
+  KEY `team_organization_id` (`organization_id`),
+  KEY `team_role_id` (`role_id`),
+  CONSTRAINT `fk_team_organization_id_user` FOREIGN KEY (`organization_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_team_role_id_teamrole` FOREIGN KEY (`role_id`) REFERENCES `teamrole` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `team`
+--
+
+LOCK TABLES `team` WRITE;
+/*!40000 ALTER TABLE `team` DISABLE KEYS */;
+INSERT INTO `team` VALUES (1,'owners',2,1,'');
+/*!40000 ALTER TABLE `team` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `teammember`
+--
+
+DROP TABLE IF EXISTS `teammember`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `teammember` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `team_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `teammember_user_id_team_id` (`user_id`,`team_id`),
+  KEY `teammember_team_id` (`team_id`),
+  KEY `teammember_user_id` (`user_id`),
+  CONSTRAINT `fk_teammember_team_id_team` FOREIGN KEY (`team_id`) REFERENCES `team` (`id`),
+  CONSTRAINT `fk_teammember_user_id_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `teammember`
+--
+
+LOCK TABLES `teammember` WRITE;
+/*!40000 ALTER TABLE `teammember` DISABLE KEYS */;
+INSERT INTO `teammember` VALUES (1,1,1);
+/*!40000 ALTER TABLE `teammember` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `teammemberinvite`
+--
+
+DROP TABLE IF EXISTS `teammemberinvite`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `teammemberinvite` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `team_id` int(11) NOT NULL,
+  `inviter_id` int(11) NOT NULL,
+  `invite_token` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `teammemberinvite_inviter_id` (`inviter_id`),
+  KEY `teammemberinvite_team_id` (`team_id`),
+  KEY `teammemberinvite_user_id` (`user_id`),
+  CONSTRAINT `fk_teammemberinvite_inviter_id_user` FOREIGN KEY (`inviter_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_teammemberinvite_team_id_team` FOREIGN KEY (`team_id`) REFERENCES `team` (`id`),
+  CONSTRAINT `fk_teammemberinvite_user_id_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `teammemberinvite`
+--
+
+LOCK TABLES `teammemberinvite` WRITE;
+/*!40000 ALTER TABLE `teammemberinvite` DISABLE KEYS */;
+/*!40000 ALTER TABLE `teammemberinvite` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `teamrole`
+--
+
+DROP TABLE IF EXISTS `teamrole`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `teamrole` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `teamrole_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `teamrole`
+--
+
+LOCK TABLES `teamrole` WRITE;
+/*!40000 ALTER TABLE `teamrole` DISABLE KEYS */;
+INSERT INTO `teamrole` VALUES (1,'admin'),(2,'creator'),(3,'member');
+/*!40000 ALTER TABLE `teamrole` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `torrentinfo`
+--
+
+DROP TABLE IF EXISTS `torrentinfo`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `torrentinfo` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `storage_id` int(11) NOT NULL,
+  `piece_length` int(11) NOT NULL,
+  `pieces` text NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `torrentinfo_storage_id_piece_length` (`storage_id`,`piece_length`),
+  KEY `torrentinfo_storage_id` (`storage_id`),
+  CONSTRAINT `fk_torrentinfo_storage_id_imagestorage` FOREIGN KEY (`storage_id`) REFERENCES `imagestorage` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `torrentinfo`
+--
+
+LOCK TABLES `torrentinfo` WRITE;
+/*!40000 ALTER TABLE `torrentinfo` DISABLE KEYS */;
+/*!40000 ALTER TABLE `torrentinfo` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `user`
+--
+
+DROP TABLE IF EXISTS `user`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `user` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(255) NOT NULL,
+  `password_hash` varchar(255) DEFAULT NULL,
+  `email` varchar(255) NOT NULL,
+  `verified` tinyint(1) NOT NULL,
+  `stripe_id` varchar(255) DEFAULT NULL,
+  `organization` tinyint(1) NOT NULL,
+  `robot` tinyint(1) NOT NULL,
+  `invoice_email` tinyint(1) NOT NULL,
+  `invalid_login_attempts` int(11) NOT NULL DEFAULT '0',
+  `last_invalid_login` datetime NOT NULL,
+  `uuid` varchar(36) DEFAULT NULL,
+  `removed_tag_expiration_s` int(11) NOT NULL DEFAULT '1209600',
+  `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `invoice_email_address` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_email` (`email`),
+  UNIQUE KEY `user_username` (`username`),
+  KEY `user_organization` (`organization`),
+  KEY `user_robot` (`robot`),
+  KEY `user_stripe_id` (`stripe_id`),
+  KEY `user_invoice_email_address` (`invoice_email_address`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `user`
+--
+
+LOCK TABLES `user` WRITE;
+/*!40000 ALTER TABLE `user` DISABLE KEYS */;
+INSERT INTO `user` VALUES (1,'admin','$2a$12$sn9Z0S1rQh7NyW1XO14fju0OqJeItrsmR2FX93ryEufuZ.HFuA8nu','paas@bobby.com',1,NULL,0,0,0,0,'2016-06-23 10:59:16','dc7d54fc-d620-4b46-b2f3-6b7ce8af13ce',1209600,1,NULL),(2,'paas',NULL,'paas-devops@bobby.com',0,NULL,1,0,0,0,'2016-06-23 11:15:26','f59a9efa-8752-4ce5-90df-9377134123cc',1209600,1,NULL),(3,'paas+robotti',NULL,'{{quay_build_robot_token}}',0,NULL,0,1,0,0,'2016-06-23 11:15:44','db1d2621-2b1a-49de-aef2-e957f1b37b4a',1209600,1,NULL);
+/*!40000 ALTER TABLE `user` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `userregion`
+--
+
+DROP TABLE IF EXISTS `userregion`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `userregion` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `location_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `userregion_location_id` (`location_id`),
+  KEY `userregion_user_id` (`user_id`),
+  CONSTRAINT `fk_userregion_location_id_imagestoragelocation` FOREIGN KEY (`location_id`) REFERENCES `imagestoragelocation` (`id`),
+  CONSTRAINT `fk_userregion_user_id_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `userregion`
+--
+
+LOCK TABLES `userregion` WRITE;
+/*!40000 ALTER TABLE `userregion` DISABLE KEYS */;
+/*!40000 ALTER TABLE `userregion` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `visibility`
+--
+
+DROP TABLE IF EXISTS `visibility`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `visibility` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `visibility_name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `visibility`
+--
+
+LOCK TABLES `visibility` WRITE;
+/*!40000 ALTER TABLE `visibility` DISABLE KEYS */;
+INSERT INTO `visibility` VALUES (2,'private'),(1,'public');
+/*!40000 ALTER TABLE `visibility` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2016-06-23 11:19:18

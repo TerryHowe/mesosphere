@@ -1,0 +1,20 @@
+---
+- hashivault_policy_set:
+    url: "{{vault_url}}"
+    token: "{{root_token}}"
+    name: "{{customer.shortname}}"
+    rules: "{{rules}}"
+
+- hashivault_userpass_create:
+    url: "{{vault_url}}"
+    token: "{{root_token}}"
+    name: "{{customer.shortname}}"
+    pass: "{{customer.password}}"
+    policies: "{{customer.shortname}}"
+
+- hashivault_userpass_create:
+    url: "{{vault_url}}"
+    token: "{{root_token}}"
+    name: "{{customer.shortname}}-admin"
+    pass: "{{customer.password}}"
+    policies: "{{customer.shortname}}"

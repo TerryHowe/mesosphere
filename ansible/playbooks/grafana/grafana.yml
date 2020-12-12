@@ -1,0 +1,6 @@
+---
+#-- Full grafana stack
+#-- Note that alerts is likely a no-op until we add default alerts
+- include: install.yml
+- include: dashboards.yml
+- include: alerts.yml

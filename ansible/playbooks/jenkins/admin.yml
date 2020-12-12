@@ -1,0 +1,22 @@
+---
+
+- hosts: jenkins
+  become: yes
+  vars:
+      docker_options: "-H tcp://127.0.0.1:4243"
+      jenkins_port: "8443"
+      persistent_store: "/root/jenkins"
+      jenkins_user_name: "{{os_username}}"
+      jenkins_user_password: "{{os_password}}"
+  roles:
+    - role: filesystem
+    - role: jenkins/admin/server
+    - role: jenkins/find
+    - role: jenkins/user
+    - role: jenkins/admin/configure
+    - role: jenkins/setpassword
+    - role: jenkins/admin/jobs
+    - role: jenkins/admin/seed
+    - role: jenkins/admin/githook
+    - role: dns/record
+      domain_name: jenkins-{{ region }}

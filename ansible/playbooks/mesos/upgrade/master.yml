@@ -1,0 +1,34 @@
+---
+- include: zk_leader_followers.yml
+
+#-- Playbook for building mesos-master instances
+- hosts: mesos-bootstrap
+  remote_user: "{{ remote_user }}"
+
+- hosts: mesos-follower
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  serial: "{{ batch_size | default(1) }}"
+  vars:
+    cluster_upgrade: true
+  roles:
+  - deploy/audit
+  - mesos/master
+  - mesos/marathon
+  post_tasks:
+  - name: Sleep for two minutes, replace with a real check later
+    pause: minutes=2
+
+#-- Can probably put this on the previous hosts line, but being explicit for now
+- hosts: mesos-leader
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  serial: "{{ batch_size | default(1) }}"
+  vars:
+    cluster_upgrade: true
+  roles:
+  - deploy/audit
+  - mesos/master
+  - mesos/marathon

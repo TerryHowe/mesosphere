@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Pulls metrics that should exist on "this" node from other carbon cache nodes.
+# Run this script on all carbon nodes when the cluster composition changes.
+#
+
+jobid=$(date '+%Y-%m-%d-%H%M')
+jobname="carbonate-rebalance[${jobid}]"
+
+function sync_metrics() {
+  for host in $(carbon-hosts --cluster old-cluster | grep -v {{ openstack['private_v4'] }})
+  do
+    echo syncing metrics from $host
+
+    ssh -o StrictHostKeyChecking=no carbon@${host} -- \
+        carbon-list --storage-dir {{ carbon_whisper_dir }} |\
+      tee ${0}.${host}.carbon-list.${jobid} |\
+      carbon-sieve | \
+      tee ${0}.${host}.carbon-sieve.${jobid} |\
+      carbon-sync --cluster old-cluster \
+        --source-storage-dir {{ carbon_whisper_dir }} \
+        --storage-dir {{ carbon_whisper_dir }} \
+        --source-node $host
+  done
+}
+
+function spurious_metrics() {
+  carbon-list --storage-dir {{ carbon_whisper_dir }} | \
+    carbon-sieve --invert |\
+    tee ${0}.carbon-sieve.spurious.${jobid}
+
+  # TODO: delete spurious metrics
+
+}
+
+function runall() {
+  echo "starting rebalancing"
+
+  # make debugging easier
+  cat /opt/graphite/conf/carbonate.conf
+
+  sync_metrics 2>&1
+
+  spurious_metrics
+
+  echo "finished rebalancing"
+}
+
+runall > ${0}.${jobid}.log

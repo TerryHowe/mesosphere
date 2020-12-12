@@ -1,0 +1,3 @@
+---
+graphite_host: "{{ hostvars[groups['graphite'][0]]['ansible_default_ipv4']['address'] }}"
+graphite_port: 2003

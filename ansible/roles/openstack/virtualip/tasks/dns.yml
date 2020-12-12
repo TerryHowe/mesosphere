@@ -1,0 +1,7 @@
+---
+- name: register dns name
+  command: >
+      designate record-create --name "{{ hostname }}"
+      --type A --data "{{ ip_addr }}" "{{project_domain}}."
+  register: designate_record_create
+  changed_when: "'duplicate_record' not in designate_record_create.stdout"

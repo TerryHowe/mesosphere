@@ -1,0 +1,1 @@
+find {{ whisper_dir }} -name *.wsp -exec /bin/whisper-resize --nobackup {} {{ retentions }} \; -exec chown carbon.carbon {} \;

@@ -1,0 +1,14 @@
+---
+- name: install collectd ping plugin
+  package: name=collectd-ping state=present
+  notify:
+    - restart collectd
+  tags:
+    - monitoring
+
+- name: configure ping plugin
+  template: src=ping.conf.j2 dest=/etc/collectd.d/ping.conf
+  notify:
+    - restart collectd
+  tags:
+    - monitoring

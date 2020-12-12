@@ -1,0 +1,57 @@
+---
+- name: install packages
+  package: name={{ item }}
+  with_items:
+    - python-carbon
+    - at
+
+- name: Start and enable atd
+  service: name=atd enabled=yes state=started
+
+- set_fact:
+    instance:
+      name: "{{ ' abcdefghijklmnopqrstuvwxyz'[item|int] }}"
+      line_port: 2{{ item }}03
+      pickle_port: 2{{ item }}04
+      query_port: 7{{ item }}02
+  with_sequence: start=1 end={{ carbon_cache_instances | int }}
+  register: instance_results
+  tags: [retention]
+
+- set_fact:
+    carbon_instances: "{{ instance_results.results | map(attribute='ansible_facts.instance') | list }}"
+  tags: [retention]
+
+- set_fact:
+    carbon_endpoint:
+      line: "{{ carbon_receiver_interface }}:{{ item.line_port }}={{ item.name }}"
+      pickle: "{{ carbon_receiver_interface }}:{{ item.pickle_port }}={{ item.name }}"
+      query: "{{ carbon_receiver_interface }}:{{ item.query_port }}={{ item.name }}"
+  with_items: "{{ carbon_instances }}"
+  register: endpoint_results
+
+- set_fact:
+    carbon_endpoints: "{{ endpoint_results.results | map(attribute='ansible_facts.carbon_endpoint') | list }}"
+
+- name: configure carbon-cache
+  template: src=carbon.conf.j2 dest=/etc/carbon/carbon.conf
+  notify:
+    - restart carbon-cache
+
+- name: configure carbon-cache retention schema
+  template: src=storage-schemas.conf.j2 dest=/etc/carbon/storage-schemas.conf
+  tags: [retention]
+  notify:
+    - restart carbon-cache
+
+- name: create carbon-cache instance service
+  template: src=carbon-cache.service.j2 dest=/etc/systemd/system/carbon-cache-{{ item.name }}.service
+  with_items: "{{ carbon_instances }}"
+
+- name: enable carbon-cache instance
+  service: name=carbon-cache-{{ item.name }} enabled=true
+  with_items: "{{ carbon_instances }}"
+
+- name: start carbon-cache instance
+  service: name=carbon-cache-{{ item.name }} state=started
+  with_items: "{{ carbon_instances }}"

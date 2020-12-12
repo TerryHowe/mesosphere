@@ -1,0 +1,35 @@
+---
+- hosts: localhost
+  tasks:
+  - fail: msg="Playbook requires maintenance_mode=True since all Virtual Services in Avi will be disabled"
+    when: not maintenance_mode | default(False)
+
+- include: cluster-state.yml
+
+- hosts: avi-controller-leader
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+
+  pre_tasks:
+  - name: ensure virtual services in the default service engine group are disabled
+    avi_virtualservices:
+      filters:
+        se_group_ref__name: Default-Group
+      state: disabled
+      controller_host: "{{ avi_controller_base_url }}"
+      controller_user: admin
+      controller_pass: "{{ avi_controller_admin_password }}"
+
+  roles:
+  - role: avi/controller
+
+  post_tasks:
+  - name: ensure virtual services in the default service engine group are enabled
+    avi_virtualservices:
+      filters:
+        se_group_ref__name: Default-Group
+      controller_host: "{{ avi_controller_base_url }}"
+      controller_user: admin
+      controller_pass: "{{ avi_controller_admin_password }}"
+      state: enabled

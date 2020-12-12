@@ -1,0 +1,4 @@
+---
+quay_build_robot_token: "{{ lookup('vault', '{{vault_environment}}', 'quay_build_robot_token') }}"
+mysql_user: "{{lookup('vault', 'quay', 'mysql_user')}}"
+mysql_password: "{{lookup('vault', 'quay', 'mysql_password')}}"

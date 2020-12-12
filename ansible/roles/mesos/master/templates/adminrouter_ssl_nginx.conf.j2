@@ -1,0 +1,15 @@
+server {
+    listen 443;
+    server_name {{ mesos_ssl_basename }}.cloud.twc.net;
+    ssl on;
+    ssl_certificate {{ mesos_certs_dir }}{{ mesos_ssl_basename }}.crt;
+    ssl_certificate_key {{ mesos_certs_dir }}{{ mesos_ssl_basename }}.key;
+
+    set $twc_backend "https://master.mesos";
+
+    location / {
+      proxy_pass $twc_backend;
+      proxy_redirect $twc_backend https://{{ mesos_ssl_basename }}.cloud.twc.net;
+    }
+
+}

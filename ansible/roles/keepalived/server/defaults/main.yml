@@ -1,0 +1,9 @@
+---
+keepalived_auth_type: PASS
+keepalived_auth_pass: foobar
+# Optional
+#keepalived_script: |
+#  script "killall -0 myproc"
+#  interval 2
+#  fall 3
+#  rise 2

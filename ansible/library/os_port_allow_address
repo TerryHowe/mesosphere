@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+from ansible.module_utils.basic import *
+
+try:
+  import shade
+  HAS_SHADE = True
+except ImportError:
+  HAS_SHADE = False
+
+
+if __name__ == '__main__':
+
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'address': { 'required': True, 'type': 'str' },
+            'server_metadata_attr': { 'required': True, 'type': 'str' },
+            'server_metadata_value': { 'required': True, 'type': 'str' }
+        },
+        supports_check_mode=True
+    )
+
+    if not HAS_SHADE:
+        module.fail_json(msg="python shade package is required")
+
+    args = module.params
+
+    cloud = shade.openstack_cloud()
+    target_servers = []
+    for server in cloud.list_servers():
+        if server['metadata'].get(args['server_metadata_attr']) == args['server_metadata_value']:
+            target_servers.append(server['id'])
+
+    if not target_servers:
+        module.exit_json(**{
+            'changed': False,
+            'warning': 'No servers found with given metadata filter: {0}={1}'.format(
+                        args['server_metadata_attr'], args['server_metadata_value'])
+        })
+
+    updated = []
+    for port in cloud.list_ports(filters={'device_id': target_servers}):
+        allowed_addresses = [a['ip_address'] for a in port['allowed_address_pairs']]
+
+        if not args['address'] in allowed_addresses:
+            if not module.check_mode:
+                port['allowed_address_pairs'].append({'ip_address': args['address']})
+                cloud.update_port(port['id'], allowed_address_pairs=port['allowed_address_pairs'])
+            updated.append(port['device_id'])
+
+    result = {
+        'changed': len(updated) > 0,
+        'candidate_devices': target_servers,
+        'affected_devices': updated,
+    }
+
+    module.exit_json(**result)

@@ -1,0 +1,18 @@
+---
+#-- Playbook for building mesos-agent instances
+- hosts: mesos-bootstrap, nfs-server
+  remote_user: "{{ remote_user }}"
+
+- hosts: mesos-agent
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  serial: "{{ batch_size | default(1) }}"
+  vars:
+    cluster_upgrade: true
+  roles:
+  - deploy/audit
+  - mesos/agent
+  post_tasks:
+  - name: Sleep for two minutes, replace with a real check later
+    pause: minutes=2

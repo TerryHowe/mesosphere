@@ -1,0 +1,7 @@
+---
+quay_oauth_token: "{{lookup('vault', '{{vault_environment}}', 'quay_api_oauth_token')}}"
+quay_namespace: "paas"
+quay_visibility: "public"
+quay_description: ""
+git_repository: 'https://github.webapps.rr.com/Docker/{{quay_name}}/archive/master.zip'
+git_subdir: '{{quay_name}}-master'

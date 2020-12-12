@@ -1,0 +1,4 @@
+remote_carbon_instances: "{{ groups['carbon-cache'] | map('extract', hostvars, 'openstack') | map(attribute='private_v4') | list }}"
+remote_carbon_port: 2004
+# assume all graphite instances host moira
+moira_endpoints: "{{ group['graphite'] | map('extract', hostvars, 'openstack') | map(attribute='private_v4') | list }}"

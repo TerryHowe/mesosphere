@@ -1,0 +1,7 @@
+---
+- name: check for running jenkins
+  shell: "docker {{docker_options}} ps | grep jenkins | cut -f1 -d' ' | while read ID ; do docker {{docker_options}} inspect $ID | grep {{persistent_store}} >/dev/null && echo $ID || true; done"
+  changed_when: False
+  register: runningjenkins
+
+- set_fact: runningjenkins="{{runningjenkins.stdout}}"

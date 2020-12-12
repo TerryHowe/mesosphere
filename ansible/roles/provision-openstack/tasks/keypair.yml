@@ -1,0 +1,7 @@
+---
+
+- name: Create the ssh keypair 
+  os_keypair:
+    state: present
+    name: "{{ openstack_common.keypair }}"
+    public_key: "{{ lookup('file', 'files/pubkeys/'+openstack_common.keypair) }}"

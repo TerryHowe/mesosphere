@@ -1,0 +1,57 @@
+AUTHENTICATION_TYPE: Database
+BUILDLOGS_REDIS: {host: {{redis_server}}, port: 6379}
+CONTACT_INFO: ['https://confluence.cloud.twc.net/display/CSAS/Platform+Services']
+DB_URI: mysql+pymysql://{{mysql_user}}:{{mysql_password}}@{{mysql_server}}/quay
+DISTRIBUTED_STORAGE_CONFIG:
+  default:
+  - SwiftStorage
+  - auth_url: {{os_auth_url}}
+    auth_version: '2'
+    os_options: {region_name: {{os_region_name}}, tenant_name: {{os_tenant_name}}}
+    storage_path: store
+    swift_container: {{quay_container}}
+    swift_password: {{os_password}}
+    swift_user: {{os_username}}
+    temp_url_key: {{quay_temp_url_key}}
+DISTRIBUTED_STORAGE_DEFAULT_LOCATIONS: []
+DISTRIBUTED_STORAGE_PREFERENCE: [default]
+ENTERPRISE_LOGO_URL: https://chrcnc-api.os.cloud.twc.net/v1/KEY_494a4b03b541408ba09ea82ea7ceea30/logo/logo.png
+FEATURE_ACI_CONVERSION: false
+FEATURE_ANONYMOUS_ACCESS: false
+FEATURE_BUILD_SUPPORT: true
+FEATURE_GITHUB_BUILD: true
+FEATURE_GITHUB_LOGIN: true
+FEATURE_GITLAB_BUILD: false
+FEATURE_MAILING: false
+FEATURE_SECURITY_NOTIFICATIONS: true
+FEATURE_SECURITY_SCANNER: true
+FEATURE_USER_CREATION: false
+FEATURE_USER_LOG_ACCESS: true
+GITHUB_LOGIN_CONFIG:
+  ALLOWED_ORGANIZATIONS: [docker]
+  CLIENT_ID: {{github_client_id}}
+  CLIENT_SECRET: {{github_client_secret}}
+  GITHUB_ENDPOINT: {{github_endpoint}}
+  ORG_RESTRICT: true
+GITHUB_TRIGGER_CONFIG: {CLIENT_ID: {{github_trigger_id}}, CLIENT_SECRET: {{github_trigger_secret}},
+  GITHUB_ENDPOINT: '{{github_endpoint}}'}
+GITLAB_TRIGGER_KIND: {}
+GPG2_PRIVATE_KEY_FILENAME: signing-private.gpg
+GPG2_PUBLIC_KEY_FILENAME: signing-public.gpg
+LOG_ARCHIVE_LOCATION: default
+MAIL_DEFAULT_SENDER: support@quay.io
+MAIL_PORT: 587
+MAIL_USE_TLS: true
+PREFERRED_URL_SCHEME: https
+SECRET_KEY: '103396649939780691479300908832487883689844179668000801578796636442978564376816'
+SECURITY_SCANNER_ENDPOINT: {{clair_scanner_host}}
+SECURITY_SCANNER_ISSUER_NAME: security_scanner
+SERVER_HOSTNAME: {{docker_registry}}
+SETUP_COMPLETE: true
+SIGNING_ENGINE: gpg2
+SUPER_USERS: {{quay_super_user}}
+TESTING: false
+USERFILES_LOCATION: default
+USERFILES_PATH: userfiles/
+USER_EVENTS_REDIS: {host: {{redis_server}}, port: 6379}
+USE_CDN: false

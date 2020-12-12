@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+
+from ansible.module_utils.basic import *
+import netaddr
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+
+if __name__ == '__main__':
+
+    module = AnsibleModule(
+        argument_spec={
+            'cidr': {'required': True, 'type': 'str'},
+        },
+    )
+
+    if not HAS_SHADE:
+        module.fail_json(msg="python shade package is required")
+
+    args = module.params
+    cloud = shade.openstack_cloud()
+    all_ips = set([ip.format() for ip in netaddr.IPNetwork(args['cidr'])])
+    used_ips = set([f['ip_address'] for port in cloud.list_ports() for f in port['fixed_ips']])
+    avail_ips = list(all_ips.difference(used_ips))
+    avail_ips.sort()
+    module.exit_json(changed=False, available_ips=avail_ips[0:-1])

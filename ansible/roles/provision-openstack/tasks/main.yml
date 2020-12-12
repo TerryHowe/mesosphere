@@ -1,0 +1,23 @@
+---
+#-- Provision OpenStack resources as defined in group_vars
+- include: network.yml
+  tags:
+    - network
+- include: security_groups.yml
+  tags:
+    - security
+
+- include: keypair.yml
+  tags:
+    - auth
+    - server
+
+- include: server.yml
+  tags:
+    - server
+#-- Move this to a decom role/strategy
+#- include: delete_ports.yml
+- name: Refresh OpenStack cache
+  shell: ./openstack.py --list --refresh >/dev/null
+  tags:
+    - server

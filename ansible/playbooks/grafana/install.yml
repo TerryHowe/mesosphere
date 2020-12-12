@@ -1,0 +1,12 @@
+---
+- hosts: grafana
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+  - role: dns/record
+    domain_name: grafana-{{ region }}
+  - grafana/install
+  - grafana/alerts
+  - grafana/notifications
+  #- grafana/ansible-webhook

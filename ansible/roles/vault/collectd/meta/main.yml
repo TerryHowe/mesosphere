@@ -1,0 +1,16 @@
+---
+dependencies:
+  - role: moira/trigger
+    moira_triggers:
+      vault_listening:
+        name: "{{ admin_project }}-{{ region }} Vault Port Listening"
+        targets: [ "collectd.{{ admin_project }}.{{ region }}.worker.*.tcpconns.8200-local.tcp_connections.LISTEN" ]
+        expression: "ERROR if t1 < 1 else OK"
+      vault_health_status:
+        name: "{{ admin_project }}-{{ region }} Vault Health Status"
+        targets: [ "collectd.{{ admin_project }}.{{ region }}.worker.*.curl.vault_health.response_code" ]
+        expression: "ERROR if t1 != 200.0 else OK"
+      vault_sealed_progress:
+        name: "{{ admin_project }}-{{ region }} Vault Sealed Progress"
+        targets: [ "collectd.{{ admin_project }}.{{ region }}.worker.*.curl_json.vault_sealed.gauge.progress" ]
+        expression: "ERROR if t1 != 0 else OK"

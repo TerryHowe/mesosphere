@@ -1,0 +1,21 @@
+- name: systemctl reload
+  command: systemctl daemon-reload
+  tags: [logging, adminrouter]
+
+- name: restart mesos-master-logstash service
+  service: name=mesos-master-logstash state=restarted
+  ignore_errors: true
+  tags: [logging]
+
+- name: dcos-adminrouter reload
+  service: name=dcos-adminrouter state=reloaded
+  ignore_errors: true
+  tags: [adminrouter]
+
+- name: dcos-mesos-master restart
+  service: name=dcos-mesos-master state=restarted
+
+- name: marathon restart
+  command: systemctl restart dcos-marathon
+  # when bringing a new cluster up marathon will fail until all ZKs are alive
+  ignore_errors: true

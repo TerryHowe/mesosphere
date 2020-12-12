@@ -1,0 +1,15 @@
+[Unit]
+Description=Clair Security Scanner Service
+Documentation=https://quay.io
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/bin/docker kill clair
+ExecStartPre=-/bin/docker rm clair
+ExecStartPre=/bin/docker pull quay.io/coreos/clair-jwt:{{clair_version}}
+ExecStart=/bin/docker run --name clair --restart=always -p 6060:6060 -p 6061:6061 -v {{clair_directory}}/config:/config quay.io/coreos/clair-jwt:{{clair_version}}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,4 @@
+docker_client_email: .
+docker_client_username: admin
+docker_client_password: "{{ os_password }}"
+docker_client_registry: "{{ docker_registry }}"

@@ -1,0 +1,4 @@
+---
+apps_elasticsearch_nodes: 3
+apps_elasticsearch_ram: 2048
+apps_elasticsearch_cpu: 2

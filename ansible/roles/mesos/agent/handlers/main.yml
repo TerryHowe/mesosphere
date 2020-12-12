@@ -1,0 +1,18 @@
+---
+# Handlers related to mesos-slave
+#
+
+- name: restart docker
+  service: name=docker state=restarted
+
+- name: systemd daemon-reload
+  command: systemctl daemon-reload
+  tags: [logging]
+
+- name: dcos-mesos-agent restart
+  service: name=dcos-mesos-slave state=restarted
+
+- name: restart mesos-slave-logstash service
+  service: name=mesos-slave-logstash state=restarted
+  ignore_errors: true
+  tags: [logging]

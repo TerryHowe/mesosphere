@@ -1,0 +1,11 @@
+LoadPlugin curl
+<Plugin curl>
+  <Page "avi_controller">
+    URL "https://{{ openstack['private_v4'] }}:9443"
+    Digest false
+    VerifyPeer true
+    VerifyHost false
+    MeasureResponseTime true
+    MeasureResponseCode true
+  </Page>
+</Plugin>

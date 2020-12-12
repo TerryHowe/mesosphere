@@ -1,0 +1,16 @@
+---
+- file: path="{{consul_directory}}" state=directory mode=0755 owner={{remote_user}} group={{remote_user}}
+- file: path="{{consul_directory}}/config" state=directory mode=0755 owner={{remote_user}} group={{remote_user}}
+- file: path="{{consul_directory}}/data" state=directory mode=0775 owner={{remote_user}} group={{remote_user}}
+
+- name: config.json file
+  template: src=config.json.j2 dest="{{consul_directory}}/config/config.json"
+
+- name: check for running consul
+  shell: docker ps --filter name=consul -q
+  changed_when: False
+  register: runningconsul
+
+- name: start consul
+  shell: docker run -d --net=host --volume {{consul_directory}}/config:/consul/config --volume {{consul_directory}}/data:/consul/data --restart always --name consul consul:v0.6.4 agent -config-file "/consul/config/config.json"
+  when: runningconsul.stdout == ""

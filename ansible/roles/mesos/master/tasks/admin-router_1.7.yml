@@ -1,0 +1,78 @@
+---
+# Configure the dcos admin-router (nginx) for ssl
+
+- name: find nginx.conf
+  command: find /opt/mesosphere/packages/ -name nginx.conf
+  register: nginx_find_result
+
+- debug: var=nginx_find_result
+
+- name: disable http listener
+  lineinfile: dest={{ nginx_find_result.stdout }} regexp="^\s+listen 80 default_server;" state=absent
+  notify:
+    - dcos-nginx reload
+
+- name: nginx conf to identify local requests
+  blockinfile:
+    dest: "{{ nginx_find_result.stdout }}"
+    marker: "# {mark} ASPAAS-372 local_filter workaround"
+    insertbefore: "server {"
+    block: |
+        geo $local_filter {
+            default "ban";
+            192.168.1.0/24 "allow";
+        }
+  notify:
+    - dcos-adminrouter reload
+
+- name: nginx conf to allow http to local requests
+  blockinfile:
+    dest: "{{ nginx_find_result.stdout }}"
+    marker: "# {mark} ASPAAS-372 http local allow workaround"
+    insertafter: "listen 443"
+    block: |
+            listen 80;
+
+            set $port_source "${server_port}_${local_filter}";
+            if ($port_source = "80_ban") {
+              return 403;
+            }
+  notify:
+    - dcos-adminrouter reload
+
+- set_fact:
+    mesos_ssl_basename: "{{ 'mesos-{{ region }}.{{ project }}' }}"
+    mesos_certs_dir: /etc/pki/tls/certs/
+
+- set_fact:
+    mesos_ssl_cert_key: "{{ lookup('vault',  '{{ mesos_ssl_basename }}.private', 'contents') | default(None) }}"
+    mesos_ssl_cert: "{{ lookup('vault', '{{ mesos_ssl_basename }}.public', 'contents') | default(None) }}"
+  no_log: True
+
+- name: create ssl cert key
+  template: src=cert_key.j2 dest={{ mesos_certs_dir }}/{{ mesos_ssl_basename }}.key mode=0700
+  no_log: True
+
+- name: create ssl cert
+  template: src=cert.j2 dest={{ mesos_certs_dir }}/{{ mesos_ssl_basename }}.crt mode=0755
+
+# dcos configures this by default:
+#  ssl_certificate snakeoil.crt;
+#  ssl_certificate_key snakeoil.key;
+
+- name: configure adminrouter ssl cert key
+  lineinfile: dest="{{ nginx_find_result.stdout }}"
+              regexp="^(\s+ssl_certificate_key ).*;"
+              line="\1 {{ mesos_certs_dir }}/{{ mesos_ssl_basename }}.key;"
+              backrefs=yes
+  no_log: True
+  notify:
+    - dcos-adminrouter reload
+
+- name: configure adminrouter ssl cert
+  lineinfile: dest="{{ nginx_find_result.stdout }}"
+              regexp="(^\s+ssl_certificate ).*;"
+              line="\1 {{ mesos_certs_dir }}/{{ mesos_ssl_basename }}.crt;"
+              backrefs=yes
+  notify:
+    - dcos-adminrouter reload

@@ -1,0 +1,44 @@
+---
+# Dynamically creates two host groups (which should not already be defined) that
+# can be used in dependent playbooks:
+#
+#   mesos-leader:
+#     The ansible hostname of the mesos leader
+#
+#   mesos-follower:
+#     A list of ansible hostnames of the mesos followers
+
+
+- hosts: mesos-master
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  run_once: yes
+  tasks:
+    - uri:
+        url: "http://{{ openstack['private_v4'] }}:5050/master/state"
+      no_log: true # tmi
+      register: master_state
+
+    - set_fact:
+        mesos_leader_ip: "{{ master_state.json.leader | regex_replace('^master@([\\d\\.]+):.*$', '\\1') }}"
+        mesos_master_openstack: "{{ groups['mesos-master'] | map('extract', hostvars, 'openstack') | list }}"
+      no_log: true # tmi
+
+    - set_fact:
+        followers: "{{ mesos_master_openstack | rejectattr('private_v4', 'equalto', mesos_leader_ip) | map(attribute='human_id') | list }}"
+        leader: "{{ mesos_master_openstack | selectattr('private_v4', 'equalto', mesos_leader_ip) | map(attribute='human_id') | first }}"
+
+    - add_host: name={{ leader }} groups=mesos-leader
+      changed_when: false
+
+    - add_host: name={{ item }} groups=mesos-follower
+      with_items: "{{ followers }}"
+      changed_when: false
+
+    - debug: msg="Mesos build date{{':'}} {{ master_state.json.build_date }}"
+    - debug: msg="Mesos build time{{':'}} {{ master_state.json.build_time }}"
+    - debug: msg="Mesos version{{':'}} {{ master_state.json.version }}"
+    - debug: msg="Mesos git sha{{':'}} {{ master_state.json.git_sha }}"
+    - debug: msg="Mesos Leader{{':'}} {{ leader }}"
+    - debug: msg="Mesos Followers{{':'}} {{ followers | join(', ') }}"

@@ -1,0 +1,18 @@
+---
+mysql_server_id: "{{ ansible_hostname | regex_replace('^\\D+(\\d+)\\D+$', '\\1')}}"
+mysql_mycnf_defaults:
+  log-bin: mysql-bin
+  server-id: "{{ mysql_server_id }}"
+  binlog_format: MIXED
+  master-info-repository: TABLE
+  log-slave-updates:
+  relay-log-recovery:
+  port: "{{ mysql_db_port }}"
+
+# because it cant be initialized with this parameter set!?
+mysql_mycnf_postinstall:
+  validate_password_policy: '0'
+
+mysql_enable_gtid: true
+mysql_healthcheck_user: healthcheck
+mysql_healthcheck_password:

@@ -1,0 +1,9 @@
+---
+allow_duplicates: yes
+dependencies:
+  - { role: system/timezone }
+  - { role: logrotate, config: "{{ logrotate_configs.syslog }}" }
+  - { role: collectd }
+  - { role: openssh }
+  - { role: docker/collectd }
+  - { role: docker/login }

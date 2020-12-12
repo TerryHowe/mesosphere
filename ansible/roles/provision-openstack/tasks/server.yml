@@ -1,0 +1,73 @@
+---
+#-- Provision OpenStack server resources as defined in group_vars
+
+- set_fact:
+    os_servers: "{{ openstack_server_templates | expand_servers(region) }}"
+
+- name: Create server groups
+  os_server_group:
+    name: "{{ item.name }}"
+    policies: "{{ item.policies }}"
+  with_items: "{{ openstack_server_templates.values() | selectattr('server_group', 'defined') | map(attribute='server_group') | list }}"
+
+- name: Create static ports for servers as needed
+  os_port:
+    name: "ansible-static-port:{{ item.name }}"
+    state: present
+    network: "{{ item.network | default(default_server_network) }}"
+    security_groups: "{{ openstack_common.security_groups + item.security_groups | default([]) | unique }}"
+  when: item.static_port is defined and item.static_port
+  with_items: "{{ os_servers }}"
+
+- name: Create OpenStack servers with static ports
+  os_server:
+    state: present
+    name: "{{ item.name }}"
+    flavor: "{{ item.flavor }}"
+    auto_ip: yes
+    image: "{{ openstack_common.image }}"
+    key_name: "{{ openstack_common.keypair }}"
+    security_groups: "{{ openstack_common.security_groups + item.security_groups | default([]) | unique }}"
+    meta: "{{ item.meta }}"
+    nics:
+      - port-name: "ansible-static-port:{{ item.name }}"
+    scheduler_hints: "{{ item.scheduler_hints | default({}) }}"
+  when: item.static_port is defined and item.static_port
+  with_items: "{{ os_servers }}"
+
+- name: Create OpenStack servers without static ports
+  os_server:
+    state: present
+    name: "{{ item.name }}"
+    flavor: "{{ item.flavor }}"
+    auto_ip: yes
+    image: "{{ openstack_common.image }}"
+    key_name: "{{ openstack_common.keypair }}"
+    security_groups: "{{ openstack_common.security_groups + item.security_groups | default([]) | unique }}"
+    meta: "{{ item.meta }}"
+    nics:
+      - net-name: "{{ item.network | default(default_server_network) }}"
+    scheduler_hints: "{{ item.scheduler_hints | default({}) }}"
+  when: item.static_port is not defined or not item.static_port
+  with_items: "{{ os_servers }}"
+
+- name: Create OpenStack Volumes
+  os_volume:
+    state: present
+    display_name: "{{ '%s_%s' | format(item.1.name, item.0.name) }}"
+    size: "{{ item.1.size }}"
+    volume_type: "{{ item.1.volume_type | default('Performance-SSD') }}"
+  when: item.1.size is defined and item.1.dir is defined
+  with_subelements:
+    - "{{ os_servers | selectattr('volumes', 'defined') | list }}"
+    - volumes
+
+- name: Attach OpenStack Volumes
+  os_server_volume:
+    state: present
+    server: "{{ item.0.name }}"
+    volume: "{{ '%s_%s' | format(item.1.name, item.0.name) }}"
+  when: item.1.size is defined and item.1.dir is defined
+  with_subelements:
+    - "{{ os_servers | selectattr('volumes', 'defined') | list }}"
+    - volumes

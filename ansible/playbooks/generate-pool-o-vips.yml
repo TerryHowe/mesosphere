@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  vars_prompt:
+    - name: "openstack_virtualip_port_prefix"
+      prompt: "Name of pool to be used as port prefix"
+      private: no
+    - name: "openstack_virtualip_pool_size"
+      prompt: "Size of pool"
+      private: no
+  roles:
+    - role: openstack/virtualip

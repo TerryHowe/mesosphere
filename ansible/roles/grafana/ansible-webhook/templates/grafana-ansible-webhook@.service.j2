@@ -1,0 +1,13 @@
+[Unit]
+Description=Ansible Playbook service
+Requires=grafana-ansible-webhook.socket
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ansible-webhook.sh %i
+StandardInput=socket
+StandardError=journal
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

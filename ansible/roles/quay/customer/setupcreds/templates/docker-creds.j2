@@ -1,0 +1,8 @@
+{
+  "auths": {
+    "{{ docker_registry }}": {
+      "auth": "{{ robot_credentials | b64encode }}",
+      "email": ""
+    }
+  }
+}

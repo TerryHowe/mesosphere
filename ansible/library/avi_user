@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+
+import base64
+from ansible.module_utils.basic import *
+
+try:
+    from avi.sdk.avi_api import ApiSession
+    HAS_AVISDK = True
+except ImportError:
+    HAS_AVISDK = False
+
+
+if __name__ == '__main__':
+
+    global module
+    module = AnsibleModule(
+        argument_spec={
+            'state': {'default': 'present', 'choices': ['present', 'absent']},
+            'full_name': {'type': 'str'},
+            'username': {'required': True, 'type': 'str'},
+            'password': {'type': 'str', 'no_log': True},
+            'tenant': {'type': 'str'},
+            'role': {'type': 'str'},
+            'is_active': {'type': 'bool', 'default': True},
+            'controller_user': {'required': True, 'type': 'str'},
+            'controller_pass': {'required': True, 'type': 'str'},
+            'controller_host': {'required': True, 'type': 'str'},
+        },
+        supports_check_mode=True
+    )
+
+    if not HAS_AVISDK:
+        module.fail_json(msg="avisdk package is required")
+
+    args = module.params
+    ensure_present = args['state'] != 'absent'
+    api = ApiSession.get_session(args['controller_host'], args['controller_user'],
+                                 args['controller_pass'], tenant='admin')
+
+    user = api.get_object_by_name('user', args['username'])
+    changed = False
+    response = {}
+
+    if ensure_present:
+        tenant = api.get_object_by_name('tenant', args['tenant'])
+        if not tenant:
+            module.fail_json(msg="Tenant not found: %s" % tenant)
+
+        role = api.get_object_by_name('role', args['role'])
+        if not role:
+            module.fail_json(msg="Role not found: %s" % role)
+
+        target_user = {
+            'username': args['username'],
+            'password': args['password'],
+            'full_name': args['full_name'] or args['username'],
+            'access': [{
+                'tenant_ref': tenant['url'],
+                'role_ref': role['url'],
+            }],
+            'default_tenant_ref': tenant['url'],
+            'is_active': args['is_active'],
+        }
+        if not user:
+            changed = True
+            if not module.check_mode:
+                resp = api.post('user', data=target_user)
+                if resp.status_code != 201:
+                    module.fail_json(msg=resp.text)
+                user = resp.json()
+        else:
+            # TODO: support updates
+            pass
+    elif user and not ensure_present:
+        changed = True
+        if not module.check_mode:
+            api.delete('user/{uuid}'.format(**user))
+
+    module.exit_json(changed=changed, user=user)

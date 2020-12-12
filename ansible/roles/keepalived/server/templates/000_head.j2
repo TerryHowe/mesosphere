@@ -1,0 +1,33 @@
+{% if keepalived_script is defined %}
+vrrp_script keepalived_script {
+  {{ keepalived_script | indent(2) }}
+}
+{% endif %}
+
+vrrp_instance default {
+  # all nodes BACKUP for nopreempt to function
+  state BACKUP
+  nopreempt
+  interface eth0
+  virtual_router_id 12
+  advert_int 1
+
+  unicast_src_ip {{ openstack['private_v4'] }}
+  unicast_peer {
+{% for host in groups['admin-proxy'] %}
+{% if host != ansible_hostname %}
+    {{ hostvars[host]['openstack']['private_v4'] }}
+{% endif %}
+{% endfor %}
+
+  }
+
+{% if keepalived_script is defined %}
+  track_script {
+    keepalived_script
+  }
+{% endif %}
+
+  notify /usr/local/bin/keepalived_state.sh
+
+  virtual_ipaddress {

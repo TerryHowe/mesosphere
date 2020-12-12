@@ -1,0 +1,5 @@
+dependencies:
+  - role: docker/install
+  - role: java
+  - role: collectd
+  - role: openssh

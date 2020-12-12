@@ -1,0 +1,10 @@
+---
+#-- Playbook for base image build
+
+- hosts: image-build
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+  - system/timezone
+  - paas-image-build

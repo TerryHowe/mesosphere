@@ -1,0 +1,20 @@
+logrotate_configs:
+  syslog:
+    name: "logrotate config for system logs in /var/log"
+    logrotate_filename: syslog
+    logfile_pattern: /var/log/messages /var/log/secure /var/log/cron /var/log/spooler /var/log/maillog
+    logrotate_settings:
+      - "missingok"
+      - "notifempty"
+      - "daily"
+      - "rotate 5"
+      - "compress"
+      - "delaycompress"
+      - "copytruncate"
+      - "sharedscripts"
+      - "postrotate\n    /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true \n  endscript"
+
+docker_client_email: .
+docker_client_username: paas+robotti
+docker_client_token: "{{ lookup('vault', '{{vault_environment}}', 'quay_build_robot_token') }}"
+docker_client_credential_archive: /etc/docker.tar.gz

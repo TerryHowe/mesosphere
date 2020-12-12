@@ -1,0 +1,36 @@
+---
+- name: check if {{ app_spec.app_name }} is installed
+  shell: dcos marathon app list | grep "^/{{ app_spec.app_name }} "
+  register: appexists
+  failed_when: false
+  changed_when: appexists.rc != 0
+
+- set_fact:
+    app_spec_combined: "{{ docker_app_defaults | combine(app_spec, recursive=true) }}"
+
+- set_fact:
+    docker_app_force_pull: "{{ forcePullImage | default(app_spec_combined['marathon'].get('container', {}).get('docker', {}).get('forcePullImage', False)) }}"
+
+- block:
+    - name: create tempfile for marathon json
+      command: mktemp -t "{{ app_spec_combined.app_name }}.XXXXXXXXXX"
+      register: mktemp
+
+    - name: render marathon json template
+      copy: content={{ app_spec_combined | to_marathon_json(virtual_ip) }} dest={{ mktemp.stdout }}
+
+    - name: marathon config
+      command: cat {{ mktemp.stdout }}
+
+    - name: add marathon app
+      shell: dcos marathon app add {{ mktemp.stdout }}
+      when: appexists.rc != 0
+
+    - name: update marathon app
+      shell: dcos marathon app update /{{ app_spec_combined.app_name }} < {{ mktemp.stdout }}
+      when: appexists.rc == 0
+
+    - name: cleanup marathon json
+      file: name={{ mktemp.stdout }} state=absent
+
+  when: appexists.rc != 0 or docker_app_force_pull

@@ -1,0 +1,14 @@
+---
+- name: check if {{ application_name }} is installed
+  shell: dcos marathon app list | grep "^/{{ application_name }} "
+  register: appexists
+  failed_when: false
+  changed_when: appexists.rc != 0
+
+- name: add marathon app
+  shell: dcos marathon app add {{ json_file }}
+  when: appexists.rc != 0
+
+- name: update marathon app
+  shell: dcos marathon app update /{{ application_name }} < {{ json_file }}
+  when: appexists.rc == 0

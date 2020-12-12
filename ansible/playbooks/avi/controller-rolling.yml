@@ -1,0 +1,36 @@
+---
+- include: cluster-state.yml
+
+- hosts: avi-controller-follower
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  serial: 1
+  vars_prompt:
+    - name: avi_controller_archive_url
+      prompt: 'Avi Controller Mesos download url'
+  roles:
+  - role: deploy/audit
+  - role: avi/controller
+  - role: dns/record
+    domain_name: avi-{{ region }}
+  post_tasks:
+  - name: wait for active cluster state
+    avi_cluster_runtime:
+      controller_host: "{{ avi_controller_base_url }}"
+      controller_user: admin
+      controller_pass: "{{ avi_controller_admin_password }}"
+    until: avi_cluster_state.runtime.cluster_state.state == 'CLUSTER_UP_HA_ACTIVE'
+    retries: 60
+    delay: 5
+    register: avi_cluster_state
+
+- hosts: avi-controller-leader
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+  - role: deploy/audit
+  - role: avi/controller
+  - role: dns/record
+    domain_name: avi-{{ region }}

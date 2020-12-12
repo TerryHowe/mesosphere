@@ -1,0 +1,63 @@
+openstack_dns:
+  nce:
+    - 69.134.11.7
+    - 69.134.11.8
+  ncw:
+    - 69.134.151.7
+    - 69.134.151.8
+
+openstack_networks:
+  default-network:
+    cidr: 192.168.0.0/24
+    shared: no
+    external: no
+    enable_snat: yes
+    router_name: default-router
+    subnet_name: default-subnet
+
+openstack_interfaces: []
+
+#-- Goal config for the future
+#openstack_networks:
+#  M_Admin_01:
+#    cidr: 192.168.0.0/24
+#    shared: no
+#    external: no
+#    enable_snat: yes
+#  M_Prod_01:
+#    cidr: 192.168.1.0/24
+#    shared: no
+#    external: no
+#    enable_snat: yes
+#  M_Prod_02:
+#    cidr: 192.168.2.0/24
+#    shared: no
+#    external: no
+#    enable_snat: yes
+#  M_Prod_03:
+#    cidr: 192.168.3.0/24
+#    shared: no
+#    external: no
+#    enable_snat: yes
+#
+#openstack_interfaces:
+#  - name: M_Admin_01
+#    routes:
+#      - subnet: M_Prod_01
+#      - subnet: M_Prod_02
+#      - subnet: M_Prod_03
+#  - name: M_Prod_01
+#    routes:
+#      - subnet: M_Admin_01
+#      - subnet: M_Prod_02
+#      - subnet: M_Prod_03
+#  - name: M_Prod_02
+#    routes:
+#      - subnet: M_Admin_01
+#      - subnet: M_Prod_01
+#      - subnet: M_Prod_03
+#  - name: M_Prod_03
+#    routes:
+#      - subnet: M_Admin_01
+#      - subnet: M_Prod_01
+#      - subnet: M_Prod_02

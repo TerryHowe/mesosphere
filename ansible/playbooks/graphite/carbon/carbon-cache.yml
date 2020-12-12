@@ -1,0 +1,20 @@
+---
+- hosts: carbon-cache
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  vars:
+   - grafana_admin_password: "{{ os_password }}"
+   - graphite_secret_key: "{{ lookup('vault', '{{vault_environment}}', 'grafana_secret_key') }}"
+   - graphite_admin_password: '{{ os_password }}'
+   - graphite_role: backend
+   - graphite_user: carbon
+   - graphite_group: carbon
+  roles:
+  - role: deploy/audit
+  - role: filesystem
+  - role: collectd
+  - role: graphite-collectd
+  - role: graphite/carbon/install
+  - role: graphite/carbon-c-relay
+  - role: graphite/graphite-web

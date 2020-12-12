@@ -1,0 +1,5 @@
+---
+# Used for graphite-web frontends, will aggregate results from graphite-web
+# endpoints on the carbon-cache instances
+carbonlink_hosts: []
+cluster_servers: "{{ groups['carbon-cache'] | map('extract', hostvars, 'openstack') | map(attribute='private_v4') | list }}"

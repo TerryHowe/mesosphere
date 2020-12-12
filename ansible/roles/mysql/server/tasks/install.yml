@@ -1,0 +1,31 @@
+---
+- block:
+    - name: yum repo for mysql57 release
+      copy: src=mysql.repo dest=/etc/yum.repos.d/mysql.repo owner=root group=root mode=0644
+
+    - name: copy key to server
+      copy: src=RPM-GPG-KEY-mysql dest=/var/tmp/
+
+    - name: import mysql gpg key
+      rpm_key: state=present key=/var/tmp/RPM-GPG-KEY-mysql
+
+    - name: install the 'Development tools' package group
+      yum: name="@Development tools" state=present
+
+  when: ansible_os_family == "RedHat"
+
+- name: install mysql57 comminuty release repo
+  package: name=mysql57-community-release state=present
+
+- name: install required rpms
+  package: name={{ item }} state=present
+  with_items:
+    - mysql-community-server
+    - mysql-community-devel
+    - python-devel
+    - python-pip
+
+- name: install required python packages
+  pip: name={{ item }} state=present
+  with_items:
+    - mysql-python

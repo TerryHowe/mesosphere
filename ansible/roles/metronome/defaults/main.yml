@@ -1,0 +1,2 @@
+---
+metronome_endpoint: "https://mesos-{{region}}.{{project}}.cloud.twc.net/service/metronome"

@@ -1,0 +1,13 @@
+---
+- name: "Get DNS record list"
+  local_action: shell designate record-list -c id -c name --format value {{project_domain}}. | grep -- -{{region}} | cut -f1 -d' '
+  become: no
+  register: dns_record_list
+  changed_when: False
+
+- name: "Delete records"
+  local_action: shell designate record-delete {{project_domain}}. {{item}}
+  become: no
+  register: dns_record_delete
+  changed_when: "'Managed records may not be deleted' not in dns_record_delete.stdout"
+  with_items: "{{ dns_record_list.stdout_lines }}"

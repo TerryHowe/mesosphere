@@ -1,0 +1,22 @@
+- set_fact:
+    security_group: "{{ item.key }}"
+    security_group_rules: "{{ item.value }}"
+  tags:
+    - access
+
+- name: Create OpenStack Security Group Rules for {{ security_group }}
+  os_security_group_rule:
+    state: "{{ subitem.0.state | default('present') }}"
+    security_group: "{{ security_group }}"
+    protocol: "{{ subitem.0.protocol | default('tcp') }}"
+    direction: "{{ subitem.0.direction | default('ingress') }}"
+    port_range_min: "{{ subitem.0.port_min }}"
+    port_range_max: "{{ subitem.0.port_max | default(subitem.0.port_min) }}"
+    remote_ip_prefix: "{{ subitem.1 }}"
+  with_subelements:
+    - "{{security_group_rules}}"
+    - remote_ip_prefixes
+  loop_control:
+    loop_var: subitem
+  tags:
+    - access

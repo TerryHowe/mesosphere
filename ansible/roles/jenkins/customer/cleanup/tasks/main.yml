@@ -1,0 +1,6 @@
+---
+- name: uninstall {{customer_name}}/jenkins-{{customer_name}}
+  shell: dcos package uninstall --app-id=/{{customer_name}}/jenkins-{{customer_name}} jenkins
+  register: dcosuninstall
+  changed_when: '"has been successfully uninstalled" in dcosuninstall.stdout'
+  failed_when: 'dcosuninstall.rc == 1 and "is not installed" not in dcosuninstall.stderr'

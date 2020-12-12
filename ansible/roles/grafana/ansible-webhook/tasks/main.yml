@@ -1,0 +1,27 @@
+---
+
+- name: create ansible webhook socket
+  template:
+    src: grafana-ansible-webhook.socket.j2
+    dest: /etc/systemd/system/grafana-ansible-webhook.socket
+  notify:
+    - reload systemd
+    - reload grafana-ansible-webhook
+
+- name: create ansible webhook service
+  template:
+    src: grafana-ansible-webhook@.service.j2
+    dest: /etc/systemd/system/grafana-ansible-webhook@.service
+  notify:
+    - reload systemd
+    - reload ansible-playbook
+
+- name: ansible webhook scripts
+  copy:
+    src: "{{ item }}"
+    dest: /usr/local/bin/{{ item }}
+    mode: 0754
+    owner: root
+  with_items:
+    - ansible-playbook-safe.sh
+    - ansible-webhook.sh

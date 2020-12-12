@@ -1,0 +1,46 @@
+---
+#
+# Run journald to collect logs on a group of hosts for a given service for a
+# given date range and pull them to your local system.
+#
+#  To collect logs for dcos-marathon for the last 30 mins on all mesos-masters:
+#
+#    $ ansible-playbook -i dev-mesos-ncw fetch-journald-logs.yml -vv \
+#        -e "target_group=mesos-master service=dcos-marathon since='30 minutes ago'"
+#
+#  Note:
+#   * Files will be placed in /var/tmp locally unless you provide dest_dir to override
+#   * 'since' and 'until' support whatever journald does, be mindful of quoting whitespace
+#
+- hosts: "{{ target_group }}"
+  tasks:
+    - fail: msg='Rerun with{{ ":" }} -e "target_group=<group-name>"'
+      when: target_group is not defined
+
+    - fail: msg='Rerun with{{ ":" }} -e "service=<service-name>"'
+      when: service is not defined
+
+    - fail: msg='Rerun with{{ ":" }} -e "since=<date-spec>"'
+      when: since is not defined
+
+    - local_action: command date '+%s'
+      register: tstamp
+
+    - set_fact:
+        local_dest: "{{ dest_dir | default('/var/tmp') }}"
+        logfile: "/var/tmp/{{ ansible_hostname }}-{{ service }}-{{ tstamp.stdout }}.log"
+
+    - debug: msg="Files will be copied to {{ local_dest }}, override with dest_dir=<dir>"
+      when: dest_dir is not defined
+
+    - name: generate and compress log
+      shell: "{{ item }}"
+      with_items:
+        - "journalctl -u {{ service }} --since '{{ since }}' {% if until is defined %}--until '{{ until }}'{% endif %} > {{ logfile }}"
+        - "gzip {{ logfile }}"
+
+    - name: fetch log
+      fetch: src={{ logfile }}.gz dest={{ local_dest }} flat=yes
+ 
+    - name: remove remote logs
+      file: path={{ logfile }}.gz state=absent

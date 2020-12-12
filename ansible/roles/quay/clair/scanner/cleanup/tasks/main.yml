@@ -1,0 +1,26 @@
+---
+- include_vars: ../../../clair/defaults/main.yml
+
+- file: path="{{clair_directory}}/config" state=absent
+  become: yes
+
+- name: name=clair.service enabled=no state=stopped
+  service: name=clair.service enabled=no state=stopped
+  failed_when: False
+
+- name: check if clair scanner service exists
+  shell: docker ps -a --filter name=clair -q
+  changed_when: False
+  register: runningclair
+
+- name: remove clair scanner service
+  shell: docker rm -f clair
+  when: runningclair.stdout  
+    
+- file: path="/usr/lib/systemd/system/clair.service" state=absent
+  register: filedeleted
+  become: yes
+
+- name: systemctl daemon-reload
+  shell: systemctl daemon-reload
+  when: filedeleted.changed

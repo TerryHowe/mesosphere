@@ -1,0 +1,48 @@
+input {
+  stdin {
+    type => "stdin"
+    tags => [ "mesos-slave", "{{ ('admin' in project) | ternary('admin-node', 'mesos-node') }}" ]
+  }
+}
+
+filter {
+
+  if ("mesos-slave" in [tags]) {
+    json {
+      source  => "message"
+      add_tag => [ "json" ]
+    }
+
+    mutate {
+      rename => { "_BOOT_ID" => "boot_id" }
+      rename => { "_GID" => "gid" }
+      rename => { "_SELINUX_CONTEXT" => "selinux_context" }
+      rename => { "_TRANSPORT" => "transport" }
+      rename => { "_CAP_EFFECTIVE" => "cap_effective" }
+      rename => { "_SYSTEMD_UNIT" => "systemd_unit" }
+      rename => { "_MACHINE_ID" => "machine_id" }
+      rename => { "_PID" => "pid" }
+      rename => { "_SYSTEMD_CGROUP" => "systemd_cgroup" }
+      rename => { "_COMM" => "comm" }
+      rename => { "_CMDLINE" => "cmdline" }
+      rename => { "_SYSTEMD_SLICE" => "systemd_slice" }
+      rename => { "_EXE" => "exe" }
+      rename => { "_UID" => "uid" }
+
+    }
+
+    if ([comm] == "nginx") {
+      grok {
+        patterns_dir => ["{{ logstash_patterns_dir }}"]
+        match => { "MESSAGE" => "%{NGINXACCESS}" }
+      }
+    }
+  }
+
+}
+
+output {
+  elasticsearch {
+    hosts => [ "{{ logstash_elasticsearch_hostport }}" ]
+  }
+}

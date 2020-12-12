@@ -1,0 +1,21 @@
+---
+- name: get avi cluster state
+  uri:
+    url: "{{ avi_controller_base_url }}/api/cluster/runtime"
+    return_content: yes
+    validate_certs: no
+  register: avi_cluster_runtime
+
+- name: check if a cluster configuration exists
+  set_fact:
+    is_cluster_configured: "{{ avi_cluster_runtime.json.node_states | length > 1 }}"
+
+- name: check if this node is reporting as the cluster leader
+  set_fact:
+    is_cluster_leader: "{{ avi_cluster_runtime.json.node_states | selectattr('role', 'equalto', 'CLUSTER_LEADER') | selectattr('name', 'equalto', openstack['private_v4']) | list | length == 1 }}"
+  when: is_cluster_configured
+
+- name: select default leader when cluster is not configured
+  set_fact:
+    is_cluster_leader: "{{ ansible_hostname == 'avi-controller-1-' ~ region }}"
+  when: not is_cluster_configured

@@ -1,0 +1,6 @@
+---
+- name: "create A record {{domain_name}} for {{ansible_hostname}}"
+  local_action: shell designate record-create --name "{{domain_name}}" --type A --data "{{ hostvars[ansible_hostname]['openstack'][ip_attr] }}" "{{project_domain}}."
+  become: no
+  register: dns_record_create
+  changed_when: "'duplicate_record' not in dns_record_create.stdout"

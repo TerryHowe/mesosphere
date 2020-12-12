@@ -1,0 +1,10 @@
+LoadPlugin curl
+
+<Plugin curl>
+  <Page "elasticsearch_proxy">
+    URL "http://elasticsearch-proxy-{{ region }}.{{ project }}.cloud.twc.net:9200"
+    MeasureResponseCode true
+    MeasureResponseTime true
+  </Page>
+</Plugin>
+

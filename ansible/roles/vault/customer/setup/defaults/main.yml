@@ -1,0 +1,11 @@
+---
+root_token: "{{ lookup('file', '{{vault_token}}') }}"
+vault_url: 'https://vault-{{region}}.{{project_domain}}:8200'
+rules: >
+    path "secret/{{customer.shortname}}/*" {
+      capabilities = ["create", "read", "update", "delete", "list"]
+    }
+    path "secret/{{customer.shortname}}" {
+      capabilities = ["list"]
+    }
+

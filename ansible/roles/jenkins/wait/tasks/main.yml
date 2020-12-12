@@ -1,0 +1,23 @@
+---
+- name: Wait for jenkins to come up
+  uri:
+    url: "https://{{jenkins_subdomain}}.{{project_domain}}/{{jenkins_path}}/"
+    headers: "{{jenkins_headers}}"
+    status_code: 200,403
+    validate_certs: no
+  register: jenkins_root_page
+  until: jenkins_root_page.status in [200,403]
+  retries: 60
+  delay: 5
+
+- name: Wait for jenkins login page
+  uri:
+    url: "https://{{jenkins_subdomain}}.{{project_domain}}/{{jenkins_path}}/login"
+    headers: "{{jenkins_headers}}"
+    status_code: 200
+    validate_certs: no
+  register: jenkins_login_page
+  until: jenkins_login_page.status == 200
+  retries: 60
+  delay: 5
+  when: jenkins_root_page.status == 403

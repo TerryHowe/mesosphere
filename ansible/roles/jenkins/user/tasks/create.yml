@@ -1,0 +1,6 @@
+---
+- file: path="{{persistent_store}}/users" state=directory mode=0755 owner={{remote_user}} group={{remote_user}}
+- file: path="{{persistent_store}}/users/{{jenkins_user_name}}" state=directory mode=0755 owner={{remote_user}} group={{remote_user}}
+
+- name: render user {{jenkins_user_name}} configuration
+  template: src=users.xml.j2 dest={{persistent_store}}/users/{{jenkins_user_name}}/config.xml owner={{remote_user}} group={{remote_user}} mode=0644 force=no

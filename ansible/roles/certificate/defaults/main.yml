@@ -1,0 +1,5 @@
+---
+certificate_config_file: "openssl.conf"
+certificate_key_file: "{{secrets}}/{{certificate_name}}-key.pem"
+certificate_csr_file: "{{secrets}}/{{certificate_name}}-csr.pem"
+certificate_cert_file: "{{secrets}}/{{certificate_name}}-cert.pem"

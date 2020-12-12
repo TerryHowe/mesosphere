@@ -1,0 +1,14 @@
+---
+#-- Playbook for base image build
+
+- hosts: localhost
+  roles:
+    - role: deploy/audit
+    - role: dns/domain
+    - role: provision-openstack
+
+- hosts: 'all!localhost'
+  become: yes
+  become_user: root
+  roles:
+    - role: system/timezone

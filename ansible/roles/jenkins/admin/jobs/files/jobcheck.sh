@@ -1,0 +1,11 @@
+
+CHANGED_FILES_FILTER='XXXXXXXX'
+GIT_PREVIOUS_SUCCESSFUL_COMMIT=${GIT_PREVIOUS_SUCCESSFUL_COMMIT:-${GIT_COMMIT}}
+if [ "${GIT_PREVIOUS_SUCCESSFUL_COMMIT}" != "${GIT_COMMIT}" ]
+then
+  if ! git diff --name-only --pretty="format:"  "$GIT_COMMIT" "$GIT_PREVIOUS_SUCCESSFUL_COMMIT" | grep "${CHANGED_FILES_FILTER}" >/dev/null
+  then
+    echo "No changes to ${CHANGED_FILES_FILTER}"
+    exit 0
+  fi
+fi

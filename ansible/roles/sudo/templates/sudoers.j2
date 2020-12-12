@@ -1,0 +1,14 @@
+#-- Managed by Ansible
+{% for user in sudo_users %}
+
+#-- User defaults, if any
+{% for default in sudo_users[user]['defaults'] %}
+Defaults:{{ user }} {{ default }}
+{% endfor %}
+
+#-- User-specific commands
+{% set commands = sudo_users[user]['commands']|join(', ') if sudo_users[user]['commands'] | default(false) else "ALL" %}
+{% set passwd = "NOPASSWD" if sudo_users[user]['nopasswd'] | default(false) else "PASSWD" %}
+{{ user }} ALL={{ passwd }}:{{ commands }}
+
+{% endfor %}

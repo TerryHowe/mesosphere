@@ -1,0 +1,8 @@
+---
+- hosts: carbon-cache
+  remote_user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+  - role: graphite/carbon/whisper_resize
+

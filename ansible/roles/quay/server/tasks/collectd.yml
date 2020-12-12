@@ -1,0 +1,5 @@
+---
+- name: configure collectd plugin
+  template: src=collectd.conf.j2 dest=/etc/collectd.d/quay-hb.conf
+  notify:
+    - restart collectd

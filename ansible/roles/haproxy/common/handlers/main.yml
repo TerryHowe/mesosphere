@@ -1,0 +1,14 @@
+---
+- name: reconfig haproxy
+  assemble: src=/etc/haproxy/conf.d dest=/etc/haproxy/haproxy.cfg
+  notify:
+    - reload haproxy
+
+- name: reload haproxy
+  service: name=haproxy state=reloaded
+
+- name: restart haproxy
+  service: name=haproxy state=restarted
+
+- name: reload systemd
+  command: systemctl daemon-reload

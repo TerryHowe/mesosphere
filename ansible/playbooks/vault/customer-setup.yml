@@ -1,0 +1,8 @@
+---
+- name: Customer setup for mesos vault
+  hosts: localhost
+  vars_files:
+    - ../customer/vars/{{ customer_name }}.yml
+  roles:
+    - vault/customer/setup
+

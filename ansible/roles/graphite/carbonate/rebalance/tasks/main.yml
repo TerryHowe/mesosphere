@@ -1,0 +1,12 @@
+---
+- name: carbonate rebalance script
+  template: src=rebalance.j2 dest=/var/run/carbonate/rebalance
+            owner=carbon group=carbon mode=0750
+
+- name: schedule the rebalance job
+  at:
+    command: su -s /bin/bash -c /var/run/carbonate/rebalance carbon
+    # stagger the jobs to lessen the disk impact of N nodes syncing
+    count: "{{ ansible_hostname | regex_replace('\\D', '') | int * graphite_carbonate_stagger_mins }}"
+    units: minutes
+    unique: true

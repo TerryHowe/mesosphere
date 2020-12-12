@@ -1,0 +1,29 @@
+---
+quay_super_user: "[admin]"
+quay_container: "registry-{{region}}"
+
+ldap_admin_bind_password: "{{lookup('vault', 'ldapadmin', 'password')}}"
+
+github_client_id: "{{lookup('vault', '{{vault_environment}}', 'git_client_id')}}"
+github_client_secret: "{{lookup('vault', '{{vault_environment}}', 'git_client_secret')}}"
+github_trigger_id: "{{lookup('vault', '{{vault_environment}}', 'git_trigger_id')}}"
+github_trigger_secret: "{{lookup('vault', '{{vault_environment}}', 'git_trigger_secret')}}"
+github_endpoint: "https://github.webapps.rr.com/"
+
+registry_public: "{{lookup('vault', 'registry-{{region}}.{{project}}.public', 'contents')}}"
+registry_private: "{{lookup('vault', 'registry-{{region}}.{{project}}.private', 'contents')}}"
+quay_temp_url_key: "{{lookup('vault', 'quay', 'quay_temp_url_key')}}"
+
+mysql_server: "mysql-common-{{region}}-internal.{{admin_domain}}"
+mysql_user: "{{lookup('vault', 'quay', 'mysql_user')}}"
+mysql_password: "{{lookup('vault', 'quay', 'mysql_password')}}"
+
+redis_server: "worker-1-{{region}}.{{admin_domain}}"
+
+quay_directory: "/mnt/persistent/quay"
+
+triggers:
+  quay_health_status:
+    name: "{{ admin_project }}-{{ region }} Quay Health Status"
+    targets: [ "collectd.{{ admin_project }}.{{ region }}.worker.*.curl.quay_heartbeat.response_code" ]
+    expression: "ERROR if t1 != 200.0 else OK"

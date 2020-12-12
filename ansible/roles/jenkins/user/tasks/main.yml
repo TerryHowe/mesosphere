@@ -1,0 +1,5 @@
+---
+- include: ssh.yml
+  when: runningjenkins != ""
+- include: create.yml
+  when: runningjenkins != ""

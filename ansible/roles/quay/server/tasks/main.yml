@@ -1,0 +1,48 @@
+---
+- name: os_object name={{quay_container}}
+  become: no
+  local_action: os_object container={{quay_container}} state=present
+
+- name: os_object  container={{quay_container}} name=bobby.png state=present filename=roles/quay/server/files/logo.png
+  become: no
+  local_action: os_object  container={{quay_container}} name=bobby.png state=present filename=roles/quay/server/files/logo.png
+
+- name: openstack object store account set --property Temp-URL-Key
+  become: no
+  local_action: shell swift post -m "Temp-URL-Key:{{quay_temp_url_key}}"
+
+- file: path="{{quay_directory}}" state=directory mode=0750
+- file: path="{{quay_directory}}/storage" state=directory mode=0750
+- file: path="{{quay_directory}}/config" state=directory mode=0750
+
+- name: config.yaml file
+  template: src=config.yaml.j2 dest="{{quay_directory}}/config/config.yaml"
+
+- copy: content="{{registry_public}}" dest="{{quay_directory}}/config/ssl.cert" mode=0400
+- copy: content="{{registry_private}}" dest="{{quay_directory}}/config/ssl.key" mode=0400
+
+- name: quay.service install
+  register: quayservice
+  template: src=quay.service.j2 dest=/usr/lib/systemd/system/quay.service
+
+- name: systemctl daemon-reload
+  shell: systemctl daemon-reload
+  changed_when: False
+  when: quayservice.changed
+
+- name: name=quay.service enabled=yes state=restarted
+  service: name=quay.service enabled=yes state=restarted
+
+- name: "wait for quay to come up"
+  uri:
+    url: "https://127.0.0.1/"
+    validate_certs: no
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 60
+  delay: 3
+
+- include: collectd.yml
+  tags:
+    - monitoring

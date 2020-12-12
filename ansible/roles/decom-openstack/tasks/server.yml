@@ -1,0 +1,43 @@
+---
+- set_fact:
+    os_servers: "{{ openstack_server_templates | expand_servers(region) }}"
+    os_server_groups: "{{ openstack_server_templates.values() | selectattr('server_group', 'defined') | map(attribute='server_group') | list }}"
+
+- name: Delete OpenStack servers
+  os_server:
+    state: absent
+    name: "{{ item.name }}"
+  with_items: "{{ os_servers }}"
+
+- name: Delete OpenStack Volumes
+  os_volume:
+    state: absent
+    display_name: "{{ '%s_%s' | format(item.1.name, item.0.name) }}"
+  when: item.1.size is defined and item.1.dir is defined
+  with_subelements:
+    - "{{ os_servers | selectattr('volumes', 'defined') | list }}"
+    - volumes
+
+- name: Delete static ports for servers as needed
+  os_port:
+    name: "ansible-static-port:{{ item.name }}"
+    state: absent
+  when: item.static_port is defined and item.static_port
+  with_items: "{{ os_servers }}"
+
+- name: Query for application ports (vips)
+  command: neutron port-list -f json
+  register: port_results
+
+- name: Remove application ports
+  os_port:
+    state: absent
+    name: "{{ item.id }}"
+  ignore_errors: true
+  with_items: "{{ port_results.stdout | from_json }}"
+
+- name: Delete server groups
+  os_server_group:
+    state: absent
+    name: "{{ item.name }}"
+  with_items: "{{ os_server_groups }}"
