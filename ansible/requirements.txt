@@ -1,5 +1,5 @@
 # requirements for ansible control node
-ansible==7.0.0
+ansible==8.5.0
 avisdk==16.4b1
 jenkins-job-builder==1.4.0
 python-neutronclient==4.1.1
