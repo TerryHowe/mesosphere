@@ -3,7 +3,7 @@ ansible==8.5.0
 avisdk==16.4b1
 jenkins-job-builder==1.4.0
 python-neutronclient==4.1.1
-python-openstackclient==2.2.0
+python-openstackclient==6.3.0
 python-designateclient==2.0.0
 shade==1.9.0
 ansible-modules-hashivault==2.5.6
